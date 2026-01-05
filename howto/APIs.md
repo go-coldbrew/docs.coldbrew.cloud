@@ -401,6 +401,137 @@ Using the `errors.WrapWithStatus` function has the same effect as `errors.Wrap` 
 
 Coldbrew errors package also provides stack trace support for errors, which can make debugging easier. For more information see Coldbrew [errors package].
 
+## Customizing HTTP Error Responses
+
+By default, grpc-gateway returns errors in the following JSON format:
+
+```json
+{
+  "code": 3,
+  "message": "Name argument is required",
+  "details": []
+}
+```
+
+You may want to customize this error response structure to match your API conventions, support legacy clients, or provide additional context. grpc-gateway provides the `WithErrorHandler` option to achieve this.
+
+### Custom Error Handler
+
+To customize the error response format, create a custom error handler and pass it to the `runtime.NewServeMux()`:
+
+```go
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+// CustomError defines your desired error response structure
+type CustomError struct {
+	Error ErrorDetail `json:"error"`
+}
+
+type ErrorDetail struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// CustomErrorHandler handles gRPC errors and writes custom JSON response
+func CustomErrorHandler(
+	ctx context.Context,
+	mux *runtime.ServeMux,
+	marshaler runtime.Marshaler,
+	w http.ResponseWriter,
+	r *http.Request,
+	err error,
+) {
+	// Extract gRPC status from the error
+	st, ok := status.FromError(err)
+	if !ok {
+		st = status.New(codes.Unknown, err.Error())
+	}
+
+	// Build custom error response
+	customErr := CustomError{
+		Error: ErrorDetail{
+			Code:    st.Code().String(),
+			Message: st.Message(),
+		},
+	}
+
+	// Set content type and HTTP status code
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(runtime.HTTPStatusFromCode(st.Code()))
+
+	// Write the custom JSON response
+	json.NewEncoder(w).Encode(customErr)
+}
+```
+
+### Integrating with ColdBrew
+
+In your `InitHTTP` function, apply the custom error handler to the existing mux before registering your service handlers:
+
+```go
+func (s *cbSvc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+	// Apply custom error handler to the existing mux
+	runtime.WithErrorHandler(CustomErrorHandler)(mux)
+
+	return proto.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+}
+```
+
+{: .note}
+This works because `runtime.ServeMuxOption` is defined as `func(*ServeMux)`, allowing you to apply options to an existing mux by calling the option function directly.
+
+### Using with runtime.NewServeMux
+
+If you're managing your own gateway setup (without ColdBrew core), pass the option when creating the ServeMux:
+
+```go
+mux := runtime.NewServeMux(
+	runtime.WithErrorHandler(CustomErrorHandler),
+)
+```
+
+### Example Response
+
+With the custom error handler above, when your gRPC service returns an `InvalidArgument` error:
+
+```go
+return nil, status.Errorf(codes.InvalidArgument, "Name argument is required")
+```
+
+The HTTP response will be:
+
+```bash
+$ curl -X GET localhost:8080/v1/books/
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "InvalidArgument",
+    "message": "Name argument is required"
+  }
+}
+```
+
+Instead of the default format:
+
+```json
+{"code":3,"message":"Name argument is required","details":[]}
+```
+
+{: .note}
+For more advanced customization options, refer to the [grpc-gateway customization guide].
+
 ---
 [google/rpc/status.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/status.proto
 [google/rpc/code.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
@@ -413,3 +544,4 @@ Coldbrew errors package also provides stack trace support for errors, which can 
 [gRPC Gateway mapping]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/examples/
 [grpc-gateway plugin]: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/generating_stubs/
 [Coldbrew cookiecutter]: /getting-started#using-the-coldbrew-cookiecutter-template
+[grpc-gateway customization guide]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_your_gateway/
