@@ -59,6 +59,11 @@ grpcpool is a pool of grpc.ClientConns that can be used to make requests to a gr
 
 Documentation can be found at [grpcpool-docs]
 
+## [Data Builder]
+Data builder is a library to compile and execute data-processing logic. Users can express any data-processing logic as functions that accept and return structs. Based on these struct types, the library is able to resolve dependencies at compile time to catch issues with the computation graph (such as missing inputs, missing data-builder functions, cyclic dependencies). Compilation infers a sequence in which the data-processing functions can be run (and can support parallel execution). Any App that acts on a request, processes it in multiple steps, and returns some data that depends on these steps could be written using data-builder.
+
+Documentation can be found at [data-builder-docs]
+
 ---
 [Core]: https://github.com/go-coldbrew/core/tree/main#readme
 [core-docs]: https://pkg.go.dev/github.com/go-coldbrew/core
@@ -78,3 +83,5 @@ Documentation can be found at [grpcpool-docs]
 [hystrixprometheus-docs]: https://pkg.go.dev/github.com/go-coldbrew/hystrixprometheus
 [grpcpool]: https://github.com/go-coldbrew/grpcpool#readme
 [grpcpool-docs]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool
+[Data Builder]: https://github.com/go-coldbrew/data-builder/tree/main#readme
+[data-builder-docs]: https://pkg.go.dev/github.com/go-coldbrew/data-builder
