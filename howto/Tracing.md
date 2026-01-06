@@ -76,6 +76,77 @@ see [Adding interceptors to your gRPC server]
 
 see [Adding interceptors to your gRPC client]
 
+## Database and External Service Tracing
+
+### Database tracing
+
+Use [NewDatastoreSpan] for database operations. This creates spans with appropriate metadata for database queries:
+
+```go
+func queryUsers(ctx context.Context) ([]User, error) {
+    span, ctx := tracing.NewDatastoreSpan(ctx, "postgres", "SELECT", "users")
+    defer span.End()
+
+    span.SetQuery("SELECT * FROM users WHERE active = true")
+    // ... execute query
+}
+```
+
+### External service calls
+
+For HTTP calls to external services, use [NewExternalSpan] or [NewHTTPExternalSpan]:
+
+```go
+func callExternalAPI(ctx context.Context) error {
+    span, ctx := tracing.NewExternalSpan(ctx, "payment-service", "https://api.payment.com/charge")
+    defer span.End()
+    // ... make HTTP call
+}
+
+// With header propagation for distributed tracing
+func callWithHeaders(ctx context.Context) error {
+    req, _ := http.NewRequest("GET", "https://api.example.com/data", nil)
+    span, ctx := tracing.NewHTTPExternalSpan(ctx, "example-api", "https://api.example.com/data", req.Header)
+    defer span.End()
+    // Headers are automatically populated for distributed tracing
+    // ... make HTTP call with req
+}
+```
+
+## Working with Context Values
+
+When working with background goroutines or async operations, you may need to preserve context values (like trace IDs) without inheriting cancellation.
+
+### Creating a new context with parent values
+
+Use [NewContextWithParentValues] to clone context values without inheriting cancellation/deadline:
+
+```go
+func asyncOperation(parentCtx context.Context) {
+    // Create new context with parent's values but independent lifecycle
+    ctx := tracing.NewContextWithParentValues(parentCtx)
+
+    go func() {
+        // This goroutine won't be cancelled when parentCtx is cancelled
+        // but will have access to trace IDs and other values
+        processAsync(ctx)
+    }()
+}
+```
+
+### Merging context values
+
+Use [MergeContextValues] to combine values from two contexts:
+
+```go
+// Cancel/Deadline come from mainCtx
+// Values are looked up in both contexts (mainCtx first, then parentCtx)
+ctx := tracing.MergeContextValues(parentCtx, mainCtx)
+```
+
+{: .warning}
+The functions `CloneContextValues` and `MergeParentContext` are deprecated. Use [NewContextWithParentValues] and [MergeContextValues] instead.
+
 ---
 
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
@@ -90,3 +161,8 @@ see [Adding interceptors to your gRPC client]
 [New Relic]: https://newrelic.com/
 [Opentelemetry]: https://opentelemetry.io/
 [Jaeger]: https://www.jaegertracing.io/
+[NewDatastoreSpan]: https://pkg.go.dev/github.com/go-coldbrew/tracing#NewDatastoreSpan
+[NewExternalSpan]: https://pkg.go.dev/github.com/go-coldbrew/tracing#NewExternalSpan
+[NewHTTPExternalSpan]: https://pkg.go.dev/github.com/go-coldbrew/tracing#NewHTTPExternalSpan
+[NewContextWithParentValues]: https://pkg.go.dev/github.com/go-coldbrew/tracing#NewContextWithParentValues
+[MergeContextValues]: https://pkg.go.dev/github.com/go-coldbrew/tracing#MergeContextValues

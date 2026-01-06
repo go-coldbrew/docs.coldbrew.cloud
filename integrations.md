@@ -116,6 +116,142 @@ You can also add more tracing to your app by [adding tracing] to your functions.
 
 [Coldbrew cookiecutter] template includes a `buf.yaml` file that configures Buf to generate code for the gRPC service. The code generation config is stored in the `buf.gen.yaml` file.
 
+## Logger
+
+ColdBrew provides a unified logging setup through the core package.
+
+### Configuring
+
+To configure the logger, set the following environment variables as defined in [Config]:
+- `LOG_LEVEL`: Log level (e.g. `debug`, `info`, `warn`, `error`)
+- `JSON_LOGS`: Set to `true` to enable JSON output, `false` for logfmt
+
+### Initialising
+
+If your app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+
+If you are using Coldbrew packages in your app, you need to initialise the logger manually:
+
+```go
+import "github.com/go-coldbrew/core"
+
+func main() {
+    // SetupLogger configures the logger with the specified log level and format
+    // logLevel: "debug", "info", "warn", "error"
+    // jsonlogs: true for JSON output, false for logfmt
+    err := core.SetupLogger("info", true)
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+## Generic OpenTelemetry
+
+ColdBrew supports any OTLP-compatible backend (Jaeger, Honeycomb, etc.) through a generic OpenTelemetry setup.
+
+### Configuring
+
+To configure generic OpenTelemetry, you can use the [OTLPConfig] struct:
+
+```go
+type OTLPConfig struct {
+    Endpoint             string            // OTLP gRPC endpoint (e.g., "localhost:4317")
+    Headers              map[string]string // Custom headers (e.g., API keys)
+    ServiceName          string            // Name of your service
+    ServiceVersion       string            // Version of your service
+    SamplingRatio        float64           // Sampling ratio (0.0 to 1.0)
+    Compression          string            // "gzip" or "none"
+    UseOpenTracingBridge bool              // Enable OpenTracing compatibility
+    Insecure             bool              // Disable TLS (for local development)
+}
+```
+
+### Initialising
+
+```go
+import "github.com/go-coldbrew/core"
+
+func main() {
+    config := core.OTLPConfig{
+        Endpoint:             "localhost:4317",
+        ServiceName:          "my-service",
+        ServiceVersion:       "v1.0.0",
+        SamplingRatio:        0.1,
+        UseOpenTracingBridge: true,
+        Insecure:             true,  // for local development
+    }
+    err := core.SetupOpenTelemetry(config)
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+## Jaeger
+
+[Jaeger] is an open-source distributed tracing system. ColdBrew supports Jaeger through the generic OpenTelemetry interface.
+
+### Configuring
+
+To send traces to Jaeger, configure the OTLP endpoint to point to your Jaeger collector:
+
+```go
+import "github.com/go-coldbrew/core"
+
+func main() {
+    config := core.OTLPConfig{
+        Endpoint:             "localhost:4317",  // Jaeger OTLP endpoint
+        ServiceName:          "my-service",
+        ServiceVersion:       "v1.0.0",
+        SamplingRatio:        0.1,
+        UseOpenTracingBridge: true,
+        Insecure:             true,
+    }
+    err := core.SetupOpenTelemetry(config)
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+## Hystrix-Go
+
+[Hystrix-Go] is a Go implementation of the circuit breaker pattern. ColdBrew provides Prometheus metrics integration for Hystrix.
+
+### Initialising
+
+If your app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+
+If you are using Coldbrew packages in your app, you need to initialise Hystrix Prometheus manually:
+
+```go
+import "github.com/go-coldbrew/core"
+
+func main() {
+    // SetupHystrixPrometheus registers Hystrix metrics with Prometheus
+    core.SetupHystrixPrometheus()
+}
+```
+
+## Environment Configuration
+
+ColdBrew provides functions to configure the environment and release information used by monitoring tools.
+
+### Initialising
+
+```go
+import "github.com/go-coldbrew/core"
+
+func main() {
+    // SetupEnvironment identifies the environment in Sentry and New Relic
+    core.SetupEnvironment("production")
+
+    // SetupReleaseName identifies the release in Sentry
+    core.SetupReleaseName("v1.0.0")
+}
+```
+
 ## Coldbrew packages
 
 All Coldbrew packages are designed to be used as standalone packages. They can be used in any Go project. They are not tied to Coldbrew and can be used in any Go project.
@@ -149,3 +285,9 @@ To see all the Coldbrew packages, check out the [Coldbrew packages] page.
 [SetupSentry]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupSentry
 [Opentelemetry documentation]: https://opentelemetry.io/docs/go/getting-started/
 [errors documentation]: /howto/errors/#coldbrew-notifier-package
+[OTLPConfig]: https://pkg.go.dev/github.com/go-coldbrew/core#OTLPConfig
+[SetupOpenTelemetry]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupOpenTelemetry
+[SetupLogger]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupLogger
+[SetupHystrixPrometheus]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupHystrixPrometheus
+[SetupEnvironment]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupEnvironment
+[SetupReleaseName]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupReleaseName

@@ -74,7 +74,8 @@ func main() {
     )
     pb.RegisterHelloWorldServer(server, &HelloWorldServer{})
     if err := server.Serve(lis); err != nil {
-        log.Fatal(context.Background(), err)
+        log.Error(context.Background(), "failed to serve", err)
+        panic(err)
     }
 }
 ```
@@ -104,13 +105,15 @@ func main() {
         grpc.WithChainUnaryInterceptor(interceptors.DefaultClientInterceptors()...),
     )
     if err != nil {
-        log.Fatal(ctx, err)
+        log.Error(ctx, "failed to dial", err)
+        panic(err)
     }
     defer conn.Close()
     client := pb.NewHelloWorldClient(conn)
     resp, err := client.HelloWorld(ctx, &pb.HelloWorldRequest{})
     if err != nil {
-        log.Fatal(ctx, err)
+        log.Error(ctx, "failed to call", err)
+        panic(err)
     }
     log.Info(ctx, resp)
 }

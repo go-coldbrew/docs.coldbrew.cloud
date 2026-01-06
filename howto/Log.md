@@ -70,20 +70,20 @@ service HelloService {
 
 ColdBrew also allows you to propagate trace id in request headers by passing in the header `X-Trace-Id` in the request. This is useful when you have a service does not have `trace_id` field in the request and you want to propagate the trace id.
 
-You can configure the trace id header name by setting the `TraceHeaderName` in [Config].
+You can configure the trace id header name using the [SetTraceHeaderName] function from the notifier package:
 
 ```go
-
 import (
-    "github.com/go-coldbrew/core/config"
+    "github.com/go-coldbrew/errors/notifier"
 )
 
 func init() {
-    config := config.GetConfig()
-    // set trace header name to X-Trace-Id
-    config.TraceHeaderName = "X-Trace-Id"
+    // set trace header name to X-Trace-Id (default is "x-trace-id")
+    notifier.SetTraceHeaderName("X-Trace-Id")
 }
 ```
+
+You can also configure this using the `TRACE_HEADER_NAME` environment variable.
 
 {: .note}
 Its important to note that the trace id header name is case insensitive. So `X-Trace-Id` and `x-trace-id` are the same.
@@ -143,3 +143,4 @@ Will output the debug log messages even when the global log level is set to info
 [UseColdBrewServcerInterceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#UseColdBrewServerInterceptors
 [OverrideLogLevel]: https://github.com/go-coldbrew/log#func-overrideloglevel
 [Config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
+[SetTraceHeaderName]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#SetTraceHeaderName

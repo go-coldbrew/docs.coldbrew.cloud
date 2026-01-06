@@ -44,15 +44,14 @@ func main() {
     if err != nil {
         // Handle error.
     }
+    defer pool.Close()
 
     // Get a connection from the pool.
-    conn, err := pool.Get()
-    if err != nil {
-        // Handle error.
-    }
+    conn := pool.Conn()
 
-    // Close the connection.
-    conn.Close()
+    // Use the connection for your gRPC calls.
+    // Note: connections are not returned to the pool, they are reused internally.
+    _ = conn
 }
 ```
 

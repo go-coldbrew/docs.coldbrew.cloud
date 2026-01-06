@@ -126,6 +126,62 @@ func main() {
 {: .note}
 You can use multiple notifiers at the same time. For example, you can use Sentry and Airbrake at the same time. This is useful when you want to use a different notifier for different environments or when you want to migrate from one provider to another.
 
+### Advanced notification functions
+
+#### Notify with custom level
+
+Use [NotifyWithLevel] to report errors with a specific severity level:
+
+```go
+// Notify with a specific error level ("error", "warning", "info", etc.)
+notifier.NotifyWithLevel(err, "warning", ctx)
+```
+
+#### Skip stack frames
+
+Use [NotifyWithLevelAndSkip] when you have wrapper functions and need to skip stack frames for accurate reporting:
+
+```go
+// Skip 2 stack frames when reporting (useful for wrapper functions)
+notifier.NotifyWithLevelAndSkip(err, 2, "error", ctx)
+```
+
+#### Log-only errors
+
+Use [NotifyWithExclude] to log errors locally but exclude them from being sent to error tracking providers:
+
+```go
+// Report error to logs but don't send to Sentry/Airbrake/Rollbar
+notifier.NotifyWithExclude(err, ctx)
+```
+
+#### Panic recovery
+
+Use [NotifyOnPanic] in a defer statement to capture and report panics:
+
+```go
+func handler(ctx context.Context) {
+    defer notifier.NotifyOnPanic(ctx, "additional data")
+    // ... code that might panic
+}
+```
+
+### Configuring trace header
+
+The trace header is used to propagate trace IDs across services. You can customize the header name:
+
+```go
+import "github.com/go-coldbrew/errors/notifier"
+
+func init() {
+    // Set custom trace header name (default: "x-trace-id")
+    notifier.SetTraceHeaderName("X-Request-Id")
+}
+
+// Get current trace header name
+name := notifier.GetTraceHeaderName()
+```
+
 ## Examples
 
 ### Sending errors to provides
@@ -222,3 +278,9 @@ the `trace` and `grpcMethod` fields are added by the ColdBrew, for more informat
 [InitSentry]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#InitSentry
 [InitAirbrake]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#InitAirbrake
 [InitRollbar]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#InitRollbar
+[NotifyWithLevel]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#NotifyWithLevel
+[NotifyWithLevelAndSkip]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#NotifyWithLevelAndSkip
+[NotifyWithExclude]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#NotifyWithExclude
+[NotifyOnPanic]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#NotifyOnPanic
+[SetTraceHeaderName]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#SetTraceHeaderName
+[GetTraceHeaderName]: https://pkg.go.dev/github.com/go-coldbrew/errors/notifier#GetTraceHeaderName

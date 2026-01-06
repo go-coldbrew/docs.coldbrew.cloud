@@ -143,6 +143,51 @@ resp = result.Get(resp).(AppResponse)
 fmt.Println(resp.PriceInDollars)
 ```
 
+### Replacing builders at runtime
+
+The `Replace` method allows you to swap out a builder function at runtime. This is useful for testing or when you need to change behavior without recompiling the plan.
+
+```go
+// Define a mock builder for testing
+func MockBuildPriceAdjustment(_ context.Context, grossPrice GrossPrice) (PriceAdjustment, error) {
+    // Always return a fixed discount for testing
+    return PriceAdjustment{DiscountInCents: 500}, nil
+}
+
+// Replace the builder with the mock
+err := p.Replace(context.Background(), BuildPriceAdjustment, MockBuildPriceAdjustment)
+if err != nil {
+    panic(err)
+}
+
+// Run with the replaced builder
+result, err := p.Run(context.Background(), AppRequest{...})
+```
+
+{: .note}
+The replacement function must have the same input and output types as the original.
+
+### Running plans in parallel
+
+For I/O-bound operations, you can run the plan with parallel execution using `RunParallel`:
+
+```go
+// Run with up to 4 parallel goroutines
+result, err := p.RunParallel(
+    context.Background(),
+    4,  // max parallelism
+    AppRequest{
+        Cart: []Item{
+            Item{Name: "item1", PriceInCents: 1000},
+            Item{Name: "item2", PriceInCents: 2000},
+        },
+    },
+)
+```
+
+{: .important}
+Parallel execution is beneficial for I/O-bound builders (network calls, database queries). For CPU-bound operations, the overhead may outweigh the benefits.
+
 ---
 [data-builder]: https://pkg.go.dev/github.com/go-coldbrew/data-builder
 [guide to go generate]: https://eli.thegreenplace.net/2021/a-comprehensive-guide-to-go-generate/
