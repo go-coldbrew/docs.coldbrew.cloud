@@ -217,6 +217,9 @@ func main() {
 
 ## Hystrix-Go
 
+{: .warning }
+Hystrix-Go (`afex/hystrix-go`) is unmaintained (last updated 2018). Consider migrating to [failsafe-go] for circuit breaker functionality.
+
 [Hystrix-Go] is a Go implementation of the circuit breaker pattern. ColdBrew provides Prometheus metrics integration for Hystrix.
 
 ### Initialising
@@ -289,5 +292,6 @@ To see all the Coldbrew packages, check out the [Coldbrew packages] page.
 [SetupOpenTelemetry]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupOpenTelemetry
 [SetupLogger]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupLogger
 [SetupHystrixPrometheus]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupHystrixPrometheus
+[failsafe-go]: https://github.com/failsafe-go/failsafe-go
 [SetupEnvironment]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupEnvironment
 [SetupReleaseName]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupReleaseName
