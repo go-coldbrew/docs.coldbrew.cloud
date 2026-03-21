@@ -35,7 +35,7 @@ ColdBrew integrates with all the popular libraries. We strongly believe in the [
 - [opentelemetry] - Tracing
 - [jaeger] - Tracing
 - [opentracing] - Tracing
-- [hystrix-go] - Circuit Breaker
+- [hystrix-go] - Circuit Breaker (deprecated, consider [failsafe-go])
 - [new relic] - Monitoring
 - [sentry] - Error Reporting
 - [go-grpc-middleware] - Middlewares: interceptors, helpers and utilities.
@@ -58,6 +58,7 @@ ColdBrew integrates with all the popular libraries. We strongly believe in the [
 [new relic]: https://newrelic.com/
 [sentry]: https://sentry.io/
 [go-grpc-middleware]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware
+[failsafe-go]: https://github.com/failsafe-go/failsafe-go
 [grpc_retry]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/retry
 [opentelemetry]: https://opentelemetry.io/
 [DRY]: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself

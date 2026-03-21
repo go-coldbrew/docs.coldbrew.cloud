@@ -52,6 +52,9 @@ To learn more about the Prometheus and the data types it supports, see [here](ht
 
 ## How to use Hystrix Metrics in Prometheus
 
+{: .warning }
+Hystrix-Go is unmaintained (last updated 2018). Consider migrating to [failsafe-go](https://github.com/failsafe-go/failsafe-go) for circuit breaker functionality.
+
 [Hystrix Prometheus] is a library that provides a Prometheus metrics collector for [Hystrix-go]. To use it, you can register the collector with the default Prometheus registry:
 
 ```go
