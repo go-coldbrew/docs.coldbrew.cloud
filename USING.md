@@ -1,50 +1,122 @@
+---
+layout: default
+title: "Using ColdBrew"
+nav_order: 3
+description: "How to use ColdBrew in your Go microservices"
+permalink: /using
+---
 # Using ColdBrew
-Coldbrew is a Go library for creating cloud native applications. It provides a set of libraries for building resilient, secure, and scalable applications. It also provides ready-made components for quickly creating cloud-native applications. 
+{: .no_toc }
 
-## Getting Started
-To get started, you can use the Coldbrew CLI to create a new project. The CLI will create a new project with the necessary files and folders.
+## Table of contents
+{: .no_toc .text-delta }
 
-### Installing the CLI
-To install the CLI, run the following command:
+1. TOC
+{:toc}
 
-    go get -u github.com/coldbrewcloud/cli/coldbrew
+This guide covers how to use ColdBrew after you have created a project. If you haven't created a project yet, see the [Getting Started](/getting-started) guide.
 
-### Creating a new project
-a
+## Project Structure
 
-### Running the project
-To run the project, run the following command:
+A ColdBrew project generated from the [cookiecutter template](https://github.com/go-coldbrew/cookiecutter-coldbrew) has the following structure:
 
-    coldbrew run
+```
+MyApp/
+  proto/              # Protocol buffer definitions
+    helloworld.proto
+  server/             # gRPC service implementation
+    server.go
+  main.go             # Entry point
+  Makefile             # Build, test, lint, run targets
+  Dockerfile           # Production container
+  go.mod
+```
 
-## Creating a new service
+## Defining Your API
 
-### Creating a new service using the CLI
+ColdBrew services are defined using Protocol Buffers. Edit your `.proto` file to add new RPC methods:
 
-### Creating a new service manually
+```protobuf
+service MySvc {
+  rpc SayHello (SayHelloRequest) returns (SayHelloResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/hello"
+    };
+  }
+}
+```
 
-## Creating a new API
+The `google.api.http` annotation automatically creates a REST endpoint via grpc-gateway.
 
-### Creating a new API using the CLI
+After editing your proto file, regenerate the Go code:
 
-### Creating a new API manually
+```shell
+make gen
+```
 
-## Creating a new task
+## Implementing Your Service
 
-### Creating a new task using the CLI
+Implement the generated gRPC interface in your `server/server.go`:
 
-### Creating a new task manually
+```go
+func (s *svcNameImpl) SayHello(ctx context.Context, req *pb.SayHelloRequest) (*pb.SayHelloResponse, error) {
+    return &pb.SayHelloResponse{
+        Message: "Hello " + req.GetName(),
+    }, nil
+}
+```
 
-## Creating a new worker
+Your service struct implements `core.CBService`, which requires two methods:
 
-### Creating a new worker using the CLI
+- **`InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption)`** — Registers HTTP/REST handlers
+- **`InitGRPC(ctx context.Context, s *grpc.Server)`** — Registers gRPC handlers
 
-### Creating a new worker manually
+## Running Your Service
 
-## Creating a new cron
+```shell
+make run
+```
 
-### Creating a new cron using the CLI
+This starts the service with:
+- gRPC server on port `9090` (default)
+- HTTP gateway on port `9091` (default)
+- Prometheus metrics at `/metrics`
+- Health check at `/healthz`
+- pprof debug endpoints at `/debug/pprof/`
 
-### Creating a new cron manually
+## Configuration
 
-## Creating a new event
+ColdBrew uses environment variables for configuration. Common settings:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GRPC_PORT` | `9090` | gRPC server port |
+| `HTTP_PORT` | `9091` | HTTP gateway port |
+| `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
+| `JSON_LOGS` | `true` | JSON formatted logs |
+| `ENVIRONMENT` | `development` | Environment name |
+| `TRACE_HEADER_NAME` | `X-Trace-Id` | Header name for trace propagation |
+| `NEW_RELIC_APP_NAME` | | New Relic application name |
+| `NEW_RELIC_LICENSE_KEY` | | New Relic license key |
+| `SENTRY_DSN` | | Sentry DSN for error tracking |
+
+## Adding Interceptors
+
+ColdBrew comes with a comprehensive set of [interceptors](/howto/interceptors) pre-configured. To add custom interceptors:
+
+```go
+import "github.com/go-coldbrew/interceptors"
+
+func init() {
+    interceptors.AddUnaryServerInterceptor(myCustomInterceptor)
+}
+```
+
+{: .warning }
+Interceptor configuration functions must be called during `init()` — they are not safe for concurrent use.
+
+## What's Next?
+
+- [How-To Guides](/howto) — Detailed guides for tracing, logging, metrics, error handling, and more
+- [Integrations](/integrations) — Setting up New Relic, Prometheus, Sentry, and other integrations
+- [Packages](/packages) — Browse all ColdBrew packages
