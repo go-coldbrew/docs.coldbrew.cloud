@@ -1,8 +1,8 @@
 ---
 layout: default
-title: "Getting Started"
-nav_order: 2
-description: "Getting Started with ColdBrew"
+title: "Cookiecutter Setup"
+nav_order: 3
+description: "Detailed cookiecutter template setup for ColdBrew"
 permalink: /getting-started
 ---
 # Getting Started with ColdBrew
