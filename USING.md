@@ -81,7 +81,7 @@ This starts the service with:
 - gRPC server on port `9090` (default)
 - HTTP gateway on port `9091` (default)
 - Prometheus metrics at `/metrics`
-- Health check at `/healthz`
+- Health check at `/healthcheck` and `/readycheck`
 - pprof debug endpoints at `/debug/pprof/`
 
 ## Configuration
