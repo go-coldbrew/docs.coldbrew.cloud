@@ -11,7 +11,7 @@ permalink: /
 A Go microservice framework for building production-grade gRPC services with built-in observability, resilience, and HTTP gateway support.
 {: .fs-6 .fw-300 }
 
-**Production-proven:** Powers 100+ microservices serving 70k+ QPS each at [Gojek](https://www.gojek.com/en-id/).
+**Production-proven:** Powers 100+ microservices, handling peaks of ~70k QPS per service at [Gojek](https://www.gojek.com/en-id/).
 {: .fs-5 .fw-500 }
 
 [Get Started](/getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
