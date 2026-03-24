@@ -61,6 +61,9 @@ func main() {
 ```go
 
 import (
+    "context"
+    "fmt"
+
     "github.com/go-coldbrew/grpcpool"
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
@@ -93,6 +96,9 @@ You can also use existing gRPC connections with [grpcpool] by wrapping it with [
 ```go
 
 import (
+    "context"
+    "fmt"
+
     "github.com/go-coldbrew/grpcpool"
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
