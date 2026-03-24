@@ -2,8 +2,8 @@
 layout: default
 title: Integrations
 permalink: /integrations
-description: coldbrew integrations with other services and tools
-nav_order: 6
+description: ColdBrew integrations with other services and tools
+nav_order: 7
 ---
 # Integrations
 {: .no_toc }

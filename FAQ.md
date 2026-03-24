@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "FAQ"
-nav_order: 7
+nav_order: 8
 description: "Frequently asked questions about ColdBrew"
 permalink: /faq
 ---
@@ -41,7 +41,7 @@ This is intentional and consistent across the entire codebase. The interceptor c
 ```go
 func init() {
     // Safe: called during initialization, before server starts
-    interceptors.AddUnaryServerInterceptor(ctx, myInterceptor)
+    interceptors.AddUnaryServerInterceptor(context.Background(), myInterceptor)
     interceptors.SetFilterFunc(myFilter)
 }
 ```

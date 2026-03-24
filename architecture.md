@@ -110,13 +110,13 @@ HTTP requests arriving at port 9091 are automatically translated to gRPC calls b
 ```protobuf
 rpc Echo(EchoRequest) returns (EchoResponse) {
     option (google.api.http) = {
-        post: "/api/v1/echo"
+        post: "/api/v1/example/echo"
         body: "*"
     };
 }
 ```
 
-This means `POST /api/v1/echo` on port 9091 is translated to a gRPC call to `Echo()` on port 9090. The response is converted back to JSON automatically.
+This means `POST /api/v1/example/echo` on port 9091 is translated to a gRPC call to `Echo()` on port 9090. The response is converted back to JSON automatically.
 
 ## Server Interceptor Chain
 
@@ -142,7 +142,7 @@ You can prepend your own interceptors to the chain:
 
 ```go
 func init() {
-    interceptors.AddUnaryServerInterceptor(ctx, myCustomInterceptor)
+    interceptors.AddUnaryServerInterceptor(context.Background(), myCustomInterceptor)
 }
 ```
 
