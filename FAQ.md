@@ -91,6 +91,18 @@ vtprotobuf only affects the **gRPC wire protocol**. The HTTP/JSON gateway uses g
 
 To disable: `DISABLE_VT_PROTOBUF=true`. See the [vtprotobuf How-To](/howto/vtproto) for full details including code generation setup.
 
+## How does ColdBrew ensure API consistency?
+
+Through **compile-time enforcement**. Your `.proto` file is the single source of truth. Running `buf generate` produces:
+
+1. **Typed Go interfaces** — the compiler refuses to build until every RPC method is implemented
+2. **HTTP gateway handlers** — REST endpoints that can't drift from the gRPC definition
+3. **OpenAPI spec** — Swagger documentation generated from the same proto, always in sync
+
+This means it's impossible to have a documented endpoint that doesn't exist, an undocumented endpoint that does exist, or an HTTP route that doesn't match the gRPC method signature. The proto file is the contract — the compiler, the gateway, and the docs all enforce it.
+
+See [Self-Documenting APIs](/architecture#self-documenting-apis) for the full pipeline.
+
 ## Is hystrixprometheus still maintained?
 
 **No.** The `hystrixprometheus` package depends on `afex/hystrix-go`, which is unmaintained. Do not invest in this package for new projects.

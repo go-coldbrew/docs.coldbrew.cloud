@@ -230,6 +230,9 @@ make generate
 
 This runs `buf generate` and creates the Go code for your new message types and service interface.
 
+{: .note }
+After regenerating, the Go compiler will report an error until you implement the new `Greet` method — this is by design. Your proto file is the contract, and the compiler enforces it. You can't forget an endpoint or deploy a half-implemented API.
+
 ### 3. Implement the handler
 
 Add to `service/service.go`:

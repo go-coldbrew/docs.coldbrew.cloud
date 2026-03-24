@@ -87,7 +87,7 @@ This single definition gives you:
 - **Prometheus metrics** — per-method latency, error rate, and request count
 - **Distributed tracing** — automatic span creation through the interceptor chain
 
-Run `buf generate` → implement the handler → `make run`. Logging, tracing, metrics, health checks, and graceful shutdown are wired automatically. See the [full pipeline](/architecture#self-documenting-apis) for details.
+Run `buf generate` — it creates typed Go interfaces from your proto definitions. The compiler ensures every RPC method is implemented, so API changes are caught at build time, not runtime. Just fill in your business logic and `make run`. Logging, tracing, metrics, health checks, and graceful shutdown are wired automatically. See the [full pipeline](/architecture#self-documenting-apis) for details.
 
 ## How It Works
 

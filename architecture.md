@@ -78,6 +78,19 @@ rpc Echo(EchoRequest) returns (EchoResponse) {
 
 This creates: a gRPC method, a `POST /api/v1/example/echo` REST endpoint, and a documented Swagger UI entry — all from one definition.
 
+### Type-Safe by Design
+
+`buf generate` produces typed Go interfaces from your proto service definitions. When you add a new RPC method to your `.proto` file and regenerate, the Go compiler will refuse to build until you implement it — there's no way to forget an endpoint or deploy a half-implemented API.
+
+```
+myservice.proto          buf generate         Go compiler
+─────────────── ──────────────────────► ─────────────────
+rpc Echo(...)           EchoServer interface   ✓ Implemented
+rpc Greet(...)          GreetServer interface  ✗ Build error until implemented
+```
+
+This means your proto file is the **contract** — the compiler enforces it, grpc-gateway serves it as REST, and the OpenAPI spec documents it. They can never drift from each other.
+
 ## Overview
 
 ColdBrew is a layered framework where each layer is an independent Go module. The `core` package orchestrates everything, but you can use any package standalone.
