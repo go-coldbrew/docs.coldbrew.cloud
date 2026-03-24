@@ -126,6 +126,8 @@ ColdBrew is modular — use the full framework or pick individual packages:
 | [**grpcpool**](https://github.com/go-coldbrew/grpcpool) | Round-robin gRPC connection pool |
 | [**data-builder**](https://github.com/go-coldbrew/data-builder) | Dependency injection with parallel execution |
 
+Each package can be used independently — you don't need `core` to use `errors` or `log`.
+
 ## Don't Repeat Yourself
 
 ColdBrew integrates with the tools you already use:
