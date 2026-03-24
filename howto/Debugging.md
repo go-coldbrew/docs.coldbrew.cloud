@@ -58,6 +58,92 @@ ColdBrew provides a way to override the log level of a request based on the requ
 
 For information on this feature, please refer to the [Overriding log level at request time] page.
 
+## Debugging with Delve
+
+[Delve](https://github.com/go-delve/delve) is the standard Go debugger. To debug a ColdBrew service:
+
+```bash
+# Install delve
+go install github.com/go-delve/delve/cmd/dlv@latest
+
+# Run your service under delve
+dlv debug . -- [flags]
+
+# Or attach to a running process
+dlv attach $(pgrep myservice)
+```
+
+### Useful breakpoint locations
+
+When debugging ColdBrew services, these are good places to set breakpoints:
+
+- **Your handler**: `break service/service.go:42` — your gRPC method implementation
+- **Interceptor chain entry**: `break github.com/go-coldbrew/interceptors.UnaryServerInterceptor` — see what interceptors fire
+- **Error notification**: `break github.com/go-coldbrew/errors/notifier.Notify` — catch when errors are sent to Sentry/Rollbar
+
+### VS Code / GoLand
+
+Both IDEs support Delve natively. Configure Delve to listen on its own port (for example, set `"host": "0.0.0.0", "port": 2345` in your launch.json) and keep this distinct from your service ports (gRPC on 9090, HTTP on 9091) to avoid conflicts.
+
+## gRPC debugging environment variables
+
+Go's gRPC library has built-in debug logging. These environment variables are useful when troubleshooting connectivity or protocol issues:
+
+```bash
+# Enable gRPC internal logging (WARNING: very verbose)
+export GRPC_GO_LOG_VERBOSITY_LEVEL=99
+export GRPC_GO_LOG_SEVERITY_LEVEL=info
+```
+
+This will print detailed gRPC transport and connection state information to stderr. Useful for diagnosing:
+- Connection establishment failures
+- TLS handshake issues
+- Load balancer resolution problems
+- Keepalive/ping timeouts
+
+{: .warning }
+Do not enable verbose gRPC logging in production — it generates enormous log volume and may impact performance.
+
+## Inspecting the interceptor chain
+
+ColdBrew chains interceptors in a specific order. If you're not sure what's running, you can inspect the chain at startup by setting `LOG_LEVEL=debug`:
+
+```bash
+LOG_LEVEL=debug make run
+```
+
+The server interceptor chain runs in this order:
+1. Response time logging
+2. Trace ID injection
+3. Context tags
+4. OpenTracing/OpenTelemetry
+5. Prometheus metrics
+6. Error notification
+7. NewRelic
+8. Panic recovery
+
+If a request is failing or behaving unexpectedly, check whether an interceptor is modifying the context or returning early. The response time logging interceptor logs every request with method name and duration — check these logs first.
+
+## Common error patterns
+
+### "transport is closing"
+Usually means the client connection was closed before the response arrived. Check:
+- `SHUTDOWN_DURATION_IN_SECONDS` is long enough for your slowest requests
+- Client-side timeouts match server-side processing time
+- Load balancer idle timeout isn't shorter than your keepalive settings
+
+### "context deadline exceeded"
+The request's context expired. This propagates through the interceptor chain. Check:
+- Client-side deadline/timeout settings
+- Whether a downstream dependency (database, external API) is slow
+- Circuit breaker state via Prometheus metrics
+
+### Metrics endpoint returns 404
+Prometheus is disabled. Check `DISABLE_PROMETHEUS` environment variable (should be `false` or unset).
+
+### Health check returns error
+The service hasn't called `SetReady()` yet. This typically happens during startup while dependencies are initializing. Check your service's `InitGRPC` method.
+
 ---
 [configuration option]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [Overriding log level at request time]: /howto/Log/#overriding-log-level-at-request-time

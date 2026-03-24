@@ -2,7 +2,7 @@
 layout: default
 title: "FAQ"
 nav_order: 8
-description: "Frequently asked questions about ColdBrew"
+description: "Frequently asked questions about ColdBrew: gRPC framework configuration, interceptors, tracing, and troubleshooting"
 permalink: /faq
 ---
 # Frequently Asked Questions
@@ -64,6 +64,17 @@ func init() {
 }
 ```
 
+## How does trace ID propagation work?
+
+ColdBrew generates a unique trace ID for every request automatically. It can also read a trace ID from two sources:
+
+1. **HTTP header** — `x-trace-id` (configurable via `TRACE_HEADER_NAME`) is forwarded from the HTTP gateway to gRPC
+2. **Proto field** — if your request message has a `trace_id` string field, ColdBrew reads it via the generated `GetTraceId()` method
+
+The trace ID is then propagated to structured logs (`"trace": "abc123"`) and Sentry/Rollbar error reports — so you can search for one ID and find the complete request flow across your logs and error tracking.
+
+See the [Tracing How-To](/howto/Tracing/#trace-id-propagation) for details.
+
 ## How do I migrate from OpenTracing to OpenTelemetry?
 
 The `tracing` package supports both. To switch:
@@ -71,6 +82,37 @@ The `tracing` package supports both. To switch:
 1. Update your tracing initialization to use OpenTelemetry's SDK
 2. The `tracing.NewInternalSpan()`, `tracing.NewDatastoreSpan()`, and `tracing.NewExternalSpan()` functions work with both backends
 3. See the [Tracing How-To](/howto/Tracing/) and [Integrations](/integrations) guides for setup details
+
+## What is vtprotobuf and why does ColdBrew use it?
+
+[vtprotobuf](https://github.com/planetscale/vtprotobuf) (by PlanetScale) generates optimized `MarshalVT()`/`UnmarshalVT()` methods for protobuf messages that are typically **2–3x faster** than standard `proto.Marshal()` with fewer allocations.
+
+ColdBrew registers a custom gRPC codec that uses vtprotobuf automatically. You don't need to change any application code — if your proto messages have VT methods generated (the default with the cookiecutter template), the fast path is used. Messages without VT methods fall back to standard protobuf transparently.
+
+**Key differences from standard protobuf:**
+
+| | Standard protobuf | vtprotobuf |
+|---|---|---|
+| Marshal/Unmarshal | Reflection-based | Generated code, no reflection |
+| Performance | Baseline | ~2–3x faster, fewer allocations |
+| Extra features | None | `CloneVT()`, `EqualVT()`, object pooling |
+| Compatibility | Universal | Falls back to standard if VT methods missing |
+
+vtprotobuf only affects the **gRPC wire protocol**. The HTTP/JSON gateway uses grpc-gateway's own marshallers independently.
+
+To disable: `DISABLE_VT_PROTOBUF=true`. See the [vtprotobuf How-To](/howto/vtproto) for full details including code generation setup.
+
+## How does ColdBrew ensure API consistency?
+
+Through **compile-time enforcement**. Your `.proto` file is the single source of truth. Running `buf generate` produces:
+
+1. **Typed Go interfaces** — the compiler refuses to build until every RPC method is implemented
+2. **HTTP gateway handlers** — REST endpoints that can't drift from the gRPC definition
+3. **OpenAPI spec** — Swagger documentation generated from the same proto, always in sync
+
+This strongly prevents a documented endpoint that doesn't exist, an undocumented endpoint that does exist, or an HTTP route that doesn't match the gRPC method signature. The proto file is the contract — the compiler, the gateway, and the docs all enforce it.
+
+See [Self-Documenting APIs](/architecture#self-documenting-apis) for the full pipeline.
 
 ## Is hystrixprometheus still maintained?
 
@@ -112,6 +154,23 @@ func init() {
 
 See the [Metrics How-To](/howto/Metrics/) for more details.
 
+## How do I use grpcurl or Postman with my ColdBrew service?
+
+ColdBrew enables [gRPC server reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) by default, so tools like [grpcurl](https://github.com/fullstorydev/grpcurl), [grpcui](https://github.com/fullstorydev/grpcui), and Postman can discover your services and methods without needing proto files.
+
+```bash
+# List all services
+grpcurl -plaintext localhost:9090 list
+
+# Describe a specific service
+grpcurl -plaintext localhost:9090 describe mypackage.MyService
+
+# Call a method
+grpcurl -plaintext -d '{"msg": "hello"}' localhost:9090 mypackage.MyService/Echo
+```
+
+To disable reflection (e.g., in production for security), set `DISABLE_GRPC_REFLECTION=true`. See the [Configuration Reference](/config-reference) for details.
+
 ## How do I configure graceful shutdown?
 
 ColdBrew handles SIGTERM and SIGINT automatically. When a signal is received:
@@ -139,6 +198,18 @@ notifier.Notify(err, ctx)
 ```
 
 See the [Errors How-To](/howto/errors) and [Integrations](/integrations) for full setup instructions.
+
+## Is ColdBrew designed for Kubernetes?
+
+Yes — ColdBrew is Kubernetes-native by design. Out of the box you get:
+
+- **Liveness probe** at `/healthcheck` and **readiness probe** at `/readycheck`
+- **Graceful shutdown** on SIGTERM with configurable drain periods (`SHUTDOWN_DURATION_IN_SECONDS`, `GRPC_GRACEFUL_DURATION_IN_SECONDS`)
+- **Prometheus metrics** at `/metrics` for scraping
+- **Structured JSON logging** to stdout (ready for Fluentd, Loki, or any log aggregator)
+- **Environment variable configuration** via [envconfig](https://github.com/kelseyhightower/envconfig) — works natively with ConfigMaps and Secrets
+
+ColdBrew also follows [12-factor app](https://12factor.net/) principles: no config files, stateless processes, port binding, and log streams. See the [Production Deployment guide](/howto/production) for K8s manifests, ServiceMonitor setup, and graceful shutdown tuning, and the [Architecture](/architecture) page for the full design principles table.
 
 ## Where can I get help?
 

@@ -188,6 +188,147 @@ result, err := p.RunParallel(
 {: .important}
 Parallel execution is beneficial for I/O-bound builders (network calls, database queries). For CPU-bound operations, the overhead may outweigh the benefits.
 
+### Visualizing the dependency graph
+
+After compiling a plan, you can generate a visual representation of the execution graph using `BuildGraph`:
+
+```go
+err := p.BuildGraph(context.Background(), "svg", "dependency-graph.svg")
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+Supported formats include `svg`, `png`, and `dot` (Graphviz). This is useful for:
+- Verifying that dependencies are resolved as expected
+- Identifying opportunities for parallelism (independent branches in the graph can run concurrently)
+- Documentation and onboarding
+
+You can also use the standalone function if you have a `Plan` interface:
+
+```go
+builder.BuildGraph(myPlan, "svg", "graph.svg")
+```
+
+{: .note }
+Graph generation requires [Graphviz](https://graphviz.org/) to be installed on your system (`brew install graphviz` or `apt-get install graphviz`).
+
+## Error handling
+
+### Builder function errors
+
+When a builder function returns an error, execution stops for any functions that depend on its output. Other independent branches continue executing.
+
+```go
+func BuildGrossPrice(_ context.Context, req AppRequest) (GrossPrice, error) {
+    if len(req.Cart) == 0 {
+        return GrossPrice{}, fmt.Errorf("cart is empty")
+    }
+    // ...
+}
+```
+
+When running with `RunParallel`, if multiple builders fail, their errors are joined into a single error. You can unwrap individual errors using `errors.Is` or `errors.As`.
+
+### Compile-time validation
+
+The `Compile` method catches structural errors before runtime:
+- **Missing dependencies**: A builder requires a type that no other builder produces and wasn't provided as input
+- **Circular dependencies**: Builder A depends on B, and B depends on A (directly or transitively)
+- **Duplicate outputs**: Two builders produce the same output type
+
+Always compile plans in `init()` so these errors surface at startup, not at request time:
+
+```go
+func init() {
+    p, err = b.Compile(AppRequest{})
+    if err != nil {
+        panic(err)  // Fail fast — don't serve requests with a broken plan
+    }
+}
+```
+
+## Testing data-builder plans
+
+### Unit testing individual builders
+
+Test each builder function in isolation — they're just regular Go functions:
+
+```go
+func TestBuildGrossPrice(t *testing.T) {
+    req := AppRequest{
+        Cart: []Item{
+            {Name: "item1", PriceInCents: 1000},
+            {Name: "item2", PriceInCents: 2000},
+        },
+    }
+    price, err := BuildGrossPrice(context.Background(), req)
+    if err != nil {
+        t.Fatal(err)
+    }
+    if price.InCents != 3000 {
+        t.Errorf("expected 3000, got %d", price.InCents)
+    }
+}
+```
+
+### Integration testing with Replace
+
+Use `Replace` to swap specific builders with mocks while keeping the rest of the plan intact:
+
+```go
+func TestPlanWithMockDiscount(t *testing.T) {
+    // Compile a fresh plan for this test to avoid shared mutable state
+    b := builder.New()
+    err := b.AddBuilders(BuildGrossPrice, BuildPriceAdjustment, BuildAppResponse)
+    if err != nil {
+        t.Fatal(err)
+    }
+    testPlan, err := b.Compile(AppRequest{})
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    // Replace one builder with a mock
+    err = testPlan.Replace(context.Background(), BuildPriceAdjustment, func(_ context.Context, gp GrossPrice) (PriceAdjustment, error) {
+        return PriceAdjustment{DiscountInCents: 500}, nil
+    })
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    result, err := testPlan.Run(context.Background(), AppRequest{
+        Cart: []Item{{Name: "item1", PriceInCents: 1000}},
+    })
+    if err != nil {
+        t.Fatal(err)
+    }
+    resp := result.Get(AppResponse{}).(AppResponse)
+    if resp.PriceInDollars != 5.0 {
+        t.Errorf("expected 5.0, got %f", resp.PriceInDollars)
+    }
+}
+```
+
+## Common pitfalls
+
+### Circular dependencies
+If builder A needs the output of B and B needs the output of A, `Compile` will return an error. Break the cycle by introducing an intermediate type or restructuring your builders.
+
+### Missing input types
+If you forget to pass an initial input type to `Compile`, any builder that depends on it (directly or transitively) will cause a compile error. Make sure all "root" types are listed:
+
+```go
+// Wrong: missing UserProfile that some builders depend on
+p, err = b.Compile(AppRequest{})
+
+// Right: provide all root inputs
+p, err = b.Compile(AppRequest{}, UserProfile{})
+```
+
+### Type identity matters
+Two structs with identical fields but different names are different types. `data-builder` uses Go's type system for dependency resolution — `type Price struct{ V int }` and `type Cost struct{ V int }` are distinct.
+
 ---
 [data-builder]: https://pkg.go.dev/github.com/go-coldbrew/data-builder
 [guide to go generate]: https://eli.thegreenplace.net/2021/a-comprehensive-guide-to-go-generate/

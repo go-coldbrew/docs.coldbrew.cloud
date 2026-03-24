@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Packages
-description: "ColdBrew packages documentation"
+description: "ColdBrew Go packages: core, interceptors, errors, log, tracing, options, grpcpool, and data-builder API reference"
 permalink: /packages
 nav_order: 9
 ---

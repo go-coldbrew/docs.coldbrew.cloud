@@ -2,7 +2,7 @@
 layout: default
 title: How To
 nav_order: 6
-description: "A collection of How To guides for ColdBrew"
+description: "Step-by-step guides for logging, tracing, metrics, error handling, APIs, and debugging in ColdBrew Go services"
 permalink: /howto
 has_children: true
 has_toc: true

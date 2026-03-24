@@ -2,14 +2,15 @@ import { test, expect } from "@playwright/test";
 
 const topLevelPages = [
   { path: "/", title: "ColdBrew" },
-  { path: "/quickstart/", title: "Quickstart" },
-  { path: "/getting-started/", title: "Cookiecutter Setup" },
+  { path: "/getting-started/", title: "Getting Started" },
+  { path: "/cookiecutter-reference/", title: "Cookiecutter Reference" },
   { path: "/using/", title: "Using ColdBrew" },
   { path: "/architecture/", title: "Architecture" },
   { path: "/howto/", title: "How To" },
   { path: "/integrations/", title: "Integrations" },
   { path: "/faq/", title: "Frequently Asked Questions" },
   { path: "/packages/", title: "Packages" },
+  { path: "/config-reference/", title: "Configuration Reference" },
 ];
 
 const howtoPages = [
@@ -24,6 +25,8 @@ const howtoPages = [
   "/howto/signals/",
   "/howto/swagger/",
   "/howto/data-builder/",
+  "/howto/vtproto/",
+  "/howto/production/",
 ];
 
 test.describe("Page Loading", () => {

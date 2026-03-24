@@ -1,11 +1,11 @@
 ---
 layout: default
-title: "Quickstart"
+title: "Getting Started"
 nav_order: 2
-description: "Create and run your first ColdBrew service in 5 minutes"
-permalink: /quickstart
+description: "Create and run your first ColdBrew service in 5 minutes with cookiecutter or manual setup"
+permalink: /getting-started
 ---
-# Quickstart: Your First ColdBrew Service
+# Getting Started: Your First ColdBrew Service
 {: .no_toc }
 
 ## Table of contents
@@ -230,6 +230,9 @@ make generate
 
 This runs `buf generate` and creates the Go code for your new message types and service interface.
 
+{: .note }
+After regenerating, the Go compiler will report an error until you implement the new `Greet` method — this is by design. Your proto file is the contract, and the compiler enforces it. You can't forget an endpoint or deploy a half-implemented API.
+
 ### 3. Implement the handler
 
 Add to `service/service.go`:
@@ -293,6 +296,134 @@ Everything below was set up automatically by ColdBrew:
 - **Swagger UI** for interactive API exploration
 - **Race-detected tests** via `make test`
 - **Vulnerability scanning** via `make lint` (includes govulncheck)
+
+## Alternative: Manual Setup (No Cookiecutter)
+
+If you prefer to set up a project manually without cookiecutter, here's the minimal path:
+
+### 1. Initialize your module
+
+```bash
+mkdir myservice && cd myservice
+go mod init github.com/yourname/myservice
+go get github.com/go-coldbrew/core
+```
+
+### 2. Define your proto
+
+Create `proto/myservice.proto`:
+
+```protobuf
+syntax = "proto3";
+
+package myservice;
+
+option go_package = "github.com/yourname/myservice/proto";
+
+import "google/api/annotations.proto";
+
+service MyService {
+    rpc Echo(EchoRequest) returns (EchoResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/echo"
+            body: "*"
+        };
+    }
+}
+
+message EchoRequest {
+    string msg = 1;
+}
+
+message EchoResponse {
+    string msg = 1;
+}
+```
+
+### 3. Generate Go code
+
+Create `buf.yaml`:
+
+```yaml
+version: v2
+modules:
+  - path: proto
+deps:
+  - buf.build/googleapis/googleapis
+```
+
+Create `buf.gen.yaml`:
+
+```yaml
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: proto
+    opt: paths=source_relative
+  - remote: buf.build/grpc/go
+    out: proto
+    opt: paths=source_relative
+  - remote: buf.build/grpc-ecosystem/gateway
+    out: proto
+    opt: paths=source_relative
+```
+
+Then generate:
+
+```bash
+buf dep update
+buf generate
+```
+
+### 4. Write main.go
+
+```go
+package main
+
+import (
+    "context"
+
+    "github.com/go-coldbrew/core"
+    "github.com/go-coldbrew/core/config"
+    "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+    "google.golang.org/grpc"
+
+    pb "github.com/yourname/myservice/proto"
+)
+
+type myService struct {
+    pb.UnimplementedMyServiceServer
+}
+
+func (s *myService) Echo(ctx context.Context, req *pb.EchoRequest) (*pb.EchoResponse, error) {
+    return &pb.EchoResponse{Msg: req.GetMsg()}, nil
+}
+
+func (s *myService) InitGRPC(ctx context.Context, server *grpc.Server) error {
+    pb.RegisterMyServiceServer(server, s)
+    return nil
+}
+
+func (s *myService) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+    return pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+}
+
+func main() {
+    cfg := config.GetColdBrewConfig()
+    cb := core.New(cfg)
+    cb.SetService(&myService{})
+    cb.Run()
+}
+```
+
+### 5. Run it
+
+```bash
+go mod tidy
+go run .
+```
+
+Your service starts on `:9090` (gRPC) and `:9091` (HTTP) with metrics, health checks, and profiling endpoints — all wired automatically.
 
 ## Next Steps
 

@@ -8,7 +8,7 @@ permalink: /
 # ColdBrew
 {: .fs-9 }
 
-A Go microservice framework for building production-grade gRPC services with built-in observability, resilience, and HTTP gateway support.
+A Kubernetes-native Go microservice framework for building production-grade gRPC services with built-in observability, resilience, and HTTP gateway support. Follows [12-factor](https://12factor.net/) principles out of the box.
 {: .fs-6 .fw-300 }
 
 **Production-proven:** Powers 100+ microservices, handling peaks of ~70k QPS per service at [Gojek](https://www.gojek.com/en-id/).
@@ -25,12 +25,19 @@ A Go microservice framework for building production-grade gRPC services with bui
 
 | Feature | Description |
 |---------|-------------|
-| **gRPC + REST Gateway** | Define your API once in protobuf, get both gRPC and REST endpoints automatically via [grpc-gateway] |
+| **gRPC + REST Gateway** | Define your API once in protobuf — get gRPC, REST, and [Swagger docs](/architecture#self-documenting-apis) automatically via [grpc-gateway] |
 | **Structured Logging** | Pluggable backends (go-kit, zap, logrus) with per-request context fields and trace ID propagation |
 | **Distributed Tracing** | [OpenTelemetry], [Jaeger], and [New Relic] support with automatic span creation in interceptors |
 | **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
 | **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
 | **Resilience** | Client-side circuit breaking and retries via interceptors |
+| **Fast Serialization** | [vtprotobuf] codec enabled by default — faster gRPC marshalling with automatic fallback to standard protobuf |
+| **Kubernetes-native** | Health/ready probes, graceful SIGTERM shutdown, structured JSON logs, Prometheus metrics — all wired automatically |
+| **Swagger / OpenAPI** | Interactive API docs auto-served at `/swagger/` from your protobuf definitions |
+| **Profiling** | Go [pprof] endpoints at `/debug/pprof/` for CPU, memory, goroutine, and trace profiling |
+| **gRPC Reflection** | Server reflection enabled by default — works with [grpcurl], [grpcui], and Postman |
+| **HTTP Compression** | Automatic gzip compression for all HTTP gateway responses |
+| **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
 
 ## Quick Start
 
@@ -60,44 +67,27 @@ Your service starts with all of these endpoints ready:
 | `localhost:9091/swagger/` | Swagger UI |
 | `localhost:9091/debug/pprof/` | Go pprof profiling |
 
-## Minimal Service Example
+## Define Once, Get Everything
 
-A ColdBrew service implements the `CBService` interface:
+Your API is defined once in protobuf — ColdBrew generates everything else:
 
-```go
-package main
-
-import (
-    "context"
-
-    "github.com/go-coldbrew/core"
-    "github.com/go-coldbrew/core/config"
-    "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-    "google.golang.org/grpc"
-
-    pb "github.com/yourorg/myservice/proto" // your generated protobuf package
-)
-
-type myService struct{}
-
-func (s *myService) InitGRPC(ctx context.Context, server *grpc.Server) error {
-    pb.RegisterMyServiceServer(server, s)
-    return nil
-}
-
-func (s *myService) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-    return pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-}
-
-func main() {
-    cfg := config.GetColdBrewConfig()
-    cb := core.New(cfg)
-    cb.SetService(&myService{})
-    cb.Run()
+```protobuf
+rpc Echo(EchoRequest) returns (EchoResponse) {
+    option (google.api.http) = {
+        post: "/api/v1/echo"
+        body: "*"
+    };
 }
 ```
 
-All logging, tracing, metrics, health checks, and graceful shutdown are wired automatically.
+This single definition gives you:
+- **gRPC endpoint** on `:9090` — with reflection for [grpcurl] and Postman
+- **REST endpoint** at `POST /api/v1/echo` on `:9091` — via [grpc-gateway]
+- **Swagger UI** at `/swagger/` — interactive API docs from your proto
+- **Prometheus metrics** — per-method latency, error rate, and request count
+- **Distributed tracing** — automatic span creation through the interceptor chain
+
+Run `buf generate` — it creates typed Go interfaces from your proto definitions. The compiler ensures every RPC method is implemented, so API changes are caught at build time, not runtime. Just fill in your business logic and `make run`. Logging, tracing, metrics, health checks, and graceful shutdown are wired automatically. See the [full pipeline](/architecture#self-documenting-apis) for details.
 
 ## How It Works
 
@@ -125,10 +115,6 @@ All logging, tracing, metrics, health checks, and graceful shutdown are wired au
 
 ColdBrew is modular — use the full framework or pick individual packages:
 
-```
-options → errors → log → tracing → grpcpool → interceptors → data-builder → core
-```
-
 | Package | What It Does |
 |---------|-------------|
 | [**core**](https://github.com/go-coldbrew/core) | gRPC server + HTTP gateway, health checks, graceful shutdown |
@@ -152,6 +138,7 @@ ColdBrew integrates with the tools you already use:
 - [new relic] — Application performance monitoring
 - [sentry] — Error tracking and alerting
 - [go-grpc-middleware] — Middleware utilities
+- [vtprotobuf] — Fast protobuf serialization
 
 ## Next Steps
 
@@ -170,3 +157,8 @@ ColdBrew integrates with the tools you already use:
 [new relic]: https://newrelic.com/
 [sentry]: https://sentry.io/
 [go-grpc-middleware]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware
+[vtprotobuf]: https://github.com/planetscale/vtprotobuf
+[pprof]: https://pkg.go.dev/net/http/pprof
+[grpcurl]: https://github.com/fullstorydev/grpcurl
+[grpcui]: https://github.com/fullstorydev/grpcui
+[automaxprocs]: https://github.com/uber-go/automaxprocs

@@ -16,6 +16,81 @@ permalink: /architecture
 
 ---
 
+## Design Principles
+
+ColdBrew follows [12-factor app](https://12factor.net/) methodology and is designed to run on Kubernetes from day one:
+
+| 12-Factor Principle | How ColdBrew Implements It |
+|--------------------|-----------------------------|
+| **Config** | All configuration via environment variables ([envconfig](https://github.com/kelseyhightower/envconfig)) — no config files, no YAML. See [Configuration Reference](/config-reference) |
+| **Port binding** | Self-contained HTTP (`:9091`) and gRPC (`:9090`) servers, no external app server needed |
+| **Logs** | Structured JSON to stdout by default — ready for any log aggregator (Fluentd, Loki, CloudWatch) |
+| **Disposability** | Graceful SIGTERM handling with configurable drain periods. See [Signals](/howto/signals) |
+| **Dev/prod parity** | Same binary, same config mechanism, same observability in every environment |
+| **Concurrency** | Stateless processes — scale horizontally by adding replicas |
+| **Backing services** | External dependencies (databases, caches, queues) attached via environment variables |
+
+ColdBrew is **Kubernetes-native**: health/ready probe endpoints, Prometheus metrics scraping, graceful pod termination, and structured logging work without any additional setup. See the [Production Deployment guide](/howto/production) for K8s manifests and configuration.
+
+## Self-Documenting APIs
+
+ColdBrew follows a **define once, get everything** approach. Your `.proto` file is the single source of truth — one `buf generate` produces everything your service needs:
+
+```
+                          ┌─── Go protobuf types         (*.pb.go)
+                          ├─── gRPC service stubs         (*_grpc.pb.go)
+  myservice.proto ──buf──►├─── HTTP/REST gateway handlers (*.gw.go)
+                          ├─── OpenAPI/Swagger spec       (*.swagger.json)
+                          └─── vtprotobuf fast codec      (*_vtproto.pb.go)
+```
+
+Each output maps to a self-documenting endpoint:
+
+| Output | Serves | How Clients Discover It |
+|--------|--------|------------------------|
+| gRPC stubs | `:9090` | gRPC reflection — `grpcurl -plaintext localhost:9090 list` |
+| HTTP gateway | `:9091/api/...` | Swagger UI at `/swagger/` |
+| OpenAPI spec | `:9091/swagger/*.swagger.json` | Import into Postman, code generators, or API gateways |
+| Health/version | `:9091/healthcheck` | Returns git commit, version, build date, Go version as JSON |
+| Metrics | `:9091/metrics` | Prometheus self-describing exposition format with HELP lines |
+| Profiling | `:9091/debug/pprof/` | Standard Go pprof index page |
+
+**Every client gets documentation for free:**
+- **gRPC clients** use server reflection to discover services and methods without proto files
+- **REST clients** use the interactive Swagger UI or import the OpenAPI spec
+- **Operations** use health checks (build metadata), Prometheus metrics, and pprof
+
+The HTTP annotations in your proto file define both the REST routes and their Swagger documentation simultaneously:
+
+```protobuf
+rpc Echo(EchoRequest) returns (EchoResponse) {
+    option (google.api.http) = {
+        post: "/api/v1/example/echo"
+        body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+        summary: "Echo endpoint"
+        description: "Returns the input message unchanged."
+        tags: "example"
+    };
+}
+```
+
+This creates: a gRPC method, a `POST /api/v1/example/echo` REST endpoint, and a documented Swagger UI entry — all from one definition.
+
+### Type-Safe by Design
+
+`buf generate` produces typed Go interfaces from your proto service definitions. When you add a new RPC method to your `.proto` file and regenerate, the Go compiler will refuse to build until you implement it — there's no way to forget an endpoint or deploy a half-implemented API.
+
+```
+myservice.proto          buf generate         Go compiler
+─────────────── ──────────────────────► ─────────────────
+rpc Echo(...)           EchoServer interface   ✓ Implemented
+rpc Greet(...)          GreetServer interface  ✗ Build error until implemented
+```
+
+This means your proto file is the **contract** — the compiler enforces it, grpc-gateway serves it as REST, and the OpenAPI spec documents it. They can never drift from each other.
+
 ## Overview
 
 ColdBrew is a layered framework where each layer is an independent Go module. The `core` package orchestrates everything, but you can use any package standalone.
@@ -125,7 +200,7 @@ Interceptors are gRPC middleware that run on every request. ColdBrew chains them
 | Order | Interceptor | Package | What It Does |
 |-------|------------|---------|--------------|
 | 1 | Response Time Logging | `interceptors` | Logs method name, duration, and status code |
-| 2 | Trace ID | `interceptors` | Extracts or generates a trace ID and adds it to the context |
+| 2 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs and Sentry/Rollbar error reports |
 | 3 | Context Tags | `grpc_ctxtags` | Extracts gRPC metadata into context tags for logging |
 | 4 | OpenTracing | `grpc_opentracing` | Creates a tracing span for the request |
 | 5 | Prometheus | `grpc_prometheus` | Records request count, latency histogram, and status codes |

@@ -139,7 +139,7 @@ Will output the debug log messages even when the global log level is set to info
 ---
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
 [go-coldbrew/tracing]: https://pkg.go.dev/github.com/go-coldbrew/tracing
-[ColdBrew cookiecutter]: /getting-started
+[ColdBrew cookiecutter]: /cookiecutter-reference
 [interceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors
 [UseColdBrewServcerInterceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#UseColdBrewServerInterceptors
 [OverrideLogLevel]: https://github.com/go-coldbrew/log#func-overrideloglevel

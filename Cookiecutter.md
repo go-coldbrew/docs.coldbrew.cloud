@@ -1,12 +1,15 @@
 ---
 layout: default
-title: "Cookiecutter Setup"
-nav_order: 3
-description: "Detailed cookiecutter template setup for ColdBrew"
-permalink: /getting-started
+title: "Cookiecutter Reference"
+nav_order: 10
+description: "Detailed reference for the ColdBrew cookiecutter project template"
+permalink: /cookiecutter-reference
 ---
-# Cookiecutter Setup
+# Cookiecutter Reference
 {: .no_toc }
+
+{: .note }
+Looking to create your first ColdBrew service? See the **[Getting Started](/getting-started)** guide instead. This page is a detailed reference for the cookiecutter template.
 
 ## Table of contents
 {: .no_toc .text-delta }
