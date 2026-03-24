@@ -131,6 +131,23 @@ func init() {
 
 See the [Metrics How-To](/howto/Metrics/) for more details.
 
+## How do I use grpcurl or Postman with my ColdBrew service?
+
+ColdBrew enables [gRPC server reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) by default, so tools like [grpcurl](https://github.com/fullstorydev/grpcurl), [grpcui](https://github.com/fullstorydev/grpcui), and Postman can discover your services and methods without needing proto files.
+
+```bash
+# List all services
+grpcurl -plaintext localhost:9090 list
+
+# Describe a specific service
+grpcurl -plaintext localhost:9090 describe mypackage.MyService
+
+# Call a method
+grpcurl -plaintext -d '{"msg": "hello"}' localhost:9090 mypackage.MyService/Echo
+```
+
+To disable reflection (e.g., in production for security), set `DISABLE_GRPC_REFLECTION=true`. See the [Configuration Reference](/config-reference) for details.
+
 ## How do I configure graceful shutdown?
 
 ColdBrew handles SIGTERM and SIGINT automatically. When a signal is received:

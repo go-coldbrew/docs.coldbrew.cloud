@@ -33,6 +33,11 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **Resilience** | Client-side circuit breaking and retries via interceptors |
 | **Fast Serialization** | [vtprotobuf] codec enabled by default — faster gRPC marshalling with automatic fallback to standard protobuf |
 | **Kubernetes-native** | Health/ready probes, graceful SIGTERM shutdown, structured JSON logs, Prometheus metrics — all wired automatically |
+| **Swagger / OpenAPI** | Interactive API docs auto-served at `/swagger/` from your protobuf definitions |
+| **Profiling** | Go [pprof] endpoints at `/debug/pprof/` for CPU, memory, goroutine, and trace profiling |
+| **gRPC Reflection** | Server reflection enabled by default — works with [grpcurl], grpcui, and Postman |
+| **HTTP Compression** | Automatic gzip compression for all HTTP gateway responses |
+| **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
 
 ## Quick Start
 
@@ -174,3 +179,6 @@ ColdBrew integrates with the tools you already use:
 [sentry]: https://sentry.io/
 [go-grpc-middleware]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware
 [vtprotobuf]: https://github.com/planetscale/vtprotobuf
+[pprof]: https://pkg.go.dev/net/http/pprof
+[grpcurl]: https://github.com/fullstorydev/grpcurl
+[automaxprocs]: https://github.com/uber-go/automaxprocs
