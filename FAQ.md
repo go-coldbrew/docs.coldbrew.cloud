@@ -64,6 +64,17 @@ func init() {
 }
 ```
 
+## How does trace ID propagation work?
+
+ColdBrew generates a unique trace ID for every request automatically. It can also read a trace ID from two sources:
+
+1. **HTTP header** — `x-trace-id` (configurable via `TRACE_HEADER_NAME`) is forwarded from the HTTP gateway to gRPC
+2. **Proto field** — if your request message has a `trace_id` string field, ColdBrew reads it via the generated `GetTraceId()` method
+
+The trace ID is then propagated to structured logs (`"trace": "abc123"`) and Sentry/Rollbar error reports — so you can search for one ID and find the complete request flow across your logs and error tracking.
+
+See the [Tracing How-To](/howto/Tracing/#trace-id-propagation) for details.
+
 ## How do I migrate from OpenTracing to OpenTelemetry?
 
 The `tracing` package supports both. To switch:

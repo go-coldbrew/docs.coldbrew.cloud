@@ -200,7 +200,7 @@ Interceptors are gRPC middleware that run on every request. ColdBrew chains them
 | Order | Interceptor | Package | What It Does |
 |-------|------------|---------|--------------|
 | 1 | Response Time Logging | `interceptors` | Logs method name, duration, and status code |
-| 2 | Trace ID | `interceptors` | Extracts or generates a trace ID and adds it to the context |
+| 2 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs and Sentry/Rollbar error reports |
 | 3 | Context Tags | `grpc_ctxtags` | Extracts gRPC metadata into context tags for logging |
 | 4 | OpenTracing | `grpc_opentracing` | Creates a tracing span for the request |
 | 5 | Prometheus | `grpc_prometheus` | Records request count, latency histogram, and status codes |

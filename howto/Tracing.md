@@ -148,6 +148,55 @@ ctx := tracing.MergeContextValues(parentCtx, mainCtx)
 {: .warning}
 The functions `CloneContextValues` and `MergeParentContext` are deprecated. Use [NewContextWithParentValues] and [MergeContextValues] instead.
 
+## Trace ID Propagation
+
+ColdBrew automatically generates a unique trace ID for every request and propagates it across your observability stack. There are two ways a trace ID can enter the system:
+
+### 1. HTTP header (default: `x-trace-id`)
+
+When a request arrives via the HTTP gateway, ColdBrew reads the `x-trace-id` header (configurable via `TRACE_HEADER_NAME`) and forwards it as gRPC metadata. The `ServerErrorInterceptor` then injects it into the context.
+
+```bash
+# Pass a trace ID from the client
+curl -H "x-trace-id: req-abc-123" localhost:9091/api/v1/echo -d '{"msg":"hello"}'
+```
+
+If no header is provided, ColdBrew generates a random trace ID automatically.
+
+### 2. Proto field (`trace_id`)
+
+If your request proto message has a `trace_id` field, the [TraceId interceptor] reads it automatically:
+
+```protobuf
+message EchoRequest {
+    string msg = 1;
+    string trace_id = 2;  // ColdBrew reads this automatically
+}
+```
+
+The generated `GetTraceId()` (or `GetTraceID()`) method is detected via interface assertion — no registration needed. If both the HTTP header and proto field are present, the proto field takes precedence since it runs later in the interceptor chain.
+
+### Where the trace ID appears
+
+Once extracted, the trace ID is propagated to:
+
+| Destination | How | Example |
+|-------------|-----|---------|
+| **Structured logs** | Added as `"trace"` field via log context | `{"level":"info","msg":"handled request","trace":"req-abc-123"}` |
+| **Sentry / Rollbar / Airbrake** | Attached to error notifications as a tag | Visible in the error report for correlation |
+| **Request context** | Stored in ColdBrew options | Accessible via `notifier.GetTraceId(ctx)` in your handler code |
+
+{: .note }
+ColdBrew's trace ID is separate from OpenTelemetry's W3C trace context. OpenTelemetry spans have their own trace/span IDs managed by the tracing SDK. ColdBrew's trace ID is a lightweight request correlation ID for logs and error reports — it can also read from an existing OpenTracing span's `"trace"` baggage item if one exists.
+
+This means a single trace ID connects your logs and error reports — you can search for `req-abc-123` in your log aggregator and Sentry to find the complete request flow.
+
+### Customizing the header name
+
+```bash
+export TRACE_HEADER_NAME=x-request-id  # Use a different header
+```
+
 ---
 
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
