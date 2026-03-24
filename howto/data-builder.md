@@ -278,15 +278,26 @@ Use `Replace` to swap specific builders with mocks while keeping the rest of the
 
 ```go
 func TestPlanWithMockDiscount(t *testing.T) {
+    // Compile a fresh plan for this test to avoid shared mutable state
+    b := builder.New()
+    err := b.AddBuilders(BuildGrossPrice, BuildPriceAdjustment, BuildAppResponse)
+    if err != nil {
+        t.Fatal(err)
+    }
+    testPlan, err := b.Compile(AppRequest{})
+    if err != nil {
+        t.Fatal(err)
+    }
+
     // Replace one builder with a mock
-    err := p.Replace(context.Background(), BuildPriceAdjustment, func(_ context.Context, gp GrossPrice) (PriceAdjustment, error) {
+    err = testPlan.Replace(context.Background(), BuildPriceAdjustment, func(_ context.Context, gp GrossPrice) (PriceAdjustment, error) {
         return PriceAdjustment{DiscountInCents: 500}, nil
     })
     if err != nil {
         t.Fatal(err)
     }
 
-    result, err := p.Run(context.Background(), AppRequest{
+    result, err := testPlan.Run(context.Background(), AppRequest{
         Cart: []Item{{Name: "item1", PriceInCents: 1000}},
     })
     if err != nil {

@@ -364,4 +364,3 @@ env:
 
 ---
 [ColdBrew cookiecutter]: /cookiecutter-reference
-[Configuration Reference]: /config-reference

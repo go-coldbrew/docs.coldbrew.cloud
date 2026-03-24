@@ -83,7 +83,7 @@ When debugging ColdBrew services, these are good places to set breakpoints:
 
 ### VS Code / GoLand
 
-Both IDEs support Delve natively. Set `"host": "0.0.0.0", "port": 9090` in your launch.json to match ColdBrew's default gRPC port, or use a custom port to avoid conflicts.
+Both IDEs support Delve natively. Configure Delve to listen on its own port (for example, set `"host": "0.0.0.0", "port": 2345` in your launch.json) and keep this distinct from your service ports (gRPC on 9090, HTTP on 9091) to avoid conflicts.
 
 ## gRPC debugging environment variables
 
