@@ -67,44 +67,27 @@ Your service starts with all of these endpoints ready:
 | `localhost:9091/swagger/` | Swagger UI |
 | `localhost:9091/debug/pprof/` | Go pprof profiling |
 
-## Minimal Service Example
+## Define Once, Get Everything
 
-A ColdBrew service implements the `CBService` interface:
+Your API is defined once in protobuf — ColdBrew generates everything else:
 
-```go
-package main
-
-import (
-    "context"
-
-    "github.com/go-coldbrew/core"
-    "github.com/go-coldbrew/core/config"
-    "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-    "google.golang.org/grpc"
-
-    pb "github.com/yourorg/myservice/proto" // your generated protobuf package
-)
-
-type myService struct{}
-
-func (s *myService) InitGRPC(ctx context.Context, server *grpc.Server) error {
-    pb.RegisterMyServiceServer(server, s)
-    return nil
-}
-
-func (s *myService) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-    return pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-}
-
-func main() {
-    cfg := config.GetColdBrewConfig()
-    cb := core.New(cfg)
-    cb.SetService(&myService{})
-    cb.Run()
+```protobuf
+rpc Echo(EchoRequest) returns (EchoResponse) {
+    option (google.api.http) = {
+        post: "/api/v1/echo"
+        body: "*"
+    };
 }
 ```
 
-All logging, tracing, metrics, health checks, and graceful shutdown are wired automatically.
+This single definition gives you:
+- **gRPC endpoint** on `:9090` — with reflection for [grpcurl] and Postman
+- **REST endpoint** at `POST /api/v1/echo` on `:9091` — via [grpc-gateway]
+- **Swagger UI** at `/swagger/` — interactive API docs from your proto
+- **Prometheus metrics** — per-method latency, error rate, and request count
+- **Distributed tracing** — automatic span creation through the interceptor chain
+
+Run `buf generate` → implement the handler → `make run`. Logging, tracing, metrics, health checks, and graceful shutdown are wired automatically. See the [full pipeline](/architecture#self-documenting-apis) for details.
 
 ## How It Works
 
