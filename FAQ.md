@@ -70,7 +70,7 @@ The `tracing` package supports both. To switch:
 
 1. Update your tracing initialization to use OpenTelemetry's SDK
 2. The `tracing.NewInternalSpan()`, `tracing.NewDatastoreSpan()`, and `tracing.NewExternalSpan()` functions work with both backends
-3. See the [Tracing How-To](/howto/tracing) and [Integrations](/integrations) guides for setup details
+3. See the [Tracing How-To](/howto/Tracing/) and [Integrations](/integrations) guides for setup details
 
 ## Is hystrixprometheus still maintained?
 
@@ -110,7 +110,7 @@ func init() {
 }
 ```
 
-See the [Metrics How-To](/howto/metrics) for more details.
+See the [Metrics How-To](/howto/Metrics/) for more details.
 
 ## How do I configure graceful shutdown?
 

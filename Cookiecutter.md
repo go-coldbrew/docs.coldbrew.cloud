@@ -56,8 +56,8 @@ project_short_description [A Golang project.]: A Golang project
 docker_image [alpine:latest]:
 docker_build_image [golang]:
 Select docker_build_image_version:
-1 - 1.25
-2 - 1.24
+1 - 1.26
+2 - 1.25
 Choose from 1, 2 [1]: 1
 {% endhighlight %}
 
