@@ -1,6 +1,7 @@
 ---
 layout: default
 title: How To
+nav_order: 6
 description: "A collection of How To guides for ColdBrew"
 permalink: /howto
 has_children: true

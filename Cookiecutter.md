@@ -1,11 +1,11 @@
 ---
 layout: default
-title: "Getting Started"
-nav_order: 2
-description: "Getting Started with ColdBrew"
+title: "Cookiecutter Setup"
+nav_order: 3
+description: "Detailed cookiecutter template setup for ColdBrew"
 permalink: /getting-started
 ---
-# Getting Started with ColdBrew
+# Cookiecutter Setup
 {: .no_toc }
 
 ## Table of contents
@@ -56,10 +56,13 @@ project_short_description [A Golang project.]: A Golang project
 docker_image [alpine:latest]:
 docker_build_image [golang]:
 Select docker_build_image_version:
-1 - 1.25
-2 - 1.24
+1 - 1.26
+2 - 1.25
 Choose from 1, 2 [1]: 1
 {% endhighlight %}
+
+{: .note }
+The exact Go image versions listed in this menu may vary depending on the cookiecutter template version you are using. Follow the options shown when you run `cookiecutter`.
 
 ## Checkout your new project
 

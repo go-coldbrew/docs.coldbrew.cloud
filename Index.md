@@ -2,69 +2,171 @@
 layout: default
 title: Home
 nav_order: 1
-description: "Coldbrew is a Go library for creating cloud native applications."
+description: "ColdBrew is a Go microservice framework for building production-grade gRPC services with built-in observability."
 permalink: /
 ---
 # ColdBrew
 {: .fs-9 }
 
-Coldbrew is a collection of Go library for creating cloud native applications. It provides ready-made components for quickly creating cloud-native microservices. It also provides a set of stand alone libraries for building resilient, secure, and scalable applications.
+A Go microservice framework for building production-grade gRPC services with built-in observability, resilience, and HTTP gateway support.
 {: .fs-6 .fw-300 }
 
-[Get started now](/getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+**Production-proven:** Powers 100+ microservices, handling peaks of ~70k QPS per service at [Gojek](https://www.gojek.com/en-id/).
+{: .fs-5 .fw-500 }
+
+[Get Started](/getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View Packages](/packages){: .btn .fs-5 .mb-4 .mb-md-0 .btn-blue .mr-2}
 [How To](/howto){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 .btn-green}
-[View it on GitHub](https://github.com/go-coldbrew/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2}
+[GitHub](https://github.com/go-coldbrew/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2}
 
+---
 
-## Why ColdBrew ?
+## What You Get Out of the Box
 
-ColdBrew is the next evolution of [Orion]. It is a collection of libraries and ready-made components that we have built since 2016 to make our lives easier. We have open-sourced these libraries so that other developers can benefit from them. We have also open-sourced the [cookiecutter] template that we use to create new services that follow [12 factor]. This allows you to quickly create new services with all the bells and whistles.
+| Feature | Description |
+|---------|-------------|
+| **gRPC + REST Gateway** | Define your API once in protobuf, get both gRPC and REST endpoints automatically via [grpc-gateway] |
+| **Structured Logging** | Pluggable backends (go-kit, zap, logrus) with per-request context fields and trace ID propagation |
+| **Distributed Tracing** | [OpenTelemetry], [Jaeger], and [New Relic] support with automatic span creation in interceptors |
+| **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
+| **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
+| **Resilience** | Client-side circuit breaking and retries via interceptors |
 
-## Who is using ColdBrew ?
+## Quick Start
 
-ColdBrew is production ready and is used at [gojek](https://www.gojek.com/en-id/) serving billions of requests per day.
+Generate a new service in seconds:
 
-## Dont repeat yourself
+```bash
+# Install cookiecutter
+brew install cookiecutter  # or: pip install cookiecutter
 
-ColdBrew integrates with all the popular libraries. We strongly believe in the [DRY] principle. Instead of repeating things we re-use already exisiting and popular open-source libraries, such as:
+# Generate a new service
+cookiecutter gh:go-coldbrew/cookiecutter-coldbrew
 
-- [grpc] - grpc server and client
-- [grpc-gateway] - RESTful APIs
-- [prometheus] - Metrics
-- [opentelemetry] - Tracing
-- [jaeger] - Tracing
-- [opentracing] - Tracing
-- [hystrix-go] - Circuit Breaker (deprecated, consider [failsafe-go])
-- [new relic] - Monitoring
-- [sentry] - Error Reporting
-- [go-grpc-middleware] - Middlewares: interceptors, helpers and utilities.
+# Build and run
+cd MyService/
+make run
+```
+
+Your service starts with all of these endpoints ready:
+
+| Endpoint | Description |
+|----------|-------------|
+| `localhost:9090` | gRPC server |
+| `localhost:9091` | HTTP/REST gateway (auto-mapped from gRPC) |
+| `localhost:9091/metrics` | Prometheus metrics |
+| `localhost:9091/healthcheck` | Kubernetes liveness probe |
+| `localhost:9091/readycheck` | Kubernetes readiness probe |
+| `localhost:9091/swagger/` | Swagger UI |
+| `localhost:9091/debug/pprof/` | Go pprof profiling |
+
+## Minimal Service Example
+
+A ColdBrew service implements the `CBService` interface:
+
+```go
+package main
+
+import (
+    "context"
+
+    "github.com/go-coldbrew/core"
+    "github.com/go-coldbrew/core/config"
+    "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+    "google.golang.org/grpc"
+
+    pb "github.com/yourorg/myservice/proto" // your generated protobuf package
+)
+
+type myService struct{}
+
+func (s *myService) InitGRPC(ctx context.Context, server *grpc.Server) error {
+    pb.RegisterMyServiceServer(server, s)
+    return nil
+}
+
+func (s *myService) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+    return pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+}
+
+func main() {
+    cfg := config.GetColdBrewConfig()
+    cb := core.New(cfg)
+    cb.SetService(&myService{})
+    cb.Run()
+}
+```
+
+All logging, tracing, metrics, health checks, and graceful shutdown are wired automatically.
+
+## How It Works
+
+```
+                    ┌─────────────────────────────────────────┐
+                    │              ColdBrew Core               │
+   HTTP Request ──► │  ┌─────────┐    ┌────────────────────┐  │
+                    │  │  HTTP    │    │  Interceptor Chain  │  │
+                    │  │ Gateway  │──► │                     │  │
+                    │  │ (grpc-  │    │  ► Response Time    │  │
+   gRPC Request ──► │  │ gateway)│    │  ► Trace ID         │  │
+                    │  └─────────┘    │  ► Context Tags     │  │
+                    │       │         │  ► OpenTelemetry     │  │
+                    │       ▼         │  ► Prometheus        │  │
+                    │  ┌─────────┐    │  ► Error Notify      │  │
+                    │  │  gRPC   │──► │  ► Panic Recovery    │  │──► Your Handler
+                    │  │ Server  │    │                     │  │
+                    │  └─────────┘    └────────────────────┘  │
+                    │                                         │
+                    │  /metrics  /healthcheck  /debug/pprof   │
+                    └─────────────────────────────────────────┘
+```
+
+## Packages
+
+ColdBrew is modular — use the full framework or pick individual packages:
+
+```
+options → errors → log → tracing → grpcpool → interceptors → data-builder → core
+```
+
+| Package | What It Does |
+|---------|-------------|
+| [**core**](https://github.com/go-coldbrew/core) | gRPC server + HTTP gateway, health checks, graceful shutdown |
+| [**interceptors**](https://github.com/go-coldbrew/interceptors) | Server/client interceptors for logging, tracing, metrics, retries |
+| [**errors**](https://github.com/go-coldbrew/errors) | Enhanced errors with stack traces and gRPC status codes |
+| [**log**](https://github.com/go-coldbrew/log) | Structured logging with pluggable backends |
+| [**tracing**](https://github.com/go-coldbrew/tracing) | Distributed tracing (OpenTelemetry, Jaeger, New Relic) |
+| [**options**](https://github.com/go-coldbrew/options) | Request-scoped key-value store via context |
+| [**grpcpool**](https://github.com/go-coldbrew/grpcpool) | Round-robin gRPC connection pool |
+| [**data-builder**](https://github.com/go-coldbrew/data-builder) | Dependency injection with parallel execution |
+
+Each package can be used independently — you don't need `core` to use `errors` or `log`.
+
+## Don't Repeat Yourself
+
+ColdBrew integrates with the tools you already use:
+
+- [grpc] + [grpc-gateway] — gRPC server with automatic REST gateway
+- [prometheus] — Metrics and monitoring
+- [opentelemetry] + [jaeger] — Distributed tracing
+- [new relic] — Application performance monitoring
+- [sentry] — Error tracking and alerting
+- [go-grpc-middleware] — Middleware utilities
 
 ## Next Steps
 
-- [Getting Started]
-- [Integrations]
-- [How To]
-- [Packages]
+- **[Getting Started](/getting-started)** — Create your first ColdBrew service
+- **[Using ColdBrew](/using)** — Configure and extend your service
+- **[How-To Guides](/howto)** — Step-by-step guides for common tasks
+- **[Integrations](/integrations)** — Set up monitoring, tracing, and error tracking
+- **[FAQ](/faq)** — Common questions and answers
 
 ---
-[orion]: https://github.com/carousell/Orion
 [grpc]:https://grpc.io/
 [grpc-gateway]:https://grpc-ecosystem.github.io/grpc-gateway/
 [prometheus]:https://prometheus.io/
 [jaeger]:https://www.jaegertracing.io/
-[opentracing]:https://opentracing.io/
-[hystrix-go]: https://pkg.go.dev/github.com/afex/hystrix-go
+[opentelemetry]: https://opentelemetry.io/
 [new relic]: https://newrelic.com/
 [sentry]: https://sentry.io/
 [go-grpc-middleware]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware
-[failsafe-go]: https://github.com/failsafe-go/failsafe-go
-[grpc_retry]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/retry
-[opentelemetry]: https://opentelemetry.io/
-[DRY]: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
-[12 factor]: https://12factor.net/
-[getting started]: /getting-started
-[cookiecutter]: getting-started#using-the-coldbrew-cookiecutter-template
-[packages]: /packages
-[integrations]: /integrations
-[how to]: /howto
