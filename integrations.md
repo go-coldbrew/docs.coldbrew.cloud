@@ -3,7 +3,7 @@ layout: default
 title: Integrations
 permalink: /integrations
 description: coldbrew integrations with other services and tools
-nav_order: 3
+nav_order: 6
 ---
 # Integrations
 {: .no_toc }

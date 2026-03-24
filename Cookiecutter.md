@@ -5,7 +5,7 @@ nav_order: 3
 description: "Detailed cookiecutter template setup for ColdBrew"
 permalink: /getting-started
 ---
-# Getting Started with ColdBrew
+# Cookiecutter Setup
 {: .no_toc }
 
 ## Table of contents

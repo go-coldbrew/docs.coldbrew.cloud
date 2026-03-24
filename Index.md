@@ -68,25 +68,30 @@ A ColdBrew service implements the `CBService` interface:
 package main
 
 import (
+    "context"
+
     "github.com/go-coldbrew/core"
-    "google.golang.org/grpc"
+    "github.com/go-coldbrew/core/config"
     "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+    "google.golang.org/grpc"
+
+    pb "github.com/yourorg/myservice/proto" // your generated protobuf package
 )
 
 type myService struct{}
 
-func (s *myService) InitGRPC(ctx context.Context, server *grpc.Server) {
-    // Register your gRPC handlers here
+func (s *myService) InitGRPC(ctx context.Context, server *grpc.Server) error {
     pb.RegisterMyServiceServer(server, s)
+    return nil
 }
 
-func (s *myService) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) {
-    // Register HTTP gateway handlers (auto-generated from proto)
-    pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+func (s *myService) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+    return pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
 
 func main() {
-    cb := core.New()
+    cfg := config.GetColdBrewConfig()
+    cb := core.New(cfg)
     cb.SetService(&myService{})
     cb.Run()
 }

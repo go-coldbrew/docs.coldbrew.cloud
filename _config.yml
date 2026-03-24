@@ -17,7 +17,7 @@ defaults:
   - scope:
       path: ""
     values:
-      image: /assets/images/coldbrew.png
+      image: /assets/images/coldbrew-social.png
 
 permalink: pretty
 

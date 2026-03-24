@@ -41,7 +41,7 @@ This is intentional and consistent across the entire codebase. The interceptor c
 ```go
 func init() {
     // Safe: called during initialization, before server starts
-    interceptors.AddUnaryServerInterceptor(myInterceptor)
+    interceptors.AddUnaryServerInterceptor(ctx, myInterceptor)
     interceptors.SetFilterFunc(myFilter)
 }
 ```
