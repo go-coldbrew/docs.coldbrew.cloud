@@ -55,8 +55,8 @@ Your service starts with all of these endpoints ready:
 | `localhost:9090` | gRPC server |
 | `localhost:9091` | HTTP/REST gateway (auto-mapped from gRPC) |
 | `localhost:9091/metrics` | Prometheus metrics |
-| `localhost:9091/healthcheck` | Kubernetes liveness probe |
-| `localhost:9091/readycheck` | Kubernetes readiness probe |
+| `localhost:9091/healthcheck` | Liveness probe — returns build/version info as JSON |
+| `localhost:9091/readycheck` | Readiness probe — returns version JSON when ready |
 | `localhost:9091/swagger/` | Swagger UI |
 | `localhost:9091/debug/pprof/` | Go pprof profiling |
 

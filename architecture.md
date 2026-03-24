@@ -216,8 +216,9 @@ A typical ColdBrew service exposes two ports:
 
 ColdBrew is designed for Kubernetes deployments:
 
-- **Liveness probe:** `GET /healthcheck` — returns `SERVING` when healthy
-- **Readiness probe:** `GET /readycheck` — returns `SERVING` when ready for traffic
+- **Liveness probe:** `GET /healthcheck` — returns build/version info as JSON (git commit, version, build date, Go version, OS/arch)
+- **Readiness probe:** `GET /readycheck` — returns the same version JSON when ready for traffic, or an error if the service hasn't called `SetReady()` yet
+- **gRPC health protocol:** Implements `grpc.health.v1.Health` ([standard gRPC health checking](https://github.com/grpc/grpc/blob/master/doc/health-checking.md)) on the gRPC port — used by gRPC load balancers, Envoy, Istio, and other service meshes for native health checking
 - **Graceful shutdown:** On SIGTERM, the service marks itself as not ready, drains in-flight requests, then exits cleanly
 - **Metrics scraping:** Prometheus scrapes `/metrics` on the HTTP port
 
