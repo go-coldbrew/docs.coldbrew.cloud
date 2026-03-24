@@ -2,6 +2,7 @@
 layout: default
 title: "Building and Configuring APIs"
 parent: "How To"
+description: "Build gRPC and REST APIs with ColdBrew using protobuf definitions and grpc-gateway HTTP annotations"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -543,5 +544,5 @@ For more advanced customization options, refer to the [grpc-gateway customizatio
 [grpc-gateway]: https://grpc-ecosystem.github.io/grpc-gateway/
 [gRPC Gateway mapping]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/examples/
 [grpc-gateway plugin]: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/generating_stubs/
-[ColdBrew cookiecutter]: /getting-started#using-the-coldbrew-cookiecutter-template
+[ColdBrew cookiecutter]: /cookiecutter-reference#using-the-coldbrew-cookiecutter-template
 [grpc-gateway customization guide]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_your_gateway/

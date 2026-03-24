@@ -267,7 +267,7 @@ To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 [GRPC Gateway]: https://grpc-ecosystem.github.io/grpc-gateway/
 [gRPC Gateway example]: /howto/APIs/#adding-a-new-api-to-your-service
 [Buf]: https://buf.build/
-[ColdBrew cookiecutter]: /getting-started#using-the-coldbrew-cookiecutter-template
+[ColdBrew cookiecutter]: /cookiecutter-reference#using-the-coldbrew-cookiecutter-template
 [Prometheus]: https://prometheus.io/
 [metrics documentation]: /howto/Metrics/
 [New Relic]: https://newrelic.com/

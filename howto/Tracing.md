@@ -2,6 +2,7 @@
 layout: default
 title: "Tracing"
 parent: "How To"
+description: "Set up distributed tracing in ColdBrew with OpenTelemetry, Jaeger, and New Relic for gRPC services"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -151,7 +152,7 @@ The functions `CloneContextValues` and `MergeParentContext` are deprecated. Use 
 
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
 [go-coldbrew/tracing]: https://pkg.go.dev/github.com/go-coldbrew/tracing
-[ColdBrew cookiecutter]: /getting-started
+[ColdBrew cookiecutter]: /cookiecutter-reference
 [interceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors
 [UseColdBrewServcerInterceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#UseColdBrewServerInterceptors
 [Default Client Interceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#DefaultClientInterceptors

@@ -84,4 +84,4 @@ func main() {
 [Config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [SetOpenAPIHandler]: https://pkg.go.dev/github.com/go-coldbrew/core#CB
 [grpc-gateway's Open API specification]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
-[ColdBrew cookiecutter]: /getting-started
+[ColdBrew cookiecutter]: /cookiecutter-reference
