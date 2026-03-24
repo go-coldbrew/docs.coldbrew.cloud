@@ -101,11 +101,13 @@ ColdBrew uses environment variables for configuration. Common settings:
 | `HTTP_PORT` | `9091` | HTTP gateway port |
 | `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
 | `JSON_LOGS` | `true` | JSON formatted logs |
-| `ENVIRONMENT` | `development` | Environment name |
-| `TRACE_HEADER_NAME` | `X-Trace-Id` | Header name for trace propagation |
-| `NEW_RELIC_APP_NAME` | | New Relic application name |
-| `NEW_RELIC_LICENSE_KEY` | | New Relic license key |
-| `SENTRY_DSN` | | Sentry DSN for error tracking |
+| `ENVIRONMENT` | `""` | Environment name |
+| `TRACE_HEADER_NAME` | `x-trace-id` | Header name for trace propagation |
+| `NEW_RELIC_APPNAME` | `""` | New Relic application name |
+| `NEW_RELIC_LICENSE_KEY` | `""` | New Relic license key |
+| `SENTRY_DSN` | `""` | Sentry DSN for error tracking |
+
+See the **[Configuration Reference](/config-reference)** for the complete list of 40+ environment variables including gRPC keepalive, TLS, OpenTelemetry OTLP, Prometheus histogram buckets, and graceful shutdown tuning.
 
 ## Adding Interceptors
 
