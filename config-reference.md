@@ -50,7 +50,7 @@ cfg := config.GetColdBrewConfig()
 | `DO_NOT_LOG_GRPC_REFLECTION` | bool | `true` | Suppress logging of gRPC reflection API calls |
 | `GRPC_MAX_SEND_MSG_SIZE` | int | `2147483647` | Maximum send message size in bytes (default: ~2GB, unlimited) |
 | `GRPC_MAX_RECV_MSG_SIZE` | int | `4194304` | Maximum receive message size in bytes (default: 4MB) |
-| `DISABLE_VT_PROTOBUF` | bool | `false` | Disable [vtprotobuf](https://github.com/planetscale/vtprotobuf) marshaller for gRPC |
+| `DISABLE_VT_PROTOBUF` | bool | `false` | Disable [vtprotobuf](https://github.com/planetscale/vtprotobuf) marshaller for gRPC. See [vtprotobuf guide](/howto/vtproto) |
 
 ## gRPC TLS
 

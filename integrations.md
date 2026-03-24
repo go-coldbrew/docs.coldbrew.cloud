@@ -255,6 +255,36 @@ func main() {
 }
 ```
 
+## vtprotobuf
+
+[vtprotobuf] is a Protocol Buffers compiler that generates optimized marshalling code, created by [PlanetScale](https://planetscale.com). ColdBrew uses it as the default gRPC serialization codec for faster message encoding/decoding.
+
+### How ColdBrew uses it
+
+ColdBrew registers a custom gRPC codec at startup that prioritizes vtprotobuf's `MarshalVT()`/`UnmarshalVT()` methods, falling back to standard protobuf for messages that don't have VT methods generated. This is transparent — you get the speed benefit without changing any application code.
+
+### Setup
+
+The [ColdBrew cookiecutter] template includes vtprotobuf code generation in `buf.gen.yaml`:
+
+```yaml
+- remote: buf.build/community/planetscale-vtprotobuf:v0.6.0
+  out: proto
+  opt: paths=source_relative,features=marshal+unmarshal+size+clone+pool+equal
+```
+
+After `make generate`, your proto messages will have additional `*_vtproto.pb.go` files with fast `MarshalVT()`, `UnmarshalVT()`, `CloneVT()`, `EqualVT()`, and pool methods.
+
+### Configuration
+
+vtprotobuf is enabled by default. To disable it (e.g., for debugging serialization issues):
+
+```bash
+export DISABLE_VT_PROTOBUF=true
+```
+
+For more details, see the [vtprotobuf how-to guide](/howto/vtproto).
+
 ## ColdBrew packages
 
 All ColdBrew packages are designed to be used as standalone packages. They can be used in any Go project. They are not tied to ColdBrew and can be used in any Go project.
@@ -295,4 +325,5 @@ To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 [failsafe-go]: https://github.com/failsafe-go/failsafe-go
 [SetupEnvironment]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupEnvironment
 [SetupReleaseName]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupReleaseName
+[vtprotobuf]: https://github.com/planetscale/vtprotobuf
 [open an issue]: https://github.com/go-coldbrew/core/issues

@@ -31,6 +31,7 @@ A Go microservice framework for building production-grade gRPC services with bui
 | **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
 | **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
 | **Resilience** | Client-side circuit breaking and retries via interceptors |
+| **Fast Serialization** | [vtprotobuf] codec enabled by default — faster gRPC marshalling with automatic fallback to standard protobuf |
 
 ## Quick Start
 
@@ -170,3 +171,4 @@ ColdBrew integrates with the tools you already use:
 [new relic]: https://newrelic.com/
 [sentry]: https://sentry.io/
 [go-grpc-middleware]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware
+[vtprotobuf]: https://github.com/planetscale/vtprotobuf
