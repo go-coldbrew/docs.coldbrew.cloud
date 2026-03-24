@@ -32,6 +32,52 @@ ColdBrew follows [12-factor app](https://12factor.net/) methodology and is desig
 
 ColdBrew is **Kubernetes-native**: health/ready probe endpoints, Prometheus metrics scraping, graceful pod termination, and structured logging work without any additional setup. See the [Production Deployment guide](/howto/production) for K8s manifests and configuration.
 
+## Self-Documenting APIs
+
+ColdBrew follows a **define once, get everything** approach. Your `.proto` file is the single source of truth — one `buf generate` produces everything your service needs:
+
+```
+                          ┌─── Go protobuf types         (*.pb.go)
+                          ├─── gRPC service stubs         (*_grpc.pb.go)
+  myservice.proto ──buf──►├─── HTTP/REST gateway handlers (*.gw.go)
+                          ├─── OpenAPI/Swagger spec       (*.swagger.json)
+                          └─── vtprotobuf fast codec      (*_vtproto.pb.go)
+```
+
+Each output maps to a self-documenting endpoint:
+
+| Output | Serves | How Clients Discover It |
+|--------|--------|------------------------|
+| gRPC stubs | `:9090` | gRPC reflection — `grpcurl -plaintext localhost:9090 list` |
+| HTTP gateway | `:9091/api/...` | Swagger UI at `/swagger/` |
+| OpenAPI spec | `:9091/swagger/*.swagger.json` | Import into Postman, code generators, or API gateways |
+| Health/version | `:9091/healthcheck` | Returns git commit, version, build date, Go version as JSON |
+| Metrics | `:9091/metrics` | Prometheus self-describing exposition format with HELP lines |
+| Profiling | `:9091/debug/pprof/` | Standard Go pprof index page |
+
+**Every client gets documentation for free:**
+- **gRPC clients** use server reflection to discover services and methods without proto files
+- **REST clients** use the interactive Swagger UI or import the OpenAPI spec
+- **Operations** use health checks (build metadata), Prometheus metrics, and pprof
+
+The HTTP annotations in your proto file define both the REST routes and their Swagger documentation simultaneously:
+
+```protobuf
+rpc Echo(EchoRequest) returns (EchoResponse) {
+    option (google.api.http) = {
+        post: "/api/v1/example/echo"
+        body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+        summary: "Echo endpoint"
+        description: "Returns the input message unchanged."
+        tags: "example"
+    };
+}
+```
+
+This creates: a gRPC method, a `POST /api/v1/example/echo` REST endpoint, and a documented Swagger UI entry — all from one definition.
+
 ## Overview
 
 ColdBrew is a layered framework where each layer is an independent Go module. The `core` package orchestrates everything, but you can use any package standalone.
