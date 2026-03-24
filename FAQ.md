@@ -72,6 +72,25 @@ The `tracing` package supports both. To switch:
 2. The `tracing.NewInternalSpan()`, `tracing.NewDatastoreSpan()`, and `tracing.NewExternalSpan()` functions work with both backends
 3. See the [Tracing How-To](/howto/Tracing/) and [Integrations](/integrations) guides for setup details
 
+## What is vtprotobuf and why does ColdBrew use it?
+
+[vtprotobuf](https://github.com/planetscale/vtprotobuf) (by PlanetScale) generates optimized `MarshalVT()`/`UnmarshalVT()` methods for protobuf messages that are typically **2–3x faster** than standard `proto.Marshal()` with fewer allocations.
+
+ColdBrew registers a custom gRPC codec that uses vtprotobuf automatically. You don't need to change any application code — if your proto messages have VT methods generated (the default with the cookiecutter template), the fast path is used. Messages without VT methods fall back to standard protobuf transparently.
+
+**Key differences from standard protobuf:**
+
+| | Standard protobuf | vtprotobuf |
+|---|---|---|
+| Marshal/Unmarshal | Reflection-based | Generated code, no reflection |
+| Performance | Baseline | ~2–3x faster, fewer allocations |
+| Extra features | None | `CloneVT()`, `EqualVT()`, object pooling |
+| Compatibility | Universal | Falls back to standard if VT methods missing |
+
+vtprotobuf only affects the **gRPC wire protocol**. The HTTP/JSON gateway uses grpc-gateway's own marshallers independently.
+
+To disable: `DISABLE_VT_PROTOBUF=true`. See the [vtprotobuf How-To](/howto/vtproto) for full details including code generation setup.
+
 ## Is hystrixprometheus still maintained?
 
 **No.** The `hystrixprometheus` package depends on `afex/hystrix-go`, which is unmaintained. Do not invest in this package for new projects.

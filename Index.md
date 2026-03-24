@@ -153,6 +153,7 @@ ColdBrew integrates with the tools you already use:
 - [new relic] — Application performance monitoring
 - [sentry] — Error tracking and alerting
 - [go-grpc-middleware] — Middleware utilities
+- [vtprotobuf] — Fast protobuf serialization
 
 ## Next Steps
 
