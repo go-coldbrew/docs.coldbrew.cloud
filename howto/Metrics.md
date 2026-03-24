@@ -2,6 +2,7 @@
 layout: default
 title: "Metrics"
 parent: "How To"
+description: "Prometheus metrics and custom metrics in ColdBrew"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -9,9 +10,9 @@ parent: "How To"
 1. TOC
 {:toc}
 
-## How Metrics Work in Coldbrew
+## How Metrics Work in ColdBrew
 
-Coldbrew uses [Prometheus](https://prometheus.io/) to collect service metrics. By Default, Coldbrew will expose a `/metrics` endpoint that will return the metrics in the [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/) on the configured [HTTP port].
+ColdBrew uses [Prometheus](https://prometheus.io/) to collect service metrics. By Default, ColdBrew will expose a `/metrics` endpoint that will return the metrics in the [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/) on the configured [HTTP port].
 
 A collection of metrics are collected by default, including:
 * Golang runtime metrics (e.g. memory usage, goroutine count, etc.)
@@ -45,7 +46,7 @@ func myFunction() {
 }
 ```
 
-These metrics will be automatically collected and exposed by Coldbrew on the `/metrics` endpoint.
+These metrics will be automatically collected and exposed by ColdBrew on the `/metrics` endpoint.
 
 {: .note .note-info }
 To learn more about the Prometheus and the data types it supports, see [here](https://prometheus.io/docs/concepts/metric_types/)

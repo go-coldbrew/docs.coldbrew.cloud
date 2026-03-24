@@ -23,12 +23,19 @@ A ColdBrew project generated from the [cookiecutter template](https://github.com
 ```
 MyApp/
   proto/              # Protocol buffer definitions
-    helloworld.proto
-  server/             # gRPC service implementation
-    server.go
+    myapp.proto
+  service/            # gRPC service implementation
+    service.go
+    service_test.go
+    healthcheck.go
+    healthcheck_test.go
+  config/
+    config.go         # Configuration via environment variables
+  version/
+    version.go        # Build-time version info
   main.go             # Entry point
-  Makefile             # Build, test, lint, run targets
-  Dockerfile           # Production container
+  Makefile            # Build, test, lint, run targets
+  Dockerfile          # Production container
   go.mod
 ```
 
@@ -51,12 +58,12 @@ The `google.api.http` annotation automatically creates a REST endpoint via grpc-
 After editing your proto file, regenerate the Go code:
 
 ```shell
-make gen
+make generate
 ```
 
 ## Implementing Your Service
 
-Implement the generated gRPC interface in your `server/server.go`:
+Implement the generated gRPC interface in your `service/service.go`:
 
 ```go
 func (s *svcNameImpl) SayHello(ctx context.Context, req *pb.SayHelloRequest) (*pb.SayHelloResponse, error) {

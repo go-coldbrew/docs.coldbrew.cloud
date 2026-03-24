@@ -2,7 +2,7 @@
 layout: default
 title: "Swagger / Open API Support"
 parent: "How To"
-description: "How Coldbrew supports Swagger / Open API"
+description: "How ColdBrew supports Swagger / Open API"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -11,15 +11,15 @@ description: "How Coldbrew supports Swagger / Open API"
 {:toc}
 
 {: .important}
-This page is only aplicable to applications using `go-coldbrew/core` package and applications created by [Coldbrew cookiecutter].
+This page is only applicable to applications using `go-coldbrew/core` package and applications created by [ColdBrew cookiecutter].
 
 ## Overview
 
-Coldbrew supports [Swagger](https://swagger.io/) / [Open API](https://www.openapis.org/) out of the box. Coldbrew automatically generates Swagger / Open API specification for your APIs.
+ColdBrew supports [Swagger](https://swagger.io/) / [Open API](https://www.openapis.org/) out of the box. ColdBrew automatically generates Swagger / Open API specification for your APIs.
 
-This makes it easy to use tools like [Swagger UI](https://swagger.io/tools/swagger-ui/) to explore and test your APIs. Coldbrew also bundles [Swagger UI](https://swagger.io/tools/swagger-ui/) and serves it at the `/swagger/` URL on the Coldbrew server.
+This makes it easy to use tools like [Swagger UI](https://swagger.io/tools/swagger-ui/) to explore and test your APIs. ColdBrew also bundles [Swagger UI](https://swagger.io/tools/swagger-ui/) and serves it at the `/swagger/` URL on the ColdBrew server.
 
-Since Coldbrew using grpc-gateway to generate RESTful APIs, the generated Swagger / Open API specification is based on the [grpc-gateway's Open API specification] documentation.
+Since ColdBrew using grpc-gateway to generate RESTful APIs, the generated Swagger / Open API specification is based on the [grpc-gateway's Open API specification] documentation.
 
 ## Adding OpenAPI annotations to your APIs
 
@@ -27,9 +27,9 @@ To learn how to add OpenAPI annotations to your APIs, please refer to [grpc-gate
 
 ## How to access the Swagger / Open API specification
 
-You can access the generated Swagger / Open API specification at the `/swagger/` URL on the Coldbrew server. For example, if your Coldbrew server is running on `http://localhost:9091`, you can access the Swagger at [http://localhost:9091/swagger/](http://localhost:9091/swagger/) and Open API specification [http://localhost:9091/swagger/myapp.swagger.json](http://localhost:9091/swagger/myapp.swagger.json)
+You can access the generated Swagger / Open API specification at the `/swagger/` URL on the ColdBrew server. For example, if your ColdBrew server is running on `http://localhost:9091`, you can access the Swagger at [http://localhost:9091/swagger/](http://localhost:9091/swagger/) and Open API specification [http://localhost:9091/swagger/myapp.swagger.json](http://localhost:9091/swagger/myapp.swagger.json)
 
-![](../../assets/images/swagger.png)
+![](/assets/images/swagger.png)
 
 ## Configuration
 
@@ -84,4 +84,4 @@ func main() {
 [Config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [SetOpenAPIHandler]: https://pkg.go.dev/github.com/go-coldbrew/core#CB
 [grpc-gateway's Open API specification]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
-[Coldbrew cookiecutter]: /getting-started
+[ColdBrew cookiecutter]: /getting-started

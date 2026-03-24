@@ -2,6 +2,7 @@
 layout: default
 title: "Interceptors"
 parent: "How To"
+description: "Configuring gRPC interceptors in ColdBrew"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -17,7 +18,7 @@ To disable coldbrew provided interceptors you can call the function [UseColdBrew
 
 ## Response Time Logging
 
-Coldbrew uses interceptors to implement response time logging in [ResponseTimeLoggingInterceptor]. The interceptor is enabled by default and logs the response time of each request in the following format:
+ColdBrew uses interceptors to implement response time logging in [ResponseTimeLoggingInterceptor]. The interceptor is enabled by default and logs the response time of each request in the following format:
 
 ```json
 {"@timestamp":"2023-04-23T22:07:38.857192+08:00","caller":"interceptors@v0.1.7/interceptors.go:248","error":null,"grpcMethod":"/com.github.ankurs.MySvc/Echo","level":"info","took":"49.542µs","trace":"50337410-4bcd-48ce-b8d4-6b42f2ac5503"}
@@ -25,7 +26,7 @@ Coldbrew uses interceptors to implement response time logging in [ResponseTimeLo
 
 ### Filtering response time logs
 
-Its possible to filter out response time logs message by using a [FilterFunc], Coldbrew provides a [default filter function] implementation that filter out common logs like healthchek, readycheck, server reflection, etc.
+Its possible to filter out response time logs message by using a [FilterFunc], ColdBrew provides a [default filter function] implementation that filter out common logs like healthchek, readycheck, server reflection, etc.
 
 You can add more methods to filter out by appending to the default [FilterMethods] list. For example, to filter out all methods that starts with `com.github.ankurs.MySvc/`:
 
@@ -94,13 +95,14 @@ import (
     "github.com/go-coldbrew/interceptors"
     "github.com/go-coldbrew/log"
     "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
     ctx := context.Background()
-    conn, err := grpc.Dial(
+    conn, err := grpc.NewClient(
         "localhost:8080",
-        grpc.WithInsecure(),
+        grpc.WithTransportCredentials(insecure.NewCredentials()),
         // Add the ColdBrew interceptors to your gRPC client to add tracing/metrics to your gRPC client calls
         grpc.WithChainUnaryInterceptor(interceptors.DefaultClientInterceptors()...),
     )

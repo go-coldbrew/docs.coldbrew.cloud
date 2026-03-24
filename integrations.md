@@ -7,11 +7,11 @@ nav_order: 7
 ---
 # Integrations
 {: .no_toc }
-Coldbrew is designed to be very thin wrappers over other services and tools. This page lists the services and tools that Coldbrew integrates with.
+ColdBrew is designed to be very thin wrappers over other services and tools. This page lists the services and tools that ColdBrew integrates with.
 
-These integrations are optional and you can choose to use them or not. You can also choose to use other services and tools instead of the ones listed here. Coldbrew is designed to be flexible and easy to integrate with other services and tools.
+These integrations are optional and you can choose to use them or not. You can also choose to use other services and tools instead of the ones listed here. ColdBrew is designed to be flexible and easy to integrate with other services and tools.
 
-If you want to integrate Coldbrew with a service or tool that is not listed here, please [open an issue].
+If you want to integrate ColdBrew with a service or tool that is not listed here, please [open an issue].
 
 ## Table of contents
 {: .no_toc .text-delta }
@@ -21,9 +21,9 @@ If you want to integrate Coldbrew with a service or tool that is not listed here
 
 ## GRPC Gateway
 
-Coldbrew relies on [GRPC Gateway] to expose the gRPC API as a REST API. The gateway is a proxy that translates a RESTful HTTP API into gRPC. It's a great tool to expose gRPC services to the web and mobile clients.
+ColdBrew relies on [GRPC Gateway] to expose the gRPC API as a REST API. The gateway is a proxy that translates a RESTful HTTP API into gRPC. It's a great tool to expose gRPC services to the web and mobile clients.
 
-To see how it works in Coldbrew, check out the [gRPC Gateway example].
+To see how it works in ColdBrew, check out the [gRPC Gateway example].
 
 ## New Relic
 
@@ -40,19 +40,19 @@ To configure New Relic, set the following environment variables as defined in [C
 
 ### Initialising
 
-If you app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
-If you are using Coldbrew packages in your app, you need to initialise New Relic manually. To initialise New Relic use the [SetupNewRelic] function and to initialise New Relic Opentelemetry use the [SetupNROpenTelemetry] function from the `go-coldbrew/core` package.
+If you are using ColdBrew packages in your app, you need to initialise New Relic manually. To initialise New Relic use the [SetupNewRelic] function and to initialise New Relic Opentelemetry use the [SetupNROpenTelemetry] function from the `go-coldbrew/core` package.
 
 ### Using
 
-To use New Relic tracing in your app, use the Coldbrew [tracing] and [interceptors] packages. They will setup the New Relic tracing provider and add the tracing middleware to the gRPC and HTTP servers.
+To use New Relic tracing in your app, use the ColdBrew [tracing] and [interceptors] packages. They will setup the New Relic tracing provider and add the tracing middleware to the gRPC and HTTP servers.
 
 You can also add more tracing to your app by [adding tracing] to your functions.
 
 ## Prometheus
 
-Coldbrew uses [Prometheus] to collect metrics from the services. Prometheus is an open-source systems monitoring and alerting toolkit originally built at SoundCloud. It includes a time series database, a query language, and a visualization UI.
+ColdBrew uses [Prometheus] to collect metrics from the services. Prometheus is an open-source systems monitoring and alerting toolkit originally built at SoundCloud. It includes a time series database, a query language, and a visualization UI.
 
 ### Configuring
 
@@ -62,13 +62,13 @@ To configure Prometheus, set the following environment variables as defined in [
 
 ### Initialising
 
-If you app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
-If you are using Coldbrew packages in your app, you need to initialise Prometheus manually. Make sure you expose Prometheus `/metrics` endpoint in your app and add the [interceptors] to your gRPC and HTTP servers.
+If you are using ColdBrew packages in your app, you need to initialise Prometheus manually. Make sure you expose Prometheus `/metrics` endpoint in your app and add the [interceptors] to your gRPC and HTTP servers.
 
 ### Using
 
-Coldbrew uses the [prometheus/client_golang] package to collect metrics. To see how to use it check out the [metrics documentation].
+ColdBrew uses the [prometheus/client_golang] package to collect metrics. To see how to use it check out the [metrics documentation].
 
 
 ## Sentry
@@ -84,9 +84,9 @@ To configure Sentry, set the following environment variables as defined in [Conf
 
 ### Initialising
 
-If you app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
-If you are using Coldbrew packages in your app, you need to initialise Sentry manually. To initialise Sentry use the [SetupSentry] function from the `go-coldbrew/core` package.
+If you are using ColdBrew packages in your app, you need to initialise Sentry manually. To initialise Sentry use the [SetupSentry] function from the `go-coldbrew/core` package.
 
 ### Using
 
@@ -98,15 +98,15 @@ To use Sentry in your app, have a look at the [errors documentation].
 
 ### Initialising
 
-If you app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
-If you are using Coldbrew packages in your app, you need to initialise Opentelemetry manually. To initialise Opentelemetry follow the [Opentelemetry documentation] and configure the otel exporter to send the data.
+If you are using ColdBrew packages in your app, you need to initialise Opentelemetry manually. To initialise Opentelemetry follow the [Opentelemetry documentation] and configure the otel exporter to send the data.
 
 To initialise New Relic Opentelemetry use the [SetupNROpenTelemetry] function from the `go-coldbrew/core` package.
 
 ### Using
 
-To use Opentelemetry tracing in your app, use the Coldbrew [tracing] and [interceptors] packages.
+To use Opentelemetry tracing in your app, use the ColdBrew [tracing] and [interceptors] packages.
 
 You can also add more tracing to your app by [adding tracing] to your functions.
 
@@ -114,7 +114,7 @@ You can also add more tracing to your app by [adding tracing] to your functions.
 
 [Buf] is a tool for managing protocol buffers. It can be used to generate code, lint proto files, and more. Buf simplifies the process of managing proto files and helps to keep them consistent across the team. It also helps to avoid common mistakes and helps to keep the proto files up to date.
 
-[Coldbrew cookiecutter] template includes a `buf.yaml` file that configures Buf to generate code for the gRPC service. The code generation config is stored in the `buf.gen.yaml` file.
+[ColdBrew cookiecutter] template includes a `buf.yaml` file that configures Buf to generate code for the gRPC service. The code generation config is stored in the `buf.gen.yaml` file.
 
 ## Logger
 
@@ -128,9 +128,9 @@ To configure the logger, set the following environment variables as defined in [
 
 ### Initialising
 
-If your app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
-If you are using Coldbrew packages in your app, you need to initialise the logger manually:
+If you are using ColdBrew packages in your app, you need to initialise the logger manually:
 
 ```go
 import "github.com/go-coldbrew/core"
@@ -224,9 +224,9 @@ Hystrix-Go (`afex/hystrix-go`) is unmaintained (last updated 2018). Consider mig
 
 ### Initialising
 
-If your app is using [Coldbrew cookiecutter] template, initialisation is done automatically.
+If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
-If you are using Coldbrew packages in your app, you need to initialise Hystrix Prometheus manually:
+If you are using ColdBrew packages in your app, you need to initialise Hystrix Prometheus manually:
 
 ```go
 import "github.com/go-coldbrew/core"
@@ -255,19 +255,19 @@ func main() {
 }
 ```
 
-## Coldbrew packages
+## ColdBrew packages
 
-All Coldbrew packages are designed to be used as standalone packages. They can be used in any Go project. They are not tied to Coldbrew and can be used in any Go project.
+All ColdBrew packages are designed to be used as standalone packages. They can be used in any Go project. They are not tied to ColdBrew and can be used in any Go project.
 
-When you build your service using [Coldbrew cookiecutter] template, it includes the [Core] package which initialises all the packages and sets up the service. You can use the [Core] package in any Go project to set up the service.
+When you build your service using [ColdBrew cookiecutter] template, it includes the [Core] package which initialises all the packages and sets up the service. You can use the [Core] package in any Go project to set up the service.
 
-To see all the Coldbrew packages, check out the [Coldbrew packages] page.
+To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 
 ---
 [GRPC Gateway]: https://grpc-ecosystem.github.io/grpc-gateway/
 [gRPC Gateway example]: /howto/APIs/#adding-a-new-api-to-your-service
 [Buf]: https://buf.build/
-[Coldbrew cookiecutter]: /getting-started#using-the-coldbrew-cookiecutter-template
+[ColdBrew cookiecutter]: /getting-started#using-the-coldbrew-cookiecutter-template
 [Prometheus]: https://prometheus.io/
 [metrics documentation]: /howto/Metrics/
 [New Relic]: https://newrelic.com/
@@ -277,7 +277,7 @@ To see all the Coldbrew packages, check out the [Coldbrew packages] page.
 [Hystrix-Go]: https://pkg.go.dev/github.com/afex/hystrix-go/hystrix
 [Go-grpc-middleware]: https://github.com/grpc-ecosystem/go-grpc-middleware
 [Core]: https://github.com/go-coldbrew/core/tree/main#readme
-[Coldbrew packages]: /packages
+[ColdBrew packages]: /packages
 [Config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [adding tracing]: /howto/Tracing/#adding-tracing-to-your-functions
 [SetupNewRelic]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupNewRelic
@@ -295,3 +295,4 @@ To see all the Coldbrew packages, check out the [Coldbrew packages] page.
 [failsafe-go]: https://github.com/failsafe-go/failsafe-go
 [SetupEnvironment]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupEnvironment
 [SetupReleaseName]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupReleaseName
+[open an issue]: https://github.com/go-coldbrew/core/issues

@@ -3,6 +3,7 @@ layout: default
 title: Packages
 description: "ColdBrew packages documentation"
 permalink: /packages
+nav_order: 9
 ---
 # Packages
 {: .no_toc }
@@ -19,7 +20,7 @@ The core module is the base module and provides the base implementation for Cold
 Documentation can be found at [core-docs]
 
 ### [Config]
-Coldbrew config package contains the configuration for the core package. It uses [envconfig] to load the configuration from the environment variables.
+ColdBrew config package contains the configuration for the core package. It uses [envconfig] to load the configuration from the environment variables.
 
 Documentation can be found at [config-docs]
 
@@ -85,3 +86,4 @@ Documentation can be found at [data-builder-docs]
 [grpcpool-docs]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool
 [Data Builder]: https://github.com/go-coldbrew/data-builder/tree/main#readme
 [data-builder-docs]: https://pkg.go.dev/github.com/go-coldbrew/data-builder
+[envconfig]: https://github.com/kelseyhightower/envconfig

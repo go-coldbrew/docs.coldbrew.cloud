@@ -76,7 +76,7 @@ func BuildAppResponse(_ context.Context, grossPrice GrossPrice, priceAdjustment 
 
 Note that the builder function signatures must satisfy the following requirements:
 1. The first argument is a context.Context
-2. All subsequent arguments are stucts
+2. All subsequent arguments are structs
 3. There are two return values: a struct and an error
 
 
@@ -120,7 +120,7 @@ During compilation we resolve all dependencies and build an execution plan. Note
 
 After compilation we can also inspect the dependency graph visually by calling `BuildGraph`:
 
-![dependency graph](../../assets/images/data-builder.svg)
+![dependency graph](/assets/images/data-builder.svg)
 
 ### Running the execution plan and retrieving the results
 
