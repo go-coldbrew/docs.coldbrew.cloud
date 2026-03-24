@@ -2,7 +2,7 @@
 layout: default
 title: "gRPC"
 parent: "How To"
-description: "How to use gRPC with Coldbrew"
+description: "How to use gRPC with ColdBrew"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -14,17 +14,17 @@ description: "How to use gRPC with Coldbrew"
 {: .note}
 If you are not familiar with gRPC, you can learn more about it at [grpc.io](https://grpc.io/).
 
-## Using gRPC with Coldbrew
+## Using gRPC with ColdBrew
 
-Coldbrew is gRPC first, which means that gRPC APIs are the primary APIs and HTTP/JSON APIs are generated from the gRPC APIs. This approach is different from other frameworks where HTTP/JSON APIs are independent from gRPC APIs.
+ColdBrew is gRPC first, which means that gRPC APIs are the primary APIs and HTTP/JSON APIs are generated from the gRPC APIs. This approach is different from other frameworks where HTTP/JSON APIs are independent from gRPC APIs.
 
-Best way to get started with gRPC in Coldbrew is to use the [Coldbrew cookiecutter] to generate a new project. The cookiecutter will generate a project with a sample gRPC service and a sample HTTP/JSON service. You can use the sample gRPC service as a template to create your own gRPC service.
+The best way to get started with gRPC in ColdBrew is to use the [ColdBrew cookiecutter] to generate a new project. The cookiecutter will generate a project with a sample gRPC service and a sample HTTP/JSON service. You can use the sample gRPC service as a template to create your own gRPC service.
 
 You can than follow the `README.md` in the project or [Building and Configuring APIs] how to see how to use the generated service.
 
-## Client side connection pool
+## Client-side connection pool
 
-Coldbrew provides a simple gRPC connection pool implementation called [grpcpool]. You can use this package to create a connection pool for your gRPC services.
+ColdBrew provides a simple gRPC connection pool implementation called [grpcpool]. You can use this package to create a connection pool for your gRPC services.
 
 The package provides a [grpcpool.Dial] function that can be used to create a connection pool for a gRPC service. The function takes a `grpc.DialOption` as an argument. You can use this option to configure the gRPC client connection. For example, you can use this option to configure TLS, authentication, etc.
 
@@ -35,12 +35,13 @@ The following example shows how to create a connection pool for a gRPC service:
 import (
     "github.com/go-coldbrew/grpcpool"
     "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
 )
 
 
 func main() {
     // Create a connection pool for a gRPC service with 3 connections.
-    pool, err := grpcpool.Dial("localhost:50051", 3, grpc.WithInsecure())
+    pool, err := grpcpool.Dial("localhost:50051", 3, grpc.WithTransportCredentials(insecure.NewCredentials()))
     if err != nil {
         // Handle error.
     }
@@ -60,13 +61,17 @@ func main() {
 ```go
 
 import (
+    "context"
+    "fmt"
+
     "github.com/go-coldbrew/grpcpool"
     "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
     // Create a connection pool for a gRPC service with 2 connections.
-    pool, err := grpcpool.Dial("localhost:50051", 2, grpc.WithInsecure())
+    pool, err := grpcpool.Dial("localhost:50051", 2, grpc.WithTransportCredentials(insecure.NewCredentials()))
     if err != nil {
         // Handle error.
     }
@@ -81,8 +86,8 @@ func main() {
     }
     fmt.Println(resp.Message)
 
-    // Close the connection.
-    conn.Close()
+    // Close the pool.
+    pool.Close()
 }
 ```
 
@@ -91,13 +96,17 @@ You can also use existing gRPC connections with [grpcpool] by wrapping it with [
 ```go
 
 import (
+    "context"
+    "fmt"
+
     "github.com/go-coldbrew/grpcpool"
     "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
     // Create a gRPC connection.
-    conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+    conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
     if err != nil {
         // Handle error.
     }
@@ -121,7 +130,7 @@ func main() {
 ```
 
 ---
-[Coldbrew cookiecutter]: /getting-started
+[ColdBrew cookiecutter]: /getting-started
 [Building and Configuring APIs]: /howto/APIs
 [grpcpool]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool
 [grpcpool.Dial]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool#Dial

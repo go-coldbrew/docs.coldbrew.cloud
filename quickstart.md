@@ -41,8 +41,8 @@ project_short_description [A Golang project.]: My first ColdBrew service
 docker_image [alpine:latest]:
 docker_build_image [golang]:
 Select docker_build_image_version:
-1 - 1.25
-2 - 1.26
+1 - 1.26
+2 - 1.25
 Choose from 1, 2 [1]: 1
 ```
 
@@ -98,18 +98,20 @@ Open a new terminal and test each endpoint:
 ### Health Check (Kubernetes liveness probe)
 
 ```bash
-curl -s localhost:9091/healthcheck
+$ curl -s localhost:9091/healthcheck
+{"git_commit":"f470560c0a361839763c2abdac8a01b495bfd908","version":"0.1.0","build_date":"2026-03-24-09:44:05","go_version":"go1.26.1","os_arch":"darwin arm64","app":"myapp","branch":"main"}
 ```
 
-Expected: `SERVING` (the service is healthy)
+The healthcheck returns build and version information as JSON — useful for quickly identifying which version of your service is running in any environment.
 
 ### Ready Check (Kubernetes readiness probe)
 
 ```bash
-curl -s localhost:9091/readycheck
+$ curl -s localhost:9091/readycheck
+{"git_commit":"f470560c0a361839763c2abdac8a01b495bfd908","version":"0.1.0","build_date":"2026-03-24-09:44:05","go_version":"go1.26.1","os_arch":"darwin arm64","app":"myapp","branch":"main"}
 ```
 
-Expected: `SERVING` (the service is ready to receive traffic)
+Returns the same version JSON when the service is ready to receive traffic. Returns an error if the service hasn't called `SetReady()` yet.
 
 ### Echo Endpoint (your demo API)
 

@@ -1,0 +1,13 @@
+{
+  "name": "docs-coldbrew-cloud",
+  "private": true,
+  "scripts": {
+    "build": "bundle exec jekyll build",
+    "test": "npm run build && npx playwright test",
+    "test:live": "BASE_URL=https://docs.coldbrew.cloud npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "serve": "^14.2.4"
+  }
+}

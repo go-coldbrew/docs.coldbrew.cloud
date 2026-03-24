@@ -21,6 +21,8 @@ defaults:
 
 permalink: pretty
 
+search_enabled: true
+
 theme: just-the-docs
 
 callouts_level: quiet

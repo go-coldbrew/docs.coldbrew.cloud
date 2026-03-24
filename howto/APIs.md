@@ -11,9 +11,9 @@ parent: "How To"
 
 ## Introduction
 
-Coldbrew is gRPC first, which means that gRPC APIs are the primary APIs and HTTP/JSON APIs are generated from the gRPC APIs. This approach is different from other frameworks where HTTP/JSON APIs are independent from gRPC APIs.
+ColdBrew is gRPC first, which means that gRPC APIs are the primary APIs and HTTP/JSON APIs are generated from the gRPC APIs. This approach is different from other frameworks where HTTP/JSON APIs are independent from gRPC APIs.
 
-Coldbrew uses [grpc-gateway] to generate HTTP/JSON APIs from gRPC APIs. It reads protobuf service definitions and generates a reverse-proxy server which translates a RESTful HTTP API into gRPC. This server is generated according to the [google.api.http annotations] in your service definitions.
+ColdBrew uses [grpc-gateway] to generate HTTP/JSON APIs from gRPC APIs. It reads protobuf service definitions and generates a reverse-proxy server which translates a RESTful HTTP API into gRPC. This server is generated according to the [google.api.http annotations] in your service definitions.
 
 {: .note}
 To learn more about HTTP to gRPC API mapping please refer to [gRPC Gateway mapping] examples.
@@ -47,7 +47,7 @@ message UpperResponse{
 
 The above example adds a new API endpoint to the service which converts the input string to upper case. The endpoint is available at `/api/v1/example/upper` on the HTTP port and `example.v1.MySvc/Upper` on the gRPC port.
 
-Run `make generate` (for [Coldbrew cookiecutter]) or `protoc`/`buf`  with [grpc-gateway plugin] for others to generate the gRPC and HTTP code.
+Run `make generate` (for [ColdBrew cookiecutter]) or `protoc`/`buf`  with [grpc-gateway plugin] for others to generate the gRPC and HTTP code.
 
 In your service implement the gRPC server interface
 
@@ -60,7 +60,7 @@ func (s *svc) Upper(_ context.Context, req *proto.UpperRequest) (*proto.UpperRes
 }
 ```
 
-Run your server (`make run` for [Coldbrew cookiecutter]) and send a request to the HTTP endpoint:
+Run your server (`make run` for [ColdBrew cookiecutter]) and send a request to the HTTP endpoint:
 
 ```bash
 $ curl -X POST -d '{"msg":"hello"}' -i http://localhost:9091/api/v1/example/upper
@@ -84,7 +84,7 @@ $ grpcurl -plaintext -d '{"msg": "hello"}' localhost:9090 example.v1.MySvc/Upper
 
 ## HTTP Content-Type
 
-Coldbrew supports multiple content-types for requests and responses. The default content-type is `application/json`. The following content-types are supported by default:
+ColdBrew supports multiple content-types for requests and responses. The default content-type is `application/json`. The following content-types are supported by default:
 
 - `application/json`
 - `application/proto`
@@ -211,7 +211,7 @@ message Status {
 ```
 ### gRPC status codes and HTTP status codes mapping
 
-gRPC status codes can be easlity translated to HTTP status codes. The following table shows the mapping between the canonical error codes and HTTP status codes:
+gRPC status codes can be easily translated to HTTP status codes. The following table shows the mapping between the canonical error codes and HTTP status codes:
 
 | gRPC status code      | HTTP status code |
 | --------------------  | ---------------- |
@@ -372,9 +372,9 @@ $ curl -X GET localhost:8080/v1/books/
 }
 ```
 
-### Using Coldbrew errors package
+### Using ColdBrew errors package
 
-All the above examples can be used with the [Coldbrew errors package] by using the functions `NewWithStatus/WrapWithStatus`
+All the above examples can be used with the [ColdBrew errors package] by using the functions `NewWithStatus/WrapWithStatus`
 
 ```go
 import (
@@ -399,7 +399,7 @@ func (s *server) GetBook(ctx context.Context, req *pb.GetBookRequest) (*pb.Book,
 
 Using the `errors.WrapWithStatus` function has the same effect as `errors.Wrap` but it also sets the status code of the error to the status code of the `google.rpc.Status` message. Similarly, the `errors.NewWithStatus` function has the same effect as `errors.New` but it also sets the status code of the error to the status code of the `google.rpc.Status` message.
 
-Coldbrew errors package also provides stack trace support for errors, which can make debugging easier. For more information see Coldbrew [errors package].
+ColdBrew errors package also provides stack trace support for errors, which can make debugging easier. For more information see ColdBrew [errors package].
 
 ## Customizing HTTP Error Responses
 
@@ -535,13 +535,13 @@ For more advanced customization options, refer to the [grpc-gateway customizatio
 ---
 [google/rpc/status.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/status.proto
 [google/rpc/code.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
-[Coldbrew errors package]: https://pkg.go.dev/github.com/go-coldbrew/errors#NewWithStatus
+[ColdBrew errors package]: https://pkg.go.dev/github.com/go-coldbrew/errors#NewWithStatus
 [errors package]: https://pkg.go.dev/github.com/go-coldbrew/errors
 [envconfig]: https://github.com/kelseyhightower/envconfig
-[Coldbrew]: https://docs.coldbrew.cloud
+[ColdBrew]: https://docs.coldbrew.cloud
 [google.api.http annotations]: https://cloud.google.com/endpoints/docs/grpc/transcoding
 [grpc-gateway]: https://grpc-ecosystem.github.io/grpc-gateway/
 [gRPC Gateway mapping]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/examples/
 [grpc-gateway plugin]: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/generating_stubs/
-[Coldbrew cookiecutter]: /getting-started#using-the-coldbrew-cookiecutter-template
+[ColdBrew cookiecutter]: /getting-started#using-the-coldbrew-cookiecutter-template
 [grpc-gateway customization guide]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_your_gateway/

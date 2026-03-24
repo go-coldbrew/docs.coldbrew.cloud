@@ -128,10 +128,14 @@ You can register cleanup callbacks and customize shutdown behavior. See the [Sig
 Set the `SENTRY_DSN` environment variable and use the errors package:
 
 ```go
-import "github.com/go-coldbrew/errors"
+import (
+    "context"
+    "github.com/go-coldbrew/errors/notifier"
+)
 
 // This notifies Sentry asynchronously (bounded, won't leak goroutines)
-errors.NotifyAsync(err, severity, args...)
+ctx := context.Background()
+notifier.Notify(err, ctx)
 ```
 
 See the [Errors How-To](/howto/errors) and [Integrations](/integrations) for full setup instructions.

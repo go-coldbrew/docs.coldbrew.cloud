@@ -184,7 +184,7 @@ name := notifier.GetTraceHeaderName()
 
 ## Examples
 
-### Sending errors to provides
+### Sending errors to providers
 
 The ColdBrew [notifier package] can be used to send errors to different providers like [Sentry], [Airbrake], [Rollbar] etc.
 

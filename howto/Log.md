@@ -2,6 +2,7 @@
 layout: default
 title: "Log"
 parent: "How To"
+description: "Context-aware logging and trace ID propagation in ColdBrew"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
