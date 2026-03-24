@@ -7,7 +7,7 @@ nav_order: 7
 ---
 # Integrations
 {: .no_toc }
-ColdBrew is designed to be very thin wrappers over other services and tools. This page lists the services and tools that ColdBrew integrates with.
+ColdBrew provides thin wrappers over other services and tools. This page lists the services and tools that ColdBrew integrates with.
 
 These integrations are optional and you can choose to use them or not. You can also choose to use other services and tools instead of the ones listed here. ColdBrew is designed to be flexible and easy to integrate with other services and tools.
 

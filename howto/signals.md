@@ -2,7 +2,7 @@
 layout: default
 title: "Signal Handling and Graceful Shutdown"
 parent: "How To"
-description: "How POSIX signals handling works in ColdBrew"
+description: "How POSIX signal handling works in ColdBrew"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -53,7 +53,7 @@ When you are running your application on [Kubernetes], you can configure your `l
 
 ## Why do I see 5xx errors when my application is shutting down?
 
-When you shutdown your application, ColdBrew will fail the readiness check. This will cause the load balancer to stop sending new requests to your application. However, there might be some requests that are already in flight. These requests will still be processed by your application.
+When you shut down your application, ColdBrew will fail the readiness check. This will cause the load balancer to stop sending new requests to your application. However, there might be some requests that are already in flight. These requests will still be processed by your application.
 
 If you want to avoid this, you can set the `SHUTDOWN_DURATION_IN_SECONDS` to a value that is greater than the maximum time it takes to process a request. This will ensure that all requests are finished before the application shuts down. However, this will also increase the time it takes to shutdown the application.
 

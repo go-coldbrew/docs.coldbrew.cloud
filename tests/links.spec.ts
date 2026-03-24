@@ -24,7 +24,7 @@ test.describe("Internal Links", () => {
   const pagesToCrawl = ["/", "/howto/APIs/", "/integrations/", "/packages/"];
 
   for (const pagePath of pagesToCrawl) {
-    test(`all internal links on ${pagePath} return 200`, async ({
+    test(`all internal links on ${pagePath} resolve without errors`, async ({
       page,
       request,
     }) => {

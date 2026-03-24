@@ -11,7 +11,7 @@ parent: "How To"
 
 ## Overview
 
-ColdBrew provides a way to add tracing to your functions using the [go-coldbrew/tracing] package. The Package implements multiple tracing backends (e.g. [New Relic] / [Opentelemetry] / [Jaeger]) which enables you to switch between them without changing your code.
+ColdBrew provides a way to add tracing to your functions using the [go-coldbrew/tracing] package. The package implements multiple tracing backends (e.g. [New Relic] / [Opentelemetry] / [Jaeger]) which enables you to switch between them without changing your code.
 
 {: .note .note-info }
 Its possible for you to have multiple backends enabled at the same time, for example you can have both [New Relic] and [Opentelemetry] enabled at the same time in the same span and they will both receive the same trace.
