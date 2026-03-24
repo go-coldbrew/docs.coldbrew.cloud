@@ -26,7 +26,7 @@ ColdBrew uses interceptors to implement response time logging in [ResponseTimeLo
 
 ### Filtering response time logs
 
-Its possible to filter out response time logs message by using a [FilterFunc], ColdBrew provides a [default filter function] implementation that filter out common logs like healthchek, readycheck, server reflection, etc.
+It's possible to filter out response time log messages by using a [FilterFunc]. ColdBrew provides a [default filter function] implementation that filters out common logs like healthcheck, readycheck, server reflection, etc.
 
 You can add more methods to filter out by appending to the default [FilterMethods] list. For example, to filter out all methods that starts with `com.github.ankurs.MySvc/`:
 

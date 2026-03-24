@@ -18,11 +18,11 @@ If you are not familiar with gRPC, you can learn more about it at [grpc.io](http
 
 ColdBrew is gRPC first, which means that gRPC APIs are the primary APIs and HTTP/JSON APIs are generated from the gRPC APIs. This approach is different from other frameworks where HTTP/JSON APIs are independent from gRPC APIs.
 
-Best way to get started with gRPC in ColdBrew is to use the [ColdBrew cookiecutter] to generate a new project. The cookiecutter will generate a project with a sample gRPC service and a sample HTTP/JSON service. You can use the sample gRPC service as a template to create your own gRPC service.
+The best way to get started with gRPC in ColdBrew is to use the [ColdBrew cookiecutter] to generate a new project. The cookiecutter will generate a project with a sample gRPC service and a sample HTTP/JSON service. You can use the sample gRPC service as a template to create your own gRPC service.
 
 You can than follow the `README.md` in the project or [Building and Configuring APIs] how to see how to use the generated service.
 
-## Client side connection pool
+## Client-side connection pool
 
 ColdBrew provides a simple gRPC connection pool implementation called [grpcpool]. You can use this package to create a connection pool for your gRPC services.
 

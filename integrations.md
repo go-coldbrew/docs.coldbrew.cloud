@@ -40,7 +40,7 @@ To configure New Relic, set the following environment variables as defined in [C
 
 ### Initialising
 
-If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
+If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
 If you are using ColdBrew packages in your app, you need to initialise New Relic manually. To initialise New Relic use the [SetupNewRelic] function and to initialise New Relic Opentelemetry use the [SetupNROpenTelemetry] function from the `go-coldbrew/core` package.
 
@@ -62,7 +62,7 @@ To configure Prometheus, set the following environment variables as defined in [
 
 ### Initialising
 
-If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
+If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
 If you are using ColdBrew packages in your app, you need to initialise Prometheus manually. Make sure you expose Prometheus `/metrics` endpoint in your app and add the [interceptors] to your gRPC and HTTP servers.
 
@@ -84,7 +84,7 @@ To configure Sentry, set the following environment variables as defined in [Conf
 
 ### Initialising
 
-If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
+If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
 If you are using ColdBrew packages in your app, you need to initialise Sentry manually. To initialise Sentry use the [SetupSentry] function from the `go-coldbrew/core` package.
 
@@ -98,7 +98,7 @@ To use Sentry in your app, have a look at the [errors documentation].
 
 ### Initialising
 
-If you app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
+If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
 
 If you are using ColdBrew packages in your app, you need to initialise Opentelemetry manually. To initialise Opentelemetry follow the [Opentelemetry documentation] and configure the otel exporter to send the data.
 

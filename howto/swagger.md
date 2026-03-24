@@ -19,7 +19,7 @@ ColdBrew supports [Swagger](https://swagger.io/) / [Open API](https://www.openap
 
 This makes it easy to use tools like [Swagger UI](https://swagger.io/tools/swagger-ui/) to explore and test your APIs. ColdBrew also bundles [Swagger UI](https://swagger.io/tools/swagger-ui/) and serves it at the `/swagger/` URL on the ColdBrew server.
 
-Since ColdBrew using grpc-gateway to generate RESTful APIs, the generated Swagger / Open API specification is based on the [grpc-gateway's Open API specification] documentation.
+Since ColdBrew uses grpc-gateway to generate RESTful APIs, the generated Swagger / Open API specification is based on the [grpc-gateway's Open API specification] documentation.
 
 ## Adding OpenAPI annotations to your APIs
 
@@ -29,7 +29,7 @@ To learn how to add OpenAPI annotations to your APIs, please refer to [grpc-gate
 
 You can access the generated Swagger / Open API specification at the `/swagger/` URL on the ColdBrew server. For example, if your ColdBrew server is running on `http://localhost:9091`, you can access the Swagger at [http://localhost:9091/swagger/](http://localhost:9091/swagger/) and Open API specification [http://localhost:9091/swagger/myapp.swagger.json](http://localhost:9091/swagger/myapp.swagger.json)
 
-![](/assets/images/swagger.png)
+![Swagger UI example page](/assets/images/swagger.png)
 
 ## Configuration
 

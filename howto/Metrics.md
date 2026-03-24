@@ -12,7 +12,7 @@ description: "Prometheus metrics and custom metrics in ColdBrew"
 
 ## How Metrics Work in ColdBrew
 
-ColdBrew uses [Prometheus](https://prometheus.io/) to collect service metrics. By Default, ColdBrew will expose a `/metrics` endpoint that will return the metrics in the [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/) on the configured [HTTP port].
+ColdBrew uses [Prometheus](https://prometheus.io/) to collect service metrics. By default, ColdBrew will expose a `/metrics` endpoint that will return the metrics in the [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/) on the configured [HTTP port].
 
 A collection of metrics are collected by default, including:
 * Golang runtime metrics (e.g. memory usage, goroutine count, etc.)

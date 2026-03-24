@@ -42,7 +42,7 @@ Configuring the shutdown process is done by setting the [config] values:
 
 ## Cleanup before shutdown
 
-If you service implements [CBStopper] interface, ColdBrew will call the `Stop` method when the application is shutting down. This is useful if you want to perform some cleanup before the application shuts down.
+If your service implements [CBStopper] interface, ColdBrew will call the `Stop` method when the application is shutting down. This is useful if you want to perform some cleanup before the application shuts down.
 
 {: .important}
 ColdBrew will call the `Stop` method after all requests have finished or after the `SHUTDOWN_DURATION_IN_SECONDS` timeout has expired.

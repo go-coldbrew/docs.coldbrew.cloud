@@ -47,30 +47,30 @@ test.describe("Tables", () => {
 test.describe("Images", () => {
   test("home page logo loads", async ({ page }) => {
     await page.goto("/");
-    const logo = page.locator('img[src*="coldbrew"]');
-    if ((await logo.count()) > 0) {
-      await expect(logo.first()).toBeVisible();
-    }
+    // just-the-docs may render the logo as an <img> tag or CSS background
+    // depending on theme version — check for either
+    const imgLogo = page.locator('img[src*="coldbrew"]');
+    const cssLogo = page.locator('.site-logo, .site-title img');
+    const hasLogo = (await imgLogo.count()) > 0 || (await cssLogo.count()) > 0;
+    expect(hasLogo).toBe(true);
   });
 
   test("swagger image loads on swagger howto", async ({ page }) => {
     await page.goto("/howto/swagger/");
     const img = page.locator('img[src*="swagger"]');
-    if ((await img.count()) > 0) {
-      await expect(img.first()).toBeVisible();
-      const loaded = await img.first().evaluate((el: HTMLImageElement) => {
-        return el.complete && el.naturalWidth > 0;
-      });
-      expect(loaded).toBe(true);
-    }
+    expect(await img.count()).toBeGreaterThan(0);
+    await expect(img.first()).toBeVisible();
+    const loaded = await img.first().evaluate((el: HTMLImageElement) => {
+      return el.complete && el.naturalWidth > 0;
+    });
+    expect(loaded).toBe(true);
   });
 
   test("data-builder SVG loads on data-builder howto", async ({ page }) => {
     await page.goto("/howto/data-builder/");
     const img = page.locator('img[src*="data-builder"]');
-    if ((await img.count()) > 0) {
-      await expect(img.first()).toBeVisible();
-    }
+    expect(await img.count()).toBeGreaterThan(0);
+    await expect(img.first()).toBeVisible();
   });
 });
 

@@ -40,7 +40,7 @@ Showing top 5 nodes out of 45
 
 ### Analyzing profiles
 
-The `go tool pprof` command can be  also be used to analyze profiles to find the root cause of performance issues. For more information, please refer to the [pprof walkthrough] and the [diagnostics doc].
+The `go tool pprof` command can also be used to analyze profiles to find the root cause of performance issues. For more information, please refer to the [pprof walkthrough] and the [diagnostics doc].
 
 {: .important }
 Its recommended that you go though the [pprof walkthrough] to get a better understanding of how to use the pprof.
