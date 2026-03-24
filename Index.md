@@ -8,7 +8,7 @@ permalink: /
 # ColdBrew
 {: .fs-9 }
 
-A Go microservice framework for building production-grade gRPC services with built-in observability, resilience, and HTTP gateway support.
+A Kubernetes-native Go microservice framework for building production-grade gRPC services with built-in observability, resilience, and HTTP gateway support. Follows [12-factor](https://12factor.net/) principles out of the box.
 {: .fs-6 .fw-300 }
 
 **Production-proven:** Powers 100+ microservices, handling peaks of ~70k QPS per service at [Gojek](https://www.gojek.com/en-id/).
@@ -32,6 +32,7 @@ A Go microservice framework for building production-grade gRPC services with bui
 | **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
 | **Resilience** | Client-side circuit breaking and retries via interceptors |
 | **Fast Serialization** | [vtprotobuf] codec enabled by default — faster gRPC marshalling with automatic fallback to standard protobuf |
+| **Kubernetes-native** | Health/ready probes, graceful SIGTERM shutdown, structured JSON logs, Prometheus metrics — all wired automatically |
 
 ## Quick Start
 

@@ -159,6 +159,18 @@ notifier.Notify(err, ctx)
 
 See the [Errors How-To](/howto/errors) and [Integrations](/integrations) for full setup instructions.
 
+## Is ColdBrew designed for Kubernetes?
+
+Yes — ColdBrew is Kubernetes-native by design. Out of the box you get:
+
+- **Liveness probe** at `/healthcheck` and **readiness probe** at `/readycheck`
+- **Graceful shutdown** on SIGTERM with configurable drain periods (`SHUTDOWN_DURATION_IN_SECONDS`, `GRPC_GRACEFUL_DURATION_IN_SECONDS`)
+- **Prometheus metrics** at `/metrics` for scraping
+- **Structured JSON logging** to stdout (ready for Fluentd, Loki, or any log aggregator)
+- **Environment variable configuration** via [envconfig](https://github.com/kelseyhightower/envconfig) — works natively with ConfigMaps and Secrets
+
+ColdBrew also follows [12-factor app](https://12factor.net/) principles: no config files, stateless processes, port binding, and log streams. See the [Production Deployment guide](/howto/production) for K8s manifests, ServiceMonitor setup, and graceful shutdown tuning, and the [Architecture](/architecture) page for the full design principles table.
+
 ## Where can I get help?
 
 - **[GitHub Discussions](https://github.com/go-coldbrew/core/discussions)** — Ask questions, share ideas

@@ -16,6 +16,22 @@ permalink: /architecture
 
 ---
 
+## Design Principles
+
+ColdBrew follows [12-factor app](https://12factor.net/) methodology and is designed to run on Kubernetes from day one:
+
+| 12-Factor Principle | How ColdBrew Implements It |
+|--------------------|-----------------------------|
+| **Config** | All configuration via environment variables ([envconfig](https://github.com/kelseyhightower/envconfig)) — no config files, no YAML. See [Configuration Reference](/config-reference) |
+| **Port binding** | Self-contained HTTP (`:9091`) and gRPC (`:9090`) servers, no external app server needed |
+| **Logs** | Structured JSON to stdout by default — ready for any log aggregator (Fluentd, Loki, CloudWatch) |
+| **Disposability** | Graceful SIGTERM handling with configurable drain periods. See [Signals](/howto/signals) |
+| **Dev/prod parity** | Same binary, same config mechanism, same observability in every environment |
+| **Concurrency** | Stateless processes — scale horizontally by adding replicas |
+| **Backing services** | External dependencies (databases, caches, queues) attached via environment variables |
+
+ColdBrew is **Kubernetes-native**: health/ready probe endpoints, Prometheus metrics scraping, graceful pod termination, and structured logging work without any additional setup. See the [Production Deployment guide](/howto/production) for K8s manifests and configuration.
+
 ## Overview
 
 ColdBrew is a layered framework where each layer is an independent Go module. The `core` package orchestrates everything, but you can use any package standalone.
