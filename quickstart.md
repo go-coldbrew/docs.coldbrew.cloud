@@ -46,6 +46,9 @@ Select docker_build_image_version:
 Choose from 1, 2 [1]: 1
 ```
 
+{: .note }
+The exact Go image versions listed in this menu may vary depending on the cookiecutter template version you are using. Follow the options shown when you run `cookiecutter`.
+
 ## Step 2: Explore What You Got
 
 ```bash
