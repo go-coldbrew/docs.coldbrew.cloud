@@ -129,10 +129,12 @@ Set the `SENTRY_DSN` environment variable and use the errors package:
 
 ```go
 import (
+    "context"
     "github.com/go-coldbrew/errors/notifier"
 )
 
 // This notifies Sentry asynchronously (bounded, won't leak goroutines)
+ctx := context.Background()
 notifier.Notify(err, ctx)
 ```
 
