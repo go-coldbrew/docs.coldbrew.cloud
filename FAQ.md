@@ -110,7 +110,7 @@ Through **compile-time enforcement**. Your `.proto` file is the single source of
 2. **HTTP gateway handlers** — REST endpoints that can't drift from the gRPC definition
 3. **OpenAPI spec** — Swagger documentation generated from the same proto, always in sync
 
-This means it's impossible to have a documented endpoint that doesn't exist, an undocumented endpoint that does exist, or an HTTP route that doesn't match the gRPC method signature. The proto file is the contract — the compiler, the gateway, and the docs all enforce it.
+This strongly prevents a documented endpoint that doesn't exist, an undocumented endpoint that does exist, or an HTTP route that doesn't match the gRPC method signature. The proto file is the contract — the compiler, the gateway, and the docs all enforce it.
 
 See [Self-Documenting APIs](/architecture#self-documenting-apis) for the full pipeline.
 
