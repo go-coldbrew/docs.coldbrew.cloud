@@ -101,7 +101,7 @@ Open a new terminal and test each endpoint:
 curl -s localhost:9091/healthcheck
 ```
 
-Expected: `SERVING` (the service is healthy)
+Expected: JSON with build and version information (e.g., `{"Version":"dev","GitCommit":"...","BuildDate":"..."}`). This is useful for quickly identifying which version of your service is running in any environment — just curl the healthcheck endpoint.
 
 ### Ready Check (Kubernetes readiness probe)
 
@@ -109,7 +109,7 @@ Expected: `SERVING` (the service is healthy)
 curl -s localhost:9091/readycheck
 ```
 
-Expected: `SERVING` (the service is ready to receive traffic)
+Expected: Same version JSON when the service is ready to receive traffic. Returns an error if the service hasn't called `SetReady()` yet.
 
 ### Echo Endpoint (your demo API)
 
