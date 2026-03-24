@@ -98,18 +98,20 @@ Open a new terminal and test each endpoint:
 ### Health Check (Kubernetes liveness probe)
 
 ```bash
-curl -s localhost:9091/healthcheck
+$ curl -s localhost:9091/healthcheck
+{"git_commit":"f470560c0a361839763c2abdac8a01b495bfd908","version":"0.1.0","build_date":"2026-03-24-09:44:05","go_version":"go1.26.1","os_arch":"darwin arm64","app":"myapp","branch":"main"}
 ```
 
-Expected: JSON with build and version information (e.g., `{"Version":"dev","GitCommit":"...","BuildDate":"..."}`). This is useful for quickly identifying which version of your service is running in any environment — just curl the healthcheck endpoint.
+The healthcheck returns build and version information as JSON — useful for quickly identifying which version of your service is running in any environment.
 
 ### Ready Check (Kubernetes readiness probe)
 
 ```bash
-curl -s localhost:9091/readycheck
+$ curl -s localhost:9091/readycheck
+{"git_commit":"f470560c0a361839763c2abdac8a01b495bfd908","version":"0.1.0","build_date":"2026-03-24-09:44:05","go_version":"go1.26.1","os_arch":"darwin arm64","app":"myapp","branch":"main"}
 ```
 
-Expected: Same version JSON when the service is ready to receive traffic. Returns an error if the service hasn't called `SetReady()` yet.
+Returns the same version JSON when the service is ready to receive traffic. Returns an error if the service hasn't called `SetReady()` yet.
 
 ### Echo Endpoint (your demo API)
 
