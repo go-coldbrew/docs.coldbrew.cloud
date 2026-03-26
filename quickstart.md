@@ -301,7 +301,7 @@ Runs on push to `main`/`master` and on pull requests. Four parallel jobs:
 | **build** | Compiles with `make build` |
 | **test** | Runs `make test` (race detector + coverage) |
 | **benchmark** | Runs `make bench` |
-| **lint** | Runs `make vulncheck` + golangci-lint v2 |
+| **lint** | Runs govulncheck + golangci-lint v2 |
 
 Each job has concurrency control so duplicate runs on the same branch are cancelled automatically.
 

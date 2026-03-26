@@ -120,3 +120,11 @@ test.describe("Home Page CTAs", () => {
     await expect(btn).toHaveAttribute("href", /github\.com\/go-coldbrew/);
   });
 });
+
+test.describe("Redirects", () => {
+  test("/cookiecutter-reference redirects to /getting-started", async ({ page }) => {
+    await page.goto("/cookiecutter-reference/");
+    await page.waitForURL(/getting-started/);
+    await expect(page).toHaveURL(/getting-started/);
+  });
+});
