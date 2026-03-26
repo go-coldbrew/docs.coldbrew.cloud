@@ -305,7 +305,7 @@ To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 [Opentelemetry]: https://opentelemetry.io/
 [Jaeger]: https://www.jaegertracing.io/
 [Hystrix-Go]: https://pkg.go.dev/github.com/afex/hystrix-go/hystrix
-[Go-grpc-middleware]: https://github.com/grpc-ecosystem/go-grpc-middleware
+[Go-grpc-middleware]: https://github.com/grpc-ecosystem/go-grpc-middleware/v2
 [Core]: https://github.com/go-coldbrew/core/tree/main#readme
 [ColdBrew packages]: /packages
 [Config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
