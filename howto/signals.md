@@ -60,7 +60,7 @@ If you want to avoid this, you can set the `SHUTDOWN_DURATION_IN_SECONDS` to a v
 Make sure you configure your load balancer to stop sending new requests to your application after readiness check fails. This will ensure that no new requests are sent to your application when it is shutting down.
 
 ---
-[ColdBrew cookiecutter]: /cookiecutter-reference#using-the-coldbrew-cookiecutter-template
+[ColdBrew cookiecutter]: /getting-started
 [go-coldbrew/core]: https://pkg.go.dev/github.com/go-coldbrew/core
 [config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [CBStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBStopper

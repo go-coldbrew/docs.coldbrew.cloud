@@ -38,6 +38,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **gRPC Reflection** | Server reflection enabled by default — works with [grpcurl], [grpcui], and Postman |
 | **HTTP Compression** | Automatic gzip compression for all HTTP gateway responses |
 | **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
+| **CI/CD Pipelines** | Ready-to-use [GitHub Actions] and [GitLab CI] workflows for build, test, lint, coverage, and benchmarks |
 
 ## Quick Start
 
@@ -162,3 +163,5 @@ ColdBrew integrates with the tools you already use:
 [grpcurl]: https://github.com/fullstorydev/grpcurl
 [grpcui]: https://github.com/fullstorydev/grpcui
 [automaxprocs]: https://github.com/uber-go/automaxprocs
+[GitHub Actions]: https://github.com/features/actions
+[GitLab CI]: https://docs.gitlab.com/ci/
