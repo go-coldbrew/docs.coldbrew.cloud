@@ -115,12 +115,11 @@ LOG_LEVEL=debug make run
 The server interceptor chain runs in this order:
 1. Response time logging
 2. Trace ID injection
-3. Context tags
-4. OpenTracing/OpenTelemetry
-5. Prometheus metrics
-6. Error notification
-7. NewRelic
-8. Panic recovery
+3. OpenTracing/OpenTelemetry
+4. Prometheus metrics
+5. Error notification
+6. NewRelic
+7. Panic recovery
 
 If a request is failing or behaving unexpectedly, check whether an interceptor is modifying the context or returning early. The response time logging interceptor logs every request with method name and duration — check these logs first.
 

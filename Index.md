@@ -99,11 +99,11 @@ Run `buf generate` — it creates typed Go interfaces from your proto definition
                     │  │ Gateway  │──► │                     │  │
                     │  │ (grpc-  │    │  ► Response Time    │  │
    gRPC Request ──► │  │ gateway)│    │  ► Trace ID         │  │
-                    │  └─────────┘    │  ► Context Tags     │  │
-                    │       │         │  ► OpenTelemetry     │  │
-                    │       ▼         │  ► Prometheus        │  │
-                    │  ┌─────────┐    │  ► Error Notify      │  │
-                    │  │  gRPC   │──► │  ► Panic Recovery    │  │──► Your Handler
+                    │  └─────────┘    │  ► OpenTelemetry     │  │
+                    │       │         │  ► Prometheus        │  │
+                    │       ▼         │  ► Error Notify      │  │
+                    │  ┌─────────┐    │  ► Panic Recovery    │  │
+                    │  │  gRPC   │──► │                     │  │──► Your Handler
                     │  │ Server  │    │                     │  │
                     │  └─────────┘    └────────────────────┘  │
                     │                                         │
@@ -156,7 +156,7 @@ ColdBrew integrates with the tools you already use:
 [opentelemetry]: https://opentelemetry.io/
 [new relic]: https://newrelic.com/
 [sentry]: https://sentry.io/
-[go-grpc-middleware]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware
+[go-grpc-middleware]: https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/v2
 [vtprotobuf]: https://github.com/planetscale/vtprotobuf
 [pprof]: https://pkg.go.dev/net/http/pprof
 [grpcurl]: https://github.com/fullstorydev/grpcurl
