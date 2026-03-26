@@ -130,7 +130,7 @@ func main() {
 ```
 
 ---
-[ColdBrew cookiecutter]: /cookiecutter-reference
+[ColdBrew cookiecutter]: /getting-started
 [Building and Configuring APIs]: /howto/APIs
 [grpcpool]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool
 [grpcpool.Dial]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool#Dial

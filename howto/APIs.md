@@ -544,5 +544,5 @@ For more advanced customization options, refer to the [grpc-gateway customizatio
 [grpc-gateway]: https://grpc-ecosystem.github.io/grpc-gateway/
 [gRPC Gateway mapping]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/examples/
 [grpc-gateway plugin]: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/generating_stubs/
-[ColdBrew cookiecutter]: /cookiecutter-reference#using-the-coldbrew-cookiecutter-template
+[ColdBrew cookiecutter]: /getting-started
 [grpc-gateway customization guide]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_your_gateway/

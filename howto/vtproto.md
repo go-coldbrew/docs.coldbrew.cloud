@@ -166,5 +166,5 @@ This is called from `processConfig()` in `core/core.go` when `DisableVTProtobuf`
 
 ---
 [vtprotobuf]: https://github.com/planetscale/vtprotobuf
-[ColdBrew cookiecutter]: /cookiecutter-reference
+[ColdBrew cookiecutter]: /getting-started
 [Configuration Reference]: /config-reference

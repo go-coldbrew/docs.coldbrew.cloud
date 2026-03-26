@@ -72,8 +72,13 @@ EchoServer/
 ├── version/
 │   └── version.go           # Build-time version info
 ├── third_party/OpenAPI/     # Swagger UI assets (embedded)
+├── .github/workflows/
+│   └── go.yml               # GitHub Actions CI pipeline
+├── .gitlab-ci.yml           # GitLab CI pipeline
 ├── Makefile                 # Build, test, lint, run, Docker targets
 ├── Dockerfile               # Multi-stage production build
+├── .golangci.yml            # Linter configuration
+├── .mockery.yaml            # Mock generation config
 ├── buf.yaml                 # Protobuf linting config
 ├── buf.gen.yaml             # Code generation config
 └── local.env.example        # Environment variable template
@@ -278,9 +283,39 @@ The Dockerfile uses a multi-stage build: compiles a static Go binary in the buil
 ```bash
 make test     # Tests with race detector + coverage
 make lint     # golangci-lint + govulncheck
+make mock     # Generate mocks for interfaces (via mockery)
 ```
 
-Both should pass out of the box.
+Both `test` and `lint` should pass out of the box. See the [Testing How-To](/howto/testing/) for details on mocks, benchmarks, and coverage reports.
+
+## Step 9: CI/CD — Already Configured
+
+Your project includes ready-to-use CI pipelines for both GitHub and GitLab. Delete whichever you don't need.
+
+### GitHub Actions (`.github/workflows/go.yml`)
+
+Runs on push to `main`/`master` and on pull requests. Four parallel jobs:
+
+| Job | What it does |
+|-----|-------------|
+| **build** | Compiles with `make build` |
+| **test** | Runs `make test` (race detector + coverage) |
+| **benchmark** | Runs `make bench` |
+| **lint** | Runs govulncheck + golangci-lint v2 |
+
+Each job has concurrency control so duplicate runs on the same branch are cancelled automatically.
+
+### GitLab CI (`.gitlab-ci.yml`)
+
+Three jobs in a single `test` stage:
+
+| Job | What it does |
+|-----|-------------|
+| **unit-test** | Runs `make test`, generates Cobertura coverage report |
+| **lint** | Runs `make lint` (golangci-lint + govulncheck) |
+| **benchmark** | Runs `make bench` |
+
+Go module caching is enabled for faster builds.
 
 ## What's Built In (You Didn't Have to Configure)
 
@@ -296,6 +331,7 @@ Everything below was set up automatically by ColdBrew:
 - **Swagger UI** for interactive API exploration
 - **Race-detected tests** via `make test`
 - **Vulnerability scanning** via `make lint` (includes govulncheck)
+- **CI/CD pipelines** for GitHub Actions and GitLab CI (build, test, lint, benchmark)
 
 ## Alternative: Manual Setup (No Cookiecutter)
 

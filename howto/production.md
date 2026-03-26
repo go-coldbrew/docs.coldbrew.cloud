@@ -363,4 +363,4 @@ env:
 - [ ] Run `make lint` (includes `govulncheck`) before deploying
 
 ---
-[ColdBrew cookiecutter]: /cookiecutter-reference
+[ColdBrew cookiecutter]: /getting-started

@@ -131,7 +131,7 @@ Use the function [AddUnaryServerInterceptor] and [AddUnaryClientInterceptor] to 
 
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
 [go-coldbrew/tracing]: https://pkg.go.dev/github.com/go-coldbrew/tracing
-[ColdBrew cookiecutter]: /cookiecutter-reference
+[ColdBrew cookiecutter]: /getting-started
 [interceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors
 [UseColdBrewServcerInterceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#UseColdBrewServerInterceptors
 [Default Client Interceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#DefaultClientInterceptors

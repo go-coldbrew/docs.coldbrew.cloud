@@ -3,7 +3,6 @@ import { test, expect } from "@playwright/test";
 const topLevelPages = [
   { path: "/", title: "ColdBrew" },
   { path: "/getting-started/", title: "Getting Started" },
-  { path: "/cookiecutter-reference/", title: "Cookiecutter Reference" },
   { path: "/using/", title: "Using ColdBrew" },
   { path: "/architecture/", title: "Architecture" },
   { path: "/howto/", title: "How To" },
@@ -27,6 +26,7 @@ const howtoPages = [
   "/howto/data-builder/",
   "/howto/vtproto/",
   "/howto/production/",
+  "/howto/testing/",
 ];
 
 test.describe("Page Loading", () => {
@@ -118,5 +118,13 @@ test.describe("Home Page CTAs", () => {
     const btn = page.locator('a.btn[href*="github.com/go-coldbrew"]');
     await expect(btn).toBeVisible();
     await expect(btn).toHaveAttribute("href", /github\.com\/go-coldbrew/);
+  });
+});
+
+test.describe("Redirects", () => {
+  test("/cookiecutter-reference redirects to /getting-started", async ({ page }) => {
+    await page.goto("/cookiecutter-reference/");
+    await page.waitForURL(/getting-started/);
+    await expect(page).toHaveURL(/getting-started/);
   });
 });
