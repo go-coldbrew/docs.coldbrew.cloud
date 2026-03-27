@@ -188,9 +188,9 @@ func main() {
 }
 ```
 
-## Jaeger
+## Jaeger / OTLP-compatible backends
 
-[Jaeger] is an open-source distributed tracing system. ColdBrew supports Jaeger through the generic OpenTelemetry interface.
+[Jaeger] is an open-source distributed tracing system. ColdBrew supports Jaeger (and any OTLP-compatible backend like Grafana Tempo, Honeycomb, etc.) through the OpenTelemetry OTLP exporter.
 
 ### Configuring
 
