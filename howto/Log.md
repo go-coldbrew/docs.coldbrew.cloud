@@ -12,7 +12,7 @@ description: "Context-aware logging and trace ID propagation in ColdBrew"
 
 ## Logging backends
 
-ColdBrew's log package supports pluggable backends. The default is **slog** (Go's standard structured logging, since v0.2.8).
+ColdBrew's log package supports pluggable backends. The default is **slog** (Go's standard structured logging).
 
 | Backend | Package | Status |
 |---------|---------|--------|
