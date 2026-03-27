@@ -10,6 +10,54 @@ description: "Context-aware logging and trace ID propagation in ColdBrew"
 1. TOC
 {:toc}
 
+## Logging backends
+
+ColdBrew's log package supports pluggable backends. The default is **slog** (Go's standard structured logging, since v0.2.8).
+
+| Backend | Package | Status |
+|---------|---------|--------|
+| **slog** | `loggers/slog` | Default, recommended |
+| **zap** | `loggers/zap` | Supported |
+| **gokit** | `loggers/gokit` | Deprecated |
+| **logrus** | `loggers/logrus` | Deprecated |
+| **stdlog** | `loggers/stdlog` | Minimal, for simple use cases |
+
+To explicitly configure a backend:
+
+```go
+import (
+    "github.com/go-coldbrew/log"
+    "github.com/go-coldbrew/log/loggers"
+    cbslog "github.com/go-coldbrew/log/loggers/slog"
+)
+
+func init() {
+    log.SetLogger(log.NewLogger(cbslog.NewLogger(
+        loggers.WithJSONLogs(true),
+        loggers.WithCallerInfo(true),
+    )))
+}
+```
+
+### slog bridge
+
+If your application or third-party libraries use `slog` directly, you can route those calls through ColdBrew's logging pipeline (context fields, level overrides, interceptors):
+
+```go
+import (
+    "log/slog"
+    "github.com/go-coldbrew/log"
+    "github.com/go-coldbrew/log/wrap"
+)
+
+func init() {
+    slog.SetDefault(wrap.ToSlogLogger(log.GetLogger()))
+}
+```
+
+{: .note }
+The gokit and logrus backends are deprecated. Both upstream libraries are in maintenance mode and no longer actively developed. Migrate to the slog backend for better performance and long-term support.
+
 ## Context aware logs
 
 In any service there a set of common items that you want to log with every log message. These items are usually things like the request-id, trace, user-id, etc. It is useful to have these items in the log message so that you can filter on them in your log aggregation system. This is especially useful when you have multiple points of logs and you want to be able to trace a request through the system.
