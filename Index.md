@@ -26,7 +26,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | Feature | Description |
 |---------|-------------|
 | **gRPC + REST Gateway** | Define your API once in protobuf — get gRPC, REST, and [Swagger docs](/architecture#self-documenting-apis) automatically via [grpc-gateway] |
-| **Structured Logging** | Pluggable backends (go-kit, zap, logrus) with per-request context fields and trace ID propagation |
+| **Structured Logging** | Pluggable backends — [slog] (default), zap, go-kit, logrus — with per-request context fields and trace ID propagation |
 | **Distributed Tracing** | [OpenTelemetry], [Jaeger], and [New Relic] support with automatic span creation in interceptors |
 | **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
 | **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
@@ -165,3 +165,4 @@ ColdBrew integrates with the tools you already use:
 [automaxprocs]: https://github.com/uber-go/automaxprocs
 [GitHub Actions]: https://github.com/features/actions
 [GitLab CI]: https://docs.gitlab.com/ci/
+[slog]: https://pkg.go.dev/log/slog
