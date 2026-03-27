@@ -46,7 +46,7 @@ Documentation can be found at [notifier-docs]
 
 ## [Tracing]
 
-Tracing is a library that provides distributed tracing to Go applications. It offers features such as collecting performance data of an application, identifying where requests are spending most of their time, and segmenting requests. It supports exporting traces to 3rd-party services such as Jaeger, Zipkin, Opentelemetry, and NewRelic.
+Tracing is a library that provides distributed tracing to Go applications. It offers features such as collecting performance data of an application, identifying where requests are spending most of their time, and segmenting requests. It supports exporting traces via OpenTelemetry to any OTLP-compatible backend (Jaeger, Grafana Tempo, Honeycomb, etc.) and New Relic.
 
 Documentation can be found at [tracing-docs]
 

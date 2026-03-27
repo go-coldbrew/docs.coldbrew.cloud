@@ -152,7 +152,7 @@ export NEW_RELIC_APPNAME=myservice
 export SENTRY_DSN=https://your-dsn@sentry.io/123
 ```
 
-## Example: Local Development with Jaeger
+## Example: Local Development with Jaeger (via OTLP)
 
 ```bash
 export APP_NAME=myservice

@@ -2,7 +2,7 @@
 layout: default
 title: "Tracing"
 parent: "How To"
-description: "Set up distributed tracing in ColdBrew with OpenTelemetry, Jaeger, and New Relic for gRPC services"
+description: "Set up distributed tracing in ColdBrew with OpenTelemetry and New Relic for gRPC services"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -12,10 +12,10 @@ description: "Set up distributed tracing in ColdBrew with OpenTelemetry, Jaeger,
 
 ## Overview
 
-ColdBrew provides a way to add tracing to your functions using the [go-coldbrew/tracing] package. The package implements multiple tracing backends (e.g. [New Relic] / [Opentelemetry] / [Jaeger]) which enables you to switch between them without changing your code.
+ColdBrew provides a way to add tracing to your functions using the [go-coldbrew/tracing] package. The package implements tracing via [OpenTelemetry] (with support for any OTLP-compatible backend like Jaeger or Grafana Tempo) and [New Relic], enabling you to switch between them without changing your code.
 
 {: .note .note-info }
-Its possible for you to have multiple backends enabled at the same time, for example you can have both [New Relic] and [Opentelemetry] enabled at the same time in the same span and they will both receive the same trace.
+Its possible for you to have multiple backends enabled at the same time, for example you can have both [New Relic] and [OpenTelemetry] enabled at the same time in the same span and they will both receive the same trace.
 
 ## Adding Tracing to your functions
 
@@ -23,7 +23,7 @@ ColdBrew provides a way to add tracing to your functions using the [go-coldbrew/
 
 Make sure you use the context returned from the `NewInternalSpan/NewExternalSpan/NewDatabaseSpan` functions. This is because the span is added to the context. If you don't use the context returned from the function, new spans will not be add at the correct place in the trace.
 
-You can also add tags to the span using the `SetTag/SetQuery/SetError` function. These tags will be added to the span and will be visible in the trace view of your tracing system (e.g. New Relic / Opentelemetry).
+You can also add tags to the span using the `SetTag/SetQuery/SetError` function. These tags will be added to the span and will be visible in the trace view of your tracing system (e.g. New Relic / OpenTelemetry).
 
 ```go
 import (
@@ -34,7 +34,7 @@ import (
 func myFunction1(ctx context.Context) {
     span, ctx := tracing.NewInternalSpan(ctx, "myFunction1") // start a new span for this function
     defer span.End() // end the span when the function returns
-    span.SetTag("myTag", "myValue") // add a tag to the span to help identify it in the trace view of your tracing system (e.g. Jaeger)
+    span.SetTag("myTag", "myValue") // add a tag to the span to help identify it in your tracing system
     // do something
     myFunction2(ctx)
     // do something
@@ -64,7 +64,7 @@ func main() {
 Adding `defer span.End()` will make sure that the span will end when the function returns. If you don't end the span, it may never be sent to the tracing system and/or have the wrong duration.
 
 ## Adding Tracing to your gRPC services
-When you create a new service with [ColdBrew cookiecutter] it will automatically add tracing (New Relic / Opentelemetry) to your gRPC services. This is done by adding the [interceptors] to your gRPC server.
+When you create a new service with [ColdBrew cookiecutter] it will automatically add tracing (New Relic / OpenTelemetry) to your gRPC services. This is done by adding the [interceptors] to your gRPC server.
 
 {: .note .note-info }
 To disable coldbrew provided interceptors you can call the function [UseColdBrewServcerInterceptors].
@@ -209,7 +209,7 @@ export TRACE_HEADER_NAME=x-request-id  # Use a different header
 [Adding interceptors to your gRPC server]: /howto/interceptors#adding-interceptors-to-your-grpc-server
 [Adding interceptors to your gRPC client]: /howto/interceptors#adding-interceptors-to-your-grpc-client
 [New Relic]: https://newrelic.com/
-[Opentelemetry]: https://opentelemetry.io/
+[OpenTelemetry]: https://opentelemetry.io/
 [Jaeger]: https://www.jaegertracing.io/
 [NewDatastoreSpan]: https://pkg.go.dev/github.com/go-coldbrew/tracing#NewDatastoreSpan
 [NewExternalSpan]: https://pkg.go.dev/github.com/go-coldbrew/tracing#NewExternalSpan
