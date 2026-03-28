@@ -197,6 +197,63 @@ This means a single trace ID connects your logs and error reports — you can se
 export TRACE_HEADER_NAME=x-request-id  # Use a different header
 ```
 
+## Distributed Trace Propagation (W3C)
+
+In addition to ColdBrew's application-level trace ID, OpenTelemetry propagates **W3C trace context** (`traceparent`/`tracestate` headers) for distributed tracing across services. This is what links spans together in your tracing backend (Jaeger, Tempo, etc.).
+
+### What's automatic
+
+ColdBrew handles these flows without any code:
+
+| Flow | Propagation | How |
+|------|------------|-----|
+| **Incoming gRPC** | Extracted from gRPC metadata | OTEL gRPC stats handler |
+| **Incoming HTTP** | Extracted from `traceparent` header | HTTP gateway tracing middleware |
+| **HTTP → gRPC gateway** | Parent span linked to child | Context propagation via W3C propagator |
+| **gRPC server → client** | Injected into outgoing metadata | OTEL gRPC stats handler |
+
+### Outgoing HTTP calls
+
+When calling external HTTP services, use `NewHTTPExternalSpan` to create a span and inject trace headers. Pass an `http.Header` to have headers injected automatically:
+
+```go
+hdr := make(http.Header)
+span, ctx := tracing.NewHTTPExternalSpan(ctx, "payment-service", "https://payment-service/api/charge", hdr)
+defer span.End()
+
+req, err := http.NewRequestWithContext(ctx, "POST", "https://payment-service/api/charge", body)
+if err != nil {
+    return err
+}
+req.Header = hdr
+
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+    span.SetError(err)
+    return err
+}
+defer resp.Body.Close()
+```
+
+{: .important }
+If you make HTTP calls without `NewHTTPExternalSpan`, trace context is **not** propagated automatically. You must inject it manually:
+
+```go
+req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+if err != nil {
+    return err
+}
+otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
+resp, err := client.Do(req)
+```
+
+### Verifying propagation
+
+To confirm trace context is flowing correctly, check your tracing backend for:
+- A single OpenTelemetry trace (same W3C trace ID) connecting HTTP → gRPC → downstream spans
+- Parent-child relationships between service boundaries
+- The `traceparent` header in outgoing requests
+
 ---
 
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
