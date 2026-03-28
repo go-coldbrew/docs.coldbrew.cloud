@@ -197,6 +197,58 @@ This means a single trace ID connects your logs and error reports — you can se
 export TRACE_HEADER_NAME=x-request-id  # Use a different header
 ```
 
+## Distributed Trace Propagation (W3C)
+
+In addition to ColdBrew's application-level trace ID, OpenTelemetry propagates **W3C trace context** (`traceparent`/`tracestate` headers) for distributed tracing across services. This is what links spans together in your tracing backend (Jaeger, Tempo, etc.).
+
+### What's automatic
+
+ColdBrew handles these flows without any code:
+
+| Flow | Propagation | How |
+|------|------------|-----|
+| **Incoming gRPC** | Extracted from gRPC metadata | `otelgrpc` stats handler |
+| **Incoming HTTP** | Extracted from `traceparent` header | `tracingWrapper` middleware |
+| **HTTP → gRPC gateway** | Parent span linked to child | Context propagation via W3C propagator |
+| **gRPC server → client** | Injected into outgoing metadata | `otelgrpc` stats handler |
+
+### Outgoing HTTP calls
+
+When calling external HTTP services, use `NewHTTPExternalSpan` to create a span and inject trace headers:
+
+```go
+span, ctx := tracing.NewHTTPExternalSpan(ctx, "other-service", "/api/data", nil)
+defer span.End()
+
+req, _ := http.NewRequestWithContext(ctx, "GET", "https://other-service/api/data", nil)
+// Inject trace headers into the outgoing request
+otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
+
+resp, err := http.DefaultClient.Do(req)
+```
+
+Or pass the headers directly to let `NewHTTPExternalSpan` inject for you:
+
+```go
+hdr := make(http.Header)
+span, ctx := tracing.NewHTTPExternalSpan(ctx, "other-service", "/api/data", hdr)
+defer span.End()
+
+req, _ := http.NewRequestWithContext(ctx, "GET", "https://other-service/api/data", nil)
+req.Header = hdr
+resp, err := http.DefaultClient.Do(req)
+```
+
+{: .important }
+If you make HTTP calls without `NewHTTPExternalSpan`, trace context is **not** propagated automatically. You must inject it manually using `otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))`.
+
+### Verifying propagation
+
+To confirm trace context is flowing correctly, check your tracing backend for:
+- A single trace ID connecting HTTP → gRPC → downstream spans
+- Parent-child relationships between service boundaries
+- The `traceparent` header in outgoing requests
+
 ---
 
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
