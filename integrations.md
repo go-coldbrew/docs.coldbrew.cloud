@@ -162,7 +162,7 @@ type OTLPConfig struct {
     ServiceVersion       string            // Version of your service
     SamplingRatio        float64           // Sampling ratio (0.0 to 1.0)
     Compression          string            // "gzip" or "none"
-    UseOpenTracingBridge bool              // Enable OpenTracing compatibility
+    UseOpenTracingBridge bool              // Deprecated: enable legacy OpenTracing bridge
     Insecure             bool              // Disable TLS (for local development)
 }
 ```
@@ -178,7 +178,7 @@ func main() {
         ServiceName:          "my-service",
         ServiceVersion:       "v1.0.0",
         SamplingRatio:        0.1,
-        UseOpenTracingBridge: true,
+        // UseOpenTracingBridge: true, // only needed for legacy OpenTracing code
         Insecure:             true,  // for local development
     }
     err := core.SetupOpenTelemetry(config)
@@ -205,7 +205,7 @@ func main() {
         ServiceName:          "my-service",
         ServiceVersion:       "v1.0.0",
         SamplingRatio:        0.1,
-        UseOpenTracingBridge: true,
+        // UseOpenTracingBridge: true, // only needed for legacy OpenTracing code
         Insecure:             true,
     }
     err := core.SetupOpenTelemetry(config)

@@ -111,7 +111,7 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | `OTLP_COMPRESSION` | string | `gzip` | Compression type: `gzip` or `none` |
 | `OTLP_INSECURE` | bool | `false` | Disable TLS for OTLP connection (development only) |
 | `OTLP_SAMPLING_RATIO` | float64 | `0.2` | Trace sampling ratio (0.0–1.0, where 1.0 = sample all) |
-| `OTLP_USE_OPENTRACING_BRIDGE` | bool | `true` | Enable OpenTracing compatibility bridge for existing instrumentation |
+| `OTLP_USE_OPENTRACING_BRIDGE` | bool | `false` | **Deprecated.** Enable legacy OpenTracing bridge — only needed for services with unmigrated OpenTracing instrumentation |
 
 ## Error Tracking
 

@@ -154,11 +154,11 @@ When a request arrives at a ColdBrew service, it flows through several layers:
   │  │                                           │   │
   │  │  1. Response Time Logging                 │   │
   │  │  2. Trace ID Injection                    │   │
-  │  │  3. OpenTracing / OpenTelemetry           │   │
-  │  │  4. Prometheus Metrics                    │   │
-  │  │  5. Error Notification (Sentry/Rollbar)   │   │
-  │  │  6. New Relic Transaction                 │   │
-  │  │  7. Panic Recovery                        │   │
+  │  │  3. Prometheus Metrics                    │   │
+  │  │  4. Error Notification (Sentry/Rollbar)   │   │
+  │  │  5. New Relic Transaction                 │   │
+  │  │  6. Panic Recovery                        │   │
+  │  │  (OTEL tracing via gRPC stats handler)    │   │
   │  │                                           │   │
   │  └────────────────────┬─────────────────────┘   │
   │                       │                          │
@@ -200,11 +200,13 @@ Interceptors are gRPC middleware that run on every request. ColdBrew chains them
 |-------|------------|---------|--------------|
 | 1 | Response Time Logging | `interceptors` | Logs method name, duration, and status code |
 | 2 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs and Sentry/Rollbar error reports |
-| 3 | OpenTracing | `grpc_opentracing` | Creates a tracing span for the request |
-| 4 | Prometheus | `interceptors` | Records request count, latency histogram, and status codes |
-| 5 | Error Notification | `interceptors` | Sends errors to Sentry/Rollbar/Airbrake asynchronously |
-| 6 | New Relic | `interceptors` | Creates a New Relic transaction for APM |
-| 7 | Panic Recovery | `interceptors` | Catches panics and converts them to gRPC errors |
+| 3 | Prometheus | `interceptors` | Records request count, latency histogram, and status codes |
+| 4 | Error Notification | `interceptors` | Sends errors to Sentry/Rollbar/Airbrake asynchronously |
+| 5 | New Relic | `interceptors` | Creates a New Relic transaction for APM |
+| 6 | Panic Recovery | `interceptors` | Catches panics and converts them to gRPC errors |
+
+{: .note }
+OpenTelemetry tracing spans are created by the `otelgrpc` stats handler configured at the gRPC server/client level, not as an interceptor in the chain.
 
 {: .note }
 Health checks, ready checks, and gRPC reflection are **excluded by default** via `FilterMethods`. This prevents observability noise from Kubernetes probes. See the [FAQ](/faq) for how to customize this.
@@ -228,9 +230,11 @@ When your service calls other gRPC services, ColdBrew applies client-side interc
 
 | Interceptor | What It Does |
 |------------|--------------|
-| OpenTracing | Propagates trace context to downstream services |
 | Hystrix | Circuit breaking (deprecated — consider failsafe-go) |
 | Retry | Automatic retries with backoff |
+
+{: .note }
+Trace context propagation to downstream services is handled by the `otelgrpc` client stats handler, not a chain interceptor.
 
 ## Context Propagation
 
@@ -249,7 +253,7 @@ ColdBrew uses `context.Context` to propagate metadata through every layer:
        │
        ├── trace span (distributed tracing)
        │     Create: tracing.NewInternalSpan(ctx, "operation")
-       │     Propagated by: OpenTracing interceptor
+       │     Propagated by: OTEL gRPC stats handler
        │
        └── trace ID (request correlation)
              Injected by: Trace ID interceptor
