@@ -465,5 +465,6 @@ Your service starts on `:9090` (gRPC) and `:9091` (HTTP) with metrics, health ch
 
 - **[Using ColdBrew](/using)** — Configure ports, environment variables, and interceptors
 - **[How-To Guides](/howto)** — Tracing, logging, metrics, error handling, and more
+- **[Production Deployment](/howto/production)** — Kubernetes manifests, health probes, tracing, and graceful shutdown
 - **[Integrations](/integrations)** — Connect New Relic, Prometheus, Sentry, Jaeger
 - **[FAQ](/faq)** — Common questions and gotchas
