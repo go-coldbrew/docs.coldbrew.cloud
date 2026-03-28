@@ -207,45 +207,50 @@ ColdBrew handles these flows without any code:
 
 | Flow | Propagation | How |
 |------|------------|-----|
-| **Incoming gRPC** | Extracted from gRPC metadata | `otelgrpc` stats handler |
-| **Incoming HTTP** | Extracted from `traceparent` header | `tracingWrapper` middleware |
+| **Incoming gRPC** | Extracted from gRPC metadata | OTEL gRPC stats handler |
+| **Incoming HTTP** | Extracted from `traceparent` header | HTTP gateway tracing middleware |
 | **HTTP → gRPC gateway** | Parent span linked to child | Context propagation via W3C propagator |
-| **gRPC server → client** | Injected into outgoing metadata | `otelgrpc` stats handler |
+| **gRPC server → client** | Injected into outgoing metadata | OTEL gRPC stats handler |
 
 ### Outgoing HTTP calls
 
-When calling external HTTP services, use `NewHTTPExternalSpan` to create a span and inject trace headers:
-
-```go
-span, ctx := tracing.NewHTTPExternalSpan(ctx, "other-service", "/api/data", nil)
-defer span.End()
-
-req, _ := http.NewRequestWithContext(ctx, "GET", "https://other-service/api/data", nil)
-// Inject trace headers into the outgoing request
-otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
-
-resp, err := http.DefaultClient.Do(req)
-```
-
-Or pass the headers directly to let `NewHTTPExternalSpan` inject for you:
+When calling external HTTP services, use `NewHTTPExternalSpan` to create a span and inject trace headers. Pass an `http.Header` to have headers injected automatically:
 
 ```go
 hdr := make(http.Header)
-span, ctx := tracing.NewHTTPExternalSpan(ctx, "other-service", "/api/data", hdr)
+span, ctx := tracing.NewHTTPExternalSpan(ctx, "payment-service", "https://payment-service/api/charge", hdr)
 defer span.End()
 
-req, _ := http.NewRequestWithContext(ctx, "GET", "https://other-service/api/data", nil)
+req, err := http.NewRequestWithContext(ctx, "POST", "https://payment-service/api/charge", body)
+if err != nil {
+    return err
+}
 req.Header = hdr
+
 resp, err := http.DefaultClient.Do(req)
+if err != nil {
+    span.SetError(err)
+    return err
+}
+defer resp.Body.Close()
 ```
 
 {: .important }
-If you make HTTP calls without `NewHTTPExternalSpan`, trace context is **not** propagated automatically. You must inject it manually using `otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))`.
+If you make HTTP calls without `NewHTTPExternalSpan`, trace context is **not** propagated automatically. You must inject it manually:
+
+```go
+req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+if err != nil {
+    return err
+}
+otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
+resp, err := client.Do(req)
+```
 
 ### Verifying propagation
 
 To confirm trace context is flowing correctly, check your tracing backend for:
-- A single trace ID connecting HTTP → gRPC → downstream spans
+- A single OpenTelemetry trace (same W3C trace ID) connecting HTTP → gRPC → downstream spans
 - Parent-child relationships between service boundaries
 - The `traceparent` header in outgoing requests
 
