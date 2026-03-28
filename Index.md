@@ -146,6 +146,7 @@ ColdBrew integrates with the tools you already use:
 - **[Getting Started](/getting-started)** — Create your first ColdBrew service
 - **[Using ColdBrew](/using)** — Configure and extend your service
 - **[How-To Guides](/howto)** — Step-by-step guides for common tasks
+- **[Production Deployment](/howto/production)** — Kubernetes, health probes, tracing, and graceful shutdown
 - **[Integrations](/integrations)** — Set up monitoring, tracing, and error tracking
 - **[FAQ](/faq)** — Common questions and answers
 

@@ -2,7 +2,7 @@
 layout: default
 title: "Production Deployment"
 parent: "How To"
-description: "Deploy ColdBrew Go services to production with Kubernetes manifests, health probes, Prometheus, and graceful shutdown"
+description: "Deploy ColdBrew Go services to production with Kubernetes manifests, health probes, Prometheus, distributed tracing, and graceful shutdown"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -129,6 +129,7 @@ type: Opaque
 stringData:
   NEW_RELIC_LICENSE_KEY: "your-license-key"
   SENTRY_DSN: "https://your-dsn@sentry.io/123"
+  OTLP_HEADERS: "x-honeycomb-team=your-api-key"  # if your OTLP backend needs auth
 ```
 
 ### Service
@@ -259,6 +260,79 @@ env:
   - name: PROMETHEUS_GRPC_HISTOGRAM_BUCKETS
     value: "0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10"
 ```
+
+## Distributed tracing
+
+ColdBrew sends traces via OpenTelemetry to any OTLP-compatible backend (Jaeger, Grafana Tempo, Honeycomb, Datadog, etc.) or New Relic.
+
+### OTLP backend (Jaeger, Tempo, Honeycomb, etc.)
+
+```yaml
+env:
+  - name: OTLP_ENDPOINT
+    value: "otel-collector.monitoring:4317"  # your OTLP collector
+  - name: OTLP_SAMPLING_RATIO
+    value: "0.1"  # sample 10% of traces in production
+```
+
+For backends that require authentication headers:
+
+```yaml
+env:
+  - name: OTLP_ENDPOINT
+    value: "api.honeycomb.io:443"
+  - name: OTLP_HEADERS
+    value: "x-honeycomb-team=your-api-key"
+  - name: OTLP_SAMPLING_RATIO
+    value: "0.1"
+```
+
+{: .note }
+For local development, set `OTLP_INSECURE=true` and point to a local Jaeger instance (`localhost:4317`). See the [config reference](/config-reference#example-local-development-with-jaeger-via-otlp) for a full example.
+
+### New Relic
+
+New Relic tracing is configured separately and can run alongside OTLP:
+
+```yaml
+env:
+  - name: NEW_RELIC_LICENSE_KEY
+    valueFrom:
+      secretKeyRef:
+        name: myservice-secrets
+        key: NEW_RELIC_LICENSE_KEY
+  - name: NEW_RELIC_OPENTELEMETRY
+    value: "true"
+  - name: NEW_RELIC_OPENTELEMETRY_SAMPLE
+    value: "0.2"
+```
+
+### What gets traced
+
+ColdBrew automatically creates spans for:
+
+| Source | Span kind | Example |
+|--------|-----------|---------|
+| Incoming gRPC RPCs | Server | `/pkg.Service/Method` |
+| Incoming HTTP requests | Server | `ServeHTTP` |
+| Outbound gRPC calls (gateway) | Client | `/pkg.Service/Method` |
+| `tracing.NewInternalSpan()` | Internal | Custom business logic spans |
+| `tracing.NewDatastoreSpan()` | Client | Database/Redis operations |
+| `tracing.NewExternalSpan()` | Client | External HTTP/API calls |
+
+### Sampling in production
+
+Set `OTLP_SAMPLING_RATIO` based on your traffic volume:
+
+| QPS | Recommended ratio | Traces/sec |
+|-----|-------------------|------------|
+| 100 | `1.0` | 100 |
+| 1,000 | `0.1` | 100 |
+| 10,000 | `0.01` | 100 |
+| 70,000+ | `0.001–0.01` | 70–700 |
+
+{: .important }
+Sampling is parent-based — if an incoming request already has a sampled trace context, ColdBrew respects that decision regardless of the local ratio.
 
 ## gRPC load balancing
 
