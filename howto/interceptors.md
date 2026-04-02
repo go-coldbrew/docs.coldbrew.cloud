@@ -28,34 +28,27 @@ ColdBrew uses interceptors to implement response time logging in [ResponseTimeLo
 
 It's possible to filter out response time log messages by using a [FilterFunc]. ColdBrew provides a [default filter function] implementation that filters out common logs like healthcheck, readycheck, server reflection, etc.
 
-You can set the filter list using [SetFilterMethods]. For example, to also filter out all methods containing `com.github.ankurs.MySvc/`:
+You can replace the default filter list using [SetFilterMethods]. This **overwrites** the entire list, so include the defaults if you want to keep them. Filter entries are matched as substrings against the lowercased method name — they work for both gRPC methods and HTTP paths:
 
 ```go
-import (
-    "context"
-    "github.com/go-coldbrew/interceptors"
-)
-
-func main() {
-    interceptors.SetFilterMethods(context.Background(), []string{
-        "healthcheck", "readycheck", "serverreflectioninfo",
-        "com.github.ankurs.MySvc/",
-    })
-}
+interceptors.SetFilterMethods(context.Background(), []string{
+    "healthcheck", "readycheck", "serverreflectioninfo", // defaults
+    "/echo",           // exclude HTTP path /echo
+    "MySvc/Echo",      // exclude gRPC method /com.github.ankurs.MySvc/Echo
+})
 ```
 
-You can also provide your own filter function by calling the [SetFilterFunc] variable:
+For more advanced filtering, provide your own [FilterFunc] via [SetFilterFunc]. The function receives the request context, which lets you distinguish gRPC from HTTP requests. Return `true` to include a method in tracing/logging, or `false` to exclude it:
 
 ```go
-import (
-    "github.com/go-coldbrew/interceptors"
-)
-
-func main() {
-    interceptors.SetFilterFunc(context.Background(), func(ctx context.Context, method string) bool {
-        return strings.HasPrefix(method, "com.github.ankurs.MySvc/")
-    })
-}
+interceptors.SetFilterFunc(context.Background(), func(ctx context.Context, method string) bool {
+    if _, ok := grpc.Method(ctx); ok {
+        // gRPC: only trace MyService methods
+        return strings.Contains(method, "MySvc")
+    }
+    // HTTP: trace everything except health and ready checks
+    return method != "/healthcheck" && method != "/readycheck"
+})
 ```
 
 ## Adding interceptors to your gRPC server
