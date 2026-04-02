@@ -58,8 +58,8 @@ Health checks run every few seconds (Kubernetes liveness/readiness probes). Logg
 
 ```go
 func init() {
-    interceptors.SetFilterFunc(func(fullMethodName string) bool {
-        return false // don't filter anything
+    interceptors.SetFilterFunc(context.Background(), func(ctx context.Context, fullMethodName string) bool {
+        return true // don't filter anything
     })
 }
 ```

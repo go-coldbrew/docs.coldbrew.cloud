@@ -28,15 +28,19 @@ ColdBrew uses interceptors to implement response time logging in [ResponseTimeLo
 
 It's possible to filter out response time log messages by using a [FilterFunc]. ColdBrew provides a [default filter function] implementation that filters out common logs like healthcheck, readycheck, server reflection, etc.
 
-You can add more methods to filter out by appending to the default [FilterMethods] list. For example, to filter out all methods that starts with `com.github.ankurs.MySvc/`:
+You can set the filter list using [SetFilterMethods]. For example, to also filter out all methods containing `com.github.ankurs.MySvc/`:
 
 ```go
 import (
+    "context"
     "github.com/go-coldbrew/interceptors"
 )
 
 func main() {
-    interceptors.FilterMethods = append(interceptors.FilterMethods, "com.github.ankurs.MySvc/")
+    interceptors.SetFilterMethods(context.Background(), []string{
+        "healthcheck", "readycheck", "serverreflectioninfo",
+        "com.github.ankurs.MySvc/",
+    })
 }
 ```
 
@@ -140,6 +144,7 @@ Use the function [AddUnaryServerInterceptor] and [AddUnaryClientInterceptor] to 
 [FilterFunc]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#FilterFunc
 [default filter function]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#FilterMethodsFunc
 [FilterMethods]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#FilterMethods
+[SetFilterMethods]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#SetFilterMethods
 [SetFilterFunc]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#SetFilterFunc
 [AddUnaryServerInterceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#AddUnaryServerInterceptor
 [AddUnaryClientInterceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#AddUnaryClientInterceptor
