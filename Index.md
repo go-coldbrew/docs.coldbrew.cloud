@@ -36,7 +36,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **Swagger / OpenAPI** | Interactive API docs auto-served at `/swagger/` from your protobuf definitions |
 | **Profiling** | Go [pprof] endpoints at `/debug/pprof/` for CPU, memory, goroutine, and trace profiling |
 | **gRPC Reflection** | Server reflection enabled by default — works with [grpcurl], [grpcui], and Postman |
-| **HTTP Compression** | Automatic gzip compression for all HTTP gateway responses |
+| **HTTP Compression** | Automatic gzip and [zstd] compression for all HTTP gateway responses (content-negotiated via `Accept-Encoding`) |
 | **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
 | **CI/CD Pipelines** | Ready-to-use [GitHub Actions] and [GitLab CI] workflows for build, test, lint, coverage, and benchmarks |
 
@@ -167,3 +167,4 @@ ColdBrew integrates with the tools you already use:
 [GitHub Actions]: https://github.com/features/actions
 [GitLab CI]: https://docs.gitlab.com/ci/
 [slog]: https://pkg.go.dev/log/slog
+[zstd]: https://datatracker.ietf.org/doc/html/rfc8878

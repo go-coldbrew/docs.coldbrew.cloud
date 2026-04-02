@@ -42,27 +42,15 @@ This is intentional and consistent across the entire codebase. The interceptor c
 func init() {
     // Safe: called during initialization, before server starts
     interceptors.AddUnaryServerInterceptor(context.Background(), myInterceptor)
-    interceptors.SetFilterFunc(myFilter)
+    interceptors.SetFilterFunc(context.Background(), myFilter)
 }
 ```
 
 ## Why are health checks excluded from tracing and logging?
 
-By default, ColdBrew's `FilterMethods` excludes these methods from interceptor processing:
+Health checks run every few seconds (Kubernetes liveness/readiness probes). Logging and tracing each one would flood your observability systems with noise. By default, ColdBrew filters out `healthcheck`, `readycheck`, and `serverreflectioninfo` methods.
 
-- `/grpc.health.v1.Health/Check`
-- `/grpc.health.v1.Health/Watch`
-- `/grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo`
-
-Health checks run every few seconds (Kubernetes liveness/readiness probes). Logging and tracing each one would flood your observability systems with noise. If you need to include them, override the filter:
-
-```go
-func init() {
-    interceptors.SetFilterFunc(func(fullMethodName string) bool {
-        return false // don't filter anything
-    })
-}
-```
+See [Filtering response time logs](/howto/interceptors#filtering-response-time-logs) for how to customize which methods are filtered.
 
 ## How does trace ID propagation work?
 
