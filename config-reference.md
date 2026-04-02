@@ -94,7 +94,7 @@ cfg := config.GetColdBrewConfig()
 |----------|------|---------|-------------|
 | `NEW_RELIC_LICENSE_KEY` | string | `""` | New Relic license key (required to enable New Relic) |
 | `NEW_RELIC_APPNAME` | string | `""` | Application name in New Relic |
-| `DISABLE_NEW_RELIC` | bool | `false` | Disable all New Relic reporting |
+| `DISABLE_NEW_RELIC` | bool | `false` | Disable all New Relic reporting. Auto-set to `true` when `NEW_RELIC_LICENSE_KEY` is empty |
 | `NEW_RELIC_DISTRIBUTED_TRACING` | bool | `true` | Enable New Relic distributed tracing |
 | `NEW_RELIC_OPENTELEMETRY` | bool | `true` | Enable New Relic via OpenTelemetry |
 | `NEW_RELIC_OPENTELEMETRY_SAMPLE` | float64 | `0.2` | Trace sampling ratio for New Relic OpenTelemetry (0.0–1.0) |
@@ -126,6 +126,20 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | `DISABLE_SIGNAL_HANDLER` | bool | `false` | Disable ColdBrew's SIGINT/SIGTERM handler |
 | `SHUTDOWN_DURATION_IN_SECONDS` | int | `15` | Time to wait for in-flight requests to complete before forced shutdown |
 | `GRPC_GRACEFUL_DURATION_IN_SECONDS` | int | `7` | Time to wait for healthcheck failure to propagate before initiating shutdown. Should be less than `SHUTDOWN_DURATION_IN_SECONDS` |
+
+## HTTP Compression
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `DISABLE_HTTP_COMPRESSION` | bool | `false` | Disable gzip/zstd compression for HTTP gateway responses |
+| `HTTP_COMPRESSION_MIN_SIZE` | int | `256` | Minimum response body size (bytes) before compression is applied. Responses smaller than this are sent uncompressed |
+
+## Response Time Logging
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `RESPONSE_TIME_LOG_LEVEL` | string | `info` | Log level for per-request response time logging. Valid: `debug`, `info`, `warn`, `error`. Invalid values fall back to `info` |
+| `RESPONSE_TIME_LOG_ERROR_ONLY` | bool | `false` | When `true`, only log response time for requests that return an error. Successful requests are not logged |
 
 ## Runtime
 
@@ -162,6 +176,21 @@ export OTLP_ENDPOINT=localhost:4317
 export OTLP_INSECURE=true
 export OTLP_SAMPLING_RATIO=1.0
 export DISABLE_NEW_RELIC=true
+```
+
+## Example: High-Throughput Production
+
+For services at 70k+ QPS where observability overhead matters:
+
+```bash
+export APP_NAME=myservice
+export ENVIRONMENT=production
+export LOG_LEVEL=warn
+export RESPONSE_TIME_LOG_ERROR_ONLY=true
+export OTLP_SAMPLING_RATIO=0.05
+export ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false
+export DISABLE_NEW_RELIC=true
+export HTTP_COMPRESSION_MIN_SIZE=512
 ```
 
 ---

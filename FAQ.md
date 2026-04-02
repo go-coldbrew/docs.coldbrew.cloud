@@ -59,7 +59,7 @@ ColdBrew generates a unique trace ID for every request automatically. It can als
 1. **HTTP header** — `x-trace-id` (configurable via `TRACE_HEADER_NAME`) is forwarded from the HTTP gateway to gRPC
 2. **Proto field** — if your request message has a `trace_id` string field, ColdBrew reads it via the generated `GetTraceId()` method
 
-The trace ID is then propagated to structured logs (`"trace": "abc123"`) and Sentry/Rollbar error reports — so you can search for one ID and find the complete request flow across your logs and error tracking.
+The trace ID is then propagated to structured logs (`"trace": "abc123"`), Sentry/Rollbar error reports, and OpenTelemetry spans (as the `coldbrew.trace_id` attribute) — so you can search for one ID and find the complete request flow across your logs, error tracking, and distributed traces.
 
 See the [Tracing How-To](/howto/Tracing/#trace-id-propagation) for details.
 
