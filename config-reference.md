@@ -99,7 +99,7 @@ cfg := config.GetColdBrewConfig()
 | `DISABLE_NEW_RELIC` | bool | `false` | Disable all New Relic reporting. **Note:** automatically set to `true` at startup when `NEW_RELIC_LICENSE_KEY` is empty, so the effective default for services without a license key is `true` |
 | `NEW_RELIC_DISTRIBUTED_TRACING` | bool | `true` | Enable New Relic distributed tracing |
 | `NEW_RELIC_OPENTELEMETRY` | bool | `true` | Enable New Relic via OpenTelemetry |
-| `NEW_RELIC_OPENTELEMETRY_SAMPLE` | float64 | `0.2` | Trace sampling ratio for New Relic OpenTelemetry (0.0–1.0) |
+| `NEW_RELIC_OPENTELEMETRY_SAMPLE` | float64 | `0.1` | Trace sampling ratio for New Relic OpenTelemetry (0.0–1.0) |
 
 ## OpenTelemetry (OTLP)
 
@@ -112,7 +112,7 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | `OTLP_HEADERS` | string | `""` | Custom headers as `key=value` pairs (comma-separated, e.g., `x-honeycomb-team=your-key`) |
 | `OTLP_COMPRESSION` | string | `gzip` | Compression type: `gzip` or `none` |
 | `OTLP_INSECURE` | bool | `false` | Disable TLS for OTLP connection (development only) |
-| `OTLP_SAMPLING_RATIO` | float64 | `0.2` | Trace sampling ratio (0.0–1.0, where 1.0 = sample all) |
+| `OTLP_SAMPLING_RATIO` | float64 | `0.1` | Trace sampling ratio (0.0–1.0, where 1.0 = sample all) |
 | `OTLP_USE_OPENTRACING_BRIDGE` | bool | `false` | **Deprecated.** Enable legacy OpenTracing bridge — only needed for services with unmigrated OpenTracing instrumentation |
 
 ## Error Tracking
@@ -147,6 +147,9 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | Variable | Replacement | Notes |
 |----------|------------|-------|
 | `HTTP_HEADER_PREFIX` | `HTTP_HEADER_PREFIXES` | Single prefix replaced by comma-separated list |
+| `DISABLE_PORMETHEUS` | `DISABLE_PROMETHEUS` | Typo variant — both work, use the correct spelling |
+| `OTLP_USE_OPENTRACING_BRIDGE` | Remove | Legacy OpenTracing bridge — remove once all instrumentation uses OpenTelemetry |
+| `GRPCClientInterceptor()` | Remove call | No-op since interceptors v0.1.15 — safe to delete |
 
 ---
 
