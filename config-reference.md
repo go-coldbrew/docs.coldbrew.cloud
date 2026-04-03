@@ -133,8 +133,8 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `RESPONSE_TIME_LOG_LEVEL` | string | `info` | Log level for per-request response time logging. Valid: `debug`, `info`, `warn`, `error`. Invalid values fall back to `info` |
-| `RESPONSE_TIME_LOG_ERROR_ONLY` | bool | `false` | When `true`, only log response time for requests that return an error. Successful requests are not logged |
+| `RESPONSE_TIME_LOG_LEVEL` | string | `info` | Log level for per-request response time logging. Valid: `debug`, `info`, `warn`, `error`. Invalid values fall back to `info`. Must be >= `LOG_LEVEL` to take effect |
+| `RESPONSE_TIME_LOG_ERROR_ONLY` | bool | `false` | When `true`, only log response time for requests that return an error. Successful requests are not logged. Note: if `LOG_LEVEL` is set higher than `RESPONSE_TIME_LOG_LEVEL`, response time logs are already suppressed |
 
 ## Runtime
 
@@ -180,8 +180,7 @@ For services at 70k+ QPS where observability overhead matters:
 ```bash
 export APP_NAME=myservice
 export ENVIRONMENT=production
-export LOG_LEVEL=warn
-export RESPONSE_TIME_LOG_ERROR_ONLY=true
+export LOG_LEVEL=warn                       # suppresses info-level response time logs
 # export OTLP_ENDPOINT=your-collector:4317  # uncomment if using OTLP tracing
 export OTLP_SAMPLING_RATIO=0.05              # only applies when OTLP_ENDPOINT is set
 export ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false
