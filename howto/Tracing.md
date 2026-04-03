@@ -188,9 +188,9 @@ Once extracted, the trace ID is propagated to:
 | **Request context** | Stored in ColdBrew options | Accessible via `notifier.GetTraceId(ctx)` in your handler code |
 
 {: .note }
-ColdBrew's trace ID is separate from OpenTelemetry's W3C trace context. OpenTelemetry spans have their own trace/span IDs managed by the tracing SDK. ColdBrew's trace ID is a lightweight application-level correlation ID for logs and error reports. When an OTEL span is active, the trace ID is also set as the `coldbrew.trace_id` span attribute, connecting both systems.
+ColdBrew's trace ID is separate from OpenTelemetry's W3C trace context. OpenTelemetry spans have their own trace/span IDs managed by the tracing SDK. ColdBrew's trace ID is a lightweight application-level correlation ID for logs, error reports, and OTEL spans. When an OTEL span is active, the trace ID is set as the `coldbrew.trace_id` span attribute, connecting both systems.
 
-This means a single trace ID connects your logs and error reports — you can search for `req-abc-123` in your log aggregator and Sentry to find the complete request flow.
+This means a single trace ID connects your logs, error reports, and distributed traces — you can search for `req-abc-123` in your log aggregator, Sentry, or trace viewer to find the complete request flow.
 
 ### Customizing the header name
 
