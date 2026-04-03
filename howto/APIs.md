@@ -551,8 +551,16 @@ func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint stri
     // Custom HTTP routes
     if err := mux.HandlePath("POST", "/webhooks/stripe", func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
         // Handle Stripe webhook — raw HTTP, no proto marshalling
-        body, _ := io.ReadAll(r.Body)
-        // verify signature, process event...
+        body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20)) // 1MB limit
+        if err != nil {
+            http.Error(w, "bad request", http.StatusBadRequest)
+            return
+        }
+        if !verifyStripeSignature(r.Header.Get("Stripe-Signature"), body) {
+            http.Error(w, "invalid signature", http.StatusForbidden)
+            return
+        }
+        processWebhookEvent(body)
         w.WriteHeader(http.StatusOK)
     }); err != nil {
         return err
@@ -568,15 +576,19 @@ Use the `{path=**}` wildcard to catch all sub-paths:
 
 ```go
 func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-    pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+    if err := pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts); err != nil {
+        return err
+    }
 
     // Serve a React/Vue frontend from embedded files
     uiHandler := http.FileServer(http.FS(uiFiles))
-    mux.HandlePath("GET", "/ui/{path=**}", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+    if err := mux.HandlePath("GET", "/ui/{path=**}", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
         // Strip the /ui prefix
         r.URL.Path = "/" + pathParams["path"]
         uiHandler.ServeHTTP(w, r)
-    })
+    }); err != nil {
+        return err
+    }
 
     return nil
 }
@@ -585,11 +597,18 @@ func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint stri
 ### OAuth callback
 
 ```go
-mux.HandlePath("GET", "/auth/callback", func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+if err := mux.HandlePath("GET", "/auth/callback", func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
     code := r.URL.Query().Get("code")
-    // exchange code for token, set session...
+    token, err := exchangeCodeForToken(code)
+    if err != nil {
+        http.Error(w, "auth failed", http.StatusUnauthorized)
+        return
+    }
+    setSessionCookie(w, token)
     http.Redirect(w, r, "/", http.StatusFound)
-})
+}); err != nil {
+    return err
+}
 ```
 
 ### Path parameters
@@ -597,10 +616,18 @@ mux.HandlePath("GET", "/auth/callback", func(w http.ResponseWriter, r *http.Requ
 `HandlePath` supports path parameters using `{name}` syntax. Parameters are passed in the `pathParams` map:
 
 ```go
-mux.HandlePath("GET", "/files/{id}", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+if err := mux.HandlePath("GET", "/files/{id}", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
     fileID := pathParams["id"]
-    // serve file...
-})
+    data, err := s.storage.GetFile(r.Context(), fileID)
+    if err != nil {
+        http.Error(w, "not found", http.StatusNotFound)
+        return
+    }
+    w.Header().Set("Content-Type", "application/octet-stream")
+    w.Write(data)
+}); err != nil {
+    return err
+}
 ```
 
 {: .note }
