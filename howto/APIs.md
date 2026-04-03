@@ -533,6 +533,82 @@ Instead of the default format:
 {: .note}
 For more advanced customization options, refer to the [grpc-gateway customization guide].
 
+## Custom HTTP Routes
+
+ColdBrew is gRPC-first, but sometimes you need HTTP endpoints that don't map to a gRPC method — webhooks, file uploads, OAuth callbacks, static file serving, or custom REST endpoints.
+
+The grpc-gateway `runtime.ServeMux` passed to `InitHTTP` supports custom routes via `HandlePath`. You can register any HTTP handler alongside your gateway routes:
+
+### Basic custom route
+
+```go
+func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+    // Register gateway routes (proto-generated)
+    if err := pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts); err != nil {
+        return err
+    }
+
+    // Custom HTTP routes
+    if err := mux.HandlePath("POST", "/webhooks/stripe", func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+        // Handle Stripe webhook — raw HTTP, no proto marshalling
+        body, _ := io.ReadAll(r.Body)
+        // verify signature, process event...
+        w.WriteHeader(http.StatusOK)
+    }); err != nil {
+        return err
+    }
+
+    return nil
+}
+```
+
+### Serving static files or a UI
+
+Use the `{path=**}` wildcard to catch all sub-paths:
+
+```go
+func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+    pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+
+    // Serve a React/Vue frontend from embedded files
+    uiHandler := http.FileServer(http.FS(uiFiles))
+    mux.HandlePath("GET", "/ui/{path=**}", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+        // Strip the /ui prefix
+        r.URL.Path = "/" + pathParams["path"]
+        uiHandler.ServeHTTP(w, r)
+    })
+
+    return nil
+}
+```
+
+### OAuth callback
+
+```go
+mux.HandlePath("GET", "/auth/callback", func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+    code := r.URL.Query().Get("code")
+    // exchange code for token, set session...
+    http.Redirect(w, r, "/", http.StatusFound)
+})
+```
+
+### Path parameters
+
+`HandlePath` supports path parameters using `{name}` syntax. Parameters are passed in the `pathParams` map:
+
+```go
+mux.HandlePath("GET", "/files/{id}", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+    fileID := pathParams["id"]
+    // serve file...
+})
+```
+
+{: .note }
+Custom routes registered via `HandlePath` go through ColdBrew's HTTP middleware stack (compression, tracing, NewRelic) just like gateway routes. They benefit from the same observability without any extra configuration.
+
+{: .note }
+For routes that need to bypass the grpc-gateway marshalling entirely (e.g., streaming file uploads), `HandlePath` gives you raw `http.ResponseWriter` and `*http.Request` — no proto encoding/decoding involved.
+
 ---
 [google/rpc/status.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/status.proto
 [google/rpc/code.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
