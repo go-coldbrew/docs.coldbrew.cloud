@@ -102,6 +102,20 @@ This strongly prevents a documented endpoint that doesn't exist, an undocumented
 
 See [Self-Documenting APIs](/architecture#self-documenting-apis) for the full pipeline.
 
+## Can I add custom HTTP endpoints that aren't gRPC?
+
+Yes. ColdBrew is gRPC-first, but the grpc-gateway `runtime.ServeMux` passed to `InitHTTP` supports custom HTTP routes via `HandlePath`. You can register webhooks, file uploads, OAuth callbacks, or any raw HTTP handler alongside your gateway routes:
+
+```go
+mux.HandlePath("POST", "/webhooks/stripe", func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+    // raw HTTP — no proto marshalling
+})
+```
+
+These routes go through ColdBrew's HTTP middleware (compression, tracing, NewRelic) automatically.
+
+See [Custom HTTP Routes](/howto/APIs#custom-http-routes) for full examples including static file serving and path parameters.
+
 ## Is hystrixprometheus still maintained?
 
 **No.** The `hystrixprometheus` package depends on `afex/hystrix-go`, which is unmaintained. Do not invest in this package for new projects.
