@@ -79,6 +79,8 @@ cfg := config.GetColdBrewConfig()
 | `JSON_BUILTIN_MARSHALLER_MIME` | string | `application/json` | Content-Type for the JSON builtin marshaller |
 | `HTTP_HEADER_PREFIXES` | []string | `""` | HTTP header prefixes to forward as gRPC metadata (comma-separated) |
 | `TRACE_HEADER_NAME` | string | `x-trace-id` | HTTP header name for trace ID propagation to log/trace contexts |
+| `DISABLE_HTTP_COMPRESSION` | bool | `false` | Disable gzip/zstd compression for HTTP gateway responses |
+| `HTTP_COMPRESSION_MIN_SIZE` | int | `256` | Minimum response body size (bytes) before compression is applied. Responses smaller than this are sent uncompressed |
 
 ## Prometheus Metrics
 
@@ -94,7 +96,7 @@ cfg := config.GetColdBrewConfig()
 |----------|------|---------|-------------|
 | `NEW_RELIC_LICENSE_KEY` | string | `""` | New Relic license key (required to enable New Relic) |
 | `NEW_RELIC_APPNAME` | string | `""` | Application name in New Relic |
-| `DISABLE_NEW_RELIC` | bool | `false` | Disable all New Relic reporting. Auto-set to `true` when `NEW_RELIC_LICENSE_KEY` is empty |
+| `DISABLE_NEW_RELIC` | bool | `false` | Disable all New Relic reporting. **Note:** automatically set to `true` at startup when `NEW_RELIC_LICENSE_KEY` is empty, so the effective default for services without a license key is `true` |
 | `NEW_RELIC_DISTRIBUTED_TRACING` | bool | `true` | Enable New Relic distributed tracing |
 | `NEW_RELIC_OPENTELEMETRY` | bool | `true` | Enable New Relic via OpenTelemetry |
 | `NEW_RELIC_OPENTELEMETRY_SAMPLE` | float64 | `0.2` | Trace sampling ratio for New Relic OpenTelemetry (0.0–1.0) |
@@ -126,13 +128,6 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | `DISABLE_SIGNAL_HANDLER` | bool | `false` | Disable ColdBrew's SIGINT/SIGTERM handler |
 | `SHUTDOWN_DURATION_IN_SECONDS` | int | `15` | Time to wait for in-flight requests to complete before forced shutdown |
 | `GRPC_GRACEFUL_DURATION_IN_SECONDS` | int | `7` | Time to wait for healthcheck failure to propagate before initiating shutdown. Should be less than `SHUTDOWN_DURATION_IN_SECONDS` |
-
-## HTTP Compression
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `DISABLE_HTTP_COMPRESSION` | bool | `false` | Disable gzip/zstd compression for HTTP gateway responses |
-| `HTTP_COMPRESSION_MIN_SIZE` | int | `256` | Minimum response body size (bytes) before compression is applied. Responses smaller than this are sent uncompressed |
 
 ## Response Time Logging
 
@@ -187,7 +182,8 @@ export APP_NAME=myservice
 export ENVIRONMENT=production
 export LOG_LEVEL=warn
 export RESPONSE_TIME_LOG_ERROR_ONLY=true
-export OTLP_SAMPLING_RATIO=0.05
+# export OTLP_ENDPOINT=your-collector:4317  # uncomment if using OTLP tracing
+export OTLP_SAMPLING_RATIO=0.05              # only applies when OTLP_ENDPOINT is set
 export ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false
 export DISABLE_NEW_RELIC=true
 export HTTP_COMPRESSION_MIN_SIZE=512
