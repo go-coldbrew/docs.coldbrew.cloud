@@ -544,7 +544,7 @@ The grpc-gateway `runtime.ServeMux` passed to `InitHTTP` supports custom routes 
 ```go
 func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
     // Register gateway routes (proto-generated)
-    if err := pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts); err != nil {
+    if err := proto.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts); err != nil {
         return err
     }
 
@@ -576,7 +576,7 @@ Use the `{path=**}` wildcard to catch all sub-paths:
 
 ```go
 func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-    if err := pb.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts); err != nil {
+    if err := proto.RegisterMyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts); err != nil {
         return err
     }
 
@@ -630,10 +630,10 @@ if err := mux.HandlePath("GET", "/files/{id}", func(w http.ResponseWriter, r *ht
 }
 ```
 
-{: .note }
-Custom routes registered via `HandlePath` go through ColdBrew's HTTP middleware stack (compression, tracing, NewRelic) just like gateway routes. They benefit from the same observability without any extra configuration.
+{: .note}
+Custom routes registered via `HandlePath` go through ColdBrew's HTTP middleware stack (compression, tracing, New Relic) just like gateway routes. They benefit from the same observability without any extra configuration.
 
-{: .note }
+{: .note}
 For routes that need to bypass the grpc-gateway marshalling entirely (e.g., streaming file uploads), `HandlePath` gives you raw `http.ResponseWriter` and `*http.Request` — no proto encoding/decoding involved.
 
 ---
