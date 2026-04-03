@@ -199,7 +199,7 @@ Interceptors are gRPC middleware that run on every request. ColdBrew chains them
 | Order | Interceptor | Package | What It Does |
 |-------|------------|---------|--------------|
 | 1 | Response Time Logging | `interceptors` | Logs method name, duration, and status code |
-| 2 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs and Sentry/Rollbar error reports |
+| 2 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs, Sentry/Rollbar error reports, and OpenTelemetry spans (as the `coldbrew.trace_id` attribute) |
 | 3 | Prometheus | `interceptors` | Records request count, latency histogram, and status codes |
 | 4 | Error Notification | `interceptors` | Sends errors to Sentry/Rollbar/Airbrake asynchronously |
 | 5 | New Relic | `interceptors` | Creates a New Relic transaction for APM |
@@ -257,7 +257,7 @@ ColdBrew uses `context.Context` to propagate metadata through every layer:
        │
        └── trace ID (request correlation)
              Injected by: Trace ID interceptor
-             Available in: log output, error reports
+             Available in: log output, error reports, OpenTelemetry spans (`coldbrew.trace_id` attribute)
 ```
 
 Every interceptor reads from and writes to the context. By the time the request reaches your handler, the context carries:
