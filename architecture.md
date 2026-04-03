@@ -257,7 +257,7 @@ ColdBrew uses `context.Context` to propagate metadata through every layer:
        │
        └── trace ID (request correlation)
              Injected by: Trace ID interceptor
-             Available in: log output, error reports, OTEL spans (coldbrew.trace_id attribute)
+             Available in: log output, error reports, OpenTelemetry spans (`coldbrew.trace_id` attribute)
 ```
 
 Every interceptor reads from and writes to the context. By the time the request reaches your handler, the context carries:
