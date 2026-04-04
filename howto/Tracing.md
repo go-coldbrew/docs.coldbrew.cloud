@@ -198,6 +198,41 @@ This means a single trace ID connects your logs, error reports, and distributed 
 export TRACE_HEADER_NAME=x-request-id  # Use a different header
 ```
 
+### Trace ID validation
+
+Client-supplied trace IDs (from HTTP headers or proto fields) are automatically sanitized:
+
+- **Max length:** 128 characters (truncated if longer)
+- **Allowed characters:** Printable ASCII only (space through tilde, 0x20–0x7E)
+- **Non-printable/control characters:** Stripped (prevents log injection)
+- **Unicode:** Stripped (trace IDs should be ASCII)
+- **Empty after sanitization:** A new trace ID is generated automatically
+
+This validation is on by default and protects against log injection attacks where malicious trace IDs could corrupt structured logs or error reports.
+
+To customize or disable validation, use `SetTraceIDValidator` during init:
+
+```go
+import "github.com/go-coldbrew/errors/notifier"
+
+func init() {
+    // Custom validator: allow alphanumeric + hyphens, max 64 chars
+    notifier.SetTraceIDValidator(func(id string) string {
+        if len(id) > 64 {
+            id = id[:64]
+        }
+        // ... your custom sanitization logic ...
+        return id
+    })
+
+    // Or disable validation entirely (not recommended):
+    // notifier.SetTraceIDValidator(nil)
+}
+```
+
+{: .note}
+`SetTraceIDValidator` must be called during init — it is not safe for concurrent use. This follows the same init-only pattern as `SetTraceHeaderName` and other ColdBrew configuration functions.
+
 ## Distributed Trace Propagation (W3C)
 
 In addition to ColdBrew's application-level trace ID, OpenTelemetry propagates **W3C trace context** (`traceparent`/`tracestate` headers) for distributed tracing across services. This is what links spans together in your tracing backend (Jaeger, Tempo, etc.).

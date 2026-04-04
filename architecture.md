@@ -299,6 +299,39 @@ ColdBrew is designed for Kubernetes deployments:
 - **Graceful shutdown:** On SIGTERM, the service marks itself as not ready, drains in-flight requests, then exits cleanly
 - **Metrics scraping:** Prometheus scrapes `/metrics` on the HTTP port
 
+### Gateway Performance Options
+
+By default, the HTTP gateway connects to the gRPC server via TCP loopback (`localhost:9090`). Two options are available for lower latency:
+
+**Option 1: Unix domain socket (opt-in, zero code changes)**
+
+Set `DISABLE_UNIX_GATEWAY=false` to route the gateway's internal connection through a Unix socket. This reduces gateway-to-gRPC latency from ~67µs to ~36µs (**1.9x improvement**) by bypassing TCP overhead. The TCP gRPC port remains available for external clients. If socket creation fails, the gateway silently falls back to TCP.
+
+When gRPC TLS is configured (`GRPC_TLS_CERT_FILE` + `GRPC_TLS_KEY_FILE`), the unix socket is automatically skipped — `grpc.Server` applies TLS to all listeners, and the gateway falls back to TCP with proper TLS credentials.
+
+**Option 2: In-process gateway via `DoHTTPtoGRPC` (maximum performance)**
+
+For zero network hop, use `RegisterHandlerServer` instead of `RegisterHandlerFromEndpoint` in your `InitHTTP`, and wrap each gRPC method with [`interceptors.DoHTTPtoGRPC()`](https://pkg.go.dev/github.com/go-coldbrew/interceptors#DoHTTPtoGRPC). This calls the gRPC handler in-process while preserving the full interceptor chain (logging, tracing, metrics, panic recovery). Requires a per-method wrapper but eliminates all network overhead.
+
+```go
+func (s *svc) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.EchoResponse, error) {
+    handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+        return s.echo(ctx, req.(*proto.EchoRequest))
+    }
+    r, err := interceptors.DoHTTPtoGRPC(ctx, s, handler, req)
+    if err != nil {
+        return nil, err
+    }
+    return r.(*proto.EchoResponse), nil
+}
+```
+
+| Approach | Latency | Code changes | Trade-offs |
+|----------|---------|-------------|------------|
+| TCP loopback (default) | ~67µs | None | Simplest, most compatible |
+| Unix socket | ~36µs | None (config only) | 1.9x faster, opt-in |
+| `DoHTTPtoGRPC` | ~19µs | Per-method wrapper | Fastest, requires code changes |
+
 ### Startup Sequence
 
 1. Configuration loaded from environment variables
