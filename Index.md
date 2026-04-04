@@ -129,17 +129,37 @@ ColdBrew is modular — use the full framework or pick individual packages:
 
 Each package can be used independently — you don't need `core` to use `errors` or `log`.
 
-## Don't Repeat Yourself
+## Don't Repeat Yourself — Focus on Business Logic
 
-ColdBrew integrates with the tools you already use:
+Every Go microservice needs health probes, Prometheus metrics, structured logging, distributed tracing, graceful shutdown, and panic recovery. Without a framework, teams copy-paste this infrastructure into every service — and each copy drifts slightly, making debugging and onboarding harder.
 
-- [grpc] + [grpc-gateway] — gRPC server with automatic REST gateway
-- [prometheus] — Metrics and monitoring
-- [opentelemetry] + [jaeger] — Distributed tracing
-- [new relic] — Application performance monitoring
-- [sentry] — Error tracking and alerting
-- [go-grpc-middleware] — Middleware utilities
-- [vtprotobuf] — Fast protobuf serialization
+ColdBrew handles all of it. You write business logic, ColdBrew handles everything else:
+
+| You write | ColdBrew handles |
+|-----------|-----------------|
+| Proto definitions + business logic | gRPC server + REST gateway via [grpc-gateway] |
+| `OTLP_ENDPOINT` env var | Distributed tracing with automatic span creation via [OpenTelemetry] |
+| `NEW_RELIC_LICENSE_KEY` env var | APM integration via [New Relic] |
+| Error returns | Stack traces, gRPC status codes, async notification to [Sentry]/Rollbar/Airbrake |
+| Nothing | Prometheus metrics at `/metrics` — per-method latency, error rate, QPS |
+| Nothing | Health/ready probes, graceful shutdown, [pprof] profiling |
+| Nothing | Interceptor chain: logging, tracing, metrics, panic recovery |
+| Nothing | [vtprotobuf] codec — up to ~4x faster proto marshal |
+| Nothing | HTTP [gzip/zstd][zstd] compression, container-aware [GOMAXPROCS][automaxprocs] |
+
+New services inherit all of this automatically via the [cookiecutter template](/getting-started) — zero boilerplate to write, zero infrastructure to maintain.
+
+### Built on battle-tested libraries
+
+ColdBrew composes proven Go libraries — not replacements:
+
+| Category | Libraries |
+|----------|----------|
+| **API** | [grpc] + [grpc-gateway] — gRPC server with automatic REST gateway and Swagger UI |
+| **Observability** | [OpenTelemetry] + [Jaeger] — distributed tracing; [Prometheus] + [go-grpc-middleware] — metrics |
+| **Monitoring** | [New Relic] — APM; [Sentry] — error tracking and alerting |
+| **Performance** | [vtprotobuf] — fast serialization; [klauspost/compress][zstd] — gzip/zstd HTTP compression |
+| **Runtime** | [automaxprocs] — container-aware GOMAXPROCS; [slog] — structured logging |
 
 ## Next Steps
 
