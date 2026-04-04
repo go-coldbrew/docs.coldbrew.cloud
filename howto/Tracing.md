@@ -208,7 +208,30 @@ Client-supplied trace IDs (from HTTP headers or proto fields) are automatically 
 - **Unicode:** Stripped (trace IDs should be ASCII)
 - **Empty after sanitization:** A new trace ID is generated automatically
 
-This validation is always on and requires no configuration. It protects against log injection attacks where malicious trace IDs could corrupt structured logs or error reports.
+This validation is on by default and protects against log injection attacks where malicious trace IDs could corrupt structured logs or error reports.
+
+To customize or disable validation, use `SetTraceIDValidator` during init:
+
+```go
+import "github.com/go-coldbrew/errors/notifier"
+
+func init() {
+    // Custom validator: allow alphanumeric + hyphens, max 64 chars
+    notifier.SetTraceIDValidator(func(id string) string {
+        if len(id) > 64 {
+            id = id[:64]
+        }
+        // ... your custom sanitization logic ...
+        return id
+    })
+
+    // Or disable validation entirely (not recommended):
+    // notifier.SetTraceIDValidator(nil)
+}
+```
+
+{: .note}
+`SetTraceIDValidator` must be called during init — it is not safe for concurrent use. This follows the same init-only pattern as `SetTraceHeaderName` and other ColdBrew configuration functions.
 
 ## Distributed Trace Propagation (W3C)
 
