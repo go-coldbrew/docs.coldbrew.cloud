@@ -34,7 +34,6 @@ cfg := config.GetColdBrewConfig()
 | `APP_NAME` | string | `""` | Application name (used in logs, metrics, New Relic) |
 | `ENVIRONMENT` | string | `""` | Environment name (e.g., production, staging, development) |
 | `RELEASE_NAME` | string | `""` | Release/version name |
-| `DISABLE_UNIX_GATEWAY` | bool | `true` | Disable Unix domain socket for HTTP gateway's internal gRPC connection. Set to `false` to enable (~1.9x faster than TCP loopback) |
 
 ## Logging
 
@@ -82,6 +81,7 @@ cfg := config.GetColdBrewConfig()
 | `TRACE_HEADER_NAME` | string | `x-trace-id` | HTTP header name for trace ID propagation to log/trace contexts |
 | `DISABLE_HTTP_COMPRESSION` | bool | `false` | Disable gzip/zstd compression for HTTP gateway responses |
 | `HTTP_COMPRESSION_MIN_SIZE` | int | `256` | Minimum response body size (bytes) before compression is applied. Responses smaller than this are sent uncompressed |
+| `DISABLE_UNIX_GATEWAY` | bool | `true` | Disable Unix domain socket for HTTP gateway's internal gRPC connection. Set to `false` to enable (~1.9x faster than TCP loopback). See [Gateway Performance Options](/architecture#gateway-performance-options) |
 
 ## Prometheus Metrics
 

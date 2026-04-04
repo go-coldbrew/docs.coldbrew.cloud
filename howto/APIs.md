@@ -186,7 +186,7 @@ JSON is the default and best choice for browser clients and debugging. But for *
 
 | Aspect | JSON | Proto binary |
 |--------|------|-------------|
-| **Serialization speed** | ~3-5x slower (reflection-based, text encoding) | Native proto marshal (or vtprotobuf for 4x faster) |
+| **Serialization speed** | ~3-5x slower (reflection-based, text encoding) | Native proto marshal (or vtprotobuf for up to ~4x faster marshal) |
 | **Payload size** | ~2-3x larger (field names, base64 for bytes, text numbers) | Compact binary (varint, field tags only) |
 | **CPU cost** | Higher (string parsing, escaping, number formatting) | Lower (direct binary read/write) |
 | **Human-readable** | Yes | No (use `grpcurl` or Swagger UI for debugging) |
@@ -732,17 +732,19 @@ Pure serialization cost, no network (Apple M1 Pro):
 | 50 items (~10KB) | 69µs / 1,908 allocs | 29µs / 1,107 allocs | **2.4x faster** |
 | 500 items (~100KB) | 684µs / 19,011 allocs | 290µs / 11,010 allocs | **2.4x faster** |
 
-vtprotobuf marshal produces **a single allocation** regardless of payload size, and is consistently 4x faster. Unmarshal is 2.4x faster with 40-70% fewer allocations.
+vtprotobuf marshal produces **a single allocation** regardless of payload size, and is up to ~4x faster. Unmarshal is ~2.4x faster with 40-70% fewer allocations.
 
 #### Transport: TCP vs Unix socket vs in-process
 
 End-to-end gRPC unary call latency with default proto codec (Apple M1 Pro):
 
-| Payload | TCP | Unix socket | Bufconn (in-process) |
+| Payload | TCP | Unix socket | Bufconn (theoretical)* |
 |---------|-----|-------------|---------------------|
 | 1 item (~200B) | 85µs | 48µs | 30µs |
 | 50 items (~10KB) | 393µs | 356µs | 295µs |
 | 500 items (~100KB) | 2,834µs | 3,061µs | 2,628µs |
+
+*\*Bufconn is a test utility (`grpc/test/bufconn`) — no keepalive, backpressure, or connection lifecycle. These numbers represent a theoretical in-process lower bound, not a production transport. For production in-process calls, use [`DoHTTPtoGRPC`](#in-process-gateway-with-dohttptogrpc) which skips serialization entirely and is even faster.*
 
 Key takeaways:
 
@@ -755,7 +757,7 @@ Key takeaways:
 These benchmarks measure the gRPC layer only — the HTTP JSON↔proto conversion at the boundary is identical for all approaches. For large responses, consider using [`application/proto` content type](#when-to-use-proto-content-type-for-performance) to avoid JSON marshalling overhead entirely.
 
 {: .note}
-Benchmark source: [`core/benchmarks/`](https://github.com/go-coldbrew/core/tree/main/benchmarks) — run with `cd benchmarks && go test -bench=. -benchmem ./...`
+Benchmark source: [`benchmarks/`](https://github.com/go-coldbrew/core/tree/main/benchmarks) — run with `cd benchmarks && go test -bench=. -benchmem ./...`
 
 ---
 [google/rpc/status.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/status.proto
