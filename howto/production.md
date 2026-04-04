@@ -227,7 +227,7 @@ ColdBrew exposes these metrics out of the box via gRPC interceptors:
 | Metric | Type | Description |
 |--------|------|-------------|
 | `grpc_server_handled_total` | Counter | Total RPCs completed, by method and status code |
-| `grpc_server_handling_seconds` | Histogram | RPC latency distribution (if `ENABLE_PROMETHEUS_GRPC_HISTOGRAM=true`) |
+| `grpc_server_handling_seconds` | Histogram | RPC latency distribution. **Only available when `ENABLE_PROMETHEUS_GRPC_HISTOGRAM=true`** (the default). Disabling this removes all latency percentile data from Prometheus |
 | `grpc_server_started_total` | Counter | Total RPCs started |
 
 Recommended alerts:
@@ -250,6 +250,9 @@ Recommended alerts:
     ) > 1
   for: 5m
 ```
+
+{: .warning }
+The latency alert above requires `ENABLE_PROMETHEUS_GRPC_HISTOGRAM=true` (the default). If you set it to `false` for [throughput tuning](/config-reference#measured-tuning-impact), the `grpc_server_handling_seconds` metric disappears and this alert will silently stop firing. Ensure you have an alternative latency signal (distributed tracing, load balancer metrics) before disabling histograms.
 
 ### Custom histogram buckets
 
@@ -435,6 +438,7 @@ env:
 - [ ] Store secrets in Kubernetes Secrets, not environment variable literals
 - [ ] Disable debug endpoints in production if not needed (`DISABLE_DEBUG=true`)
 - [ ] Run `make lint` (includes `govulncheck`) before deploying
+- [ ] For high-QPS services: set `RESPONSE_TIME_LOG_ERROR_ONLY=true` to skip per-request logging on successful RPCs (the single largest source of per-request CPU overhead — see [tuning impact](/config-reference#measured-tuning-impact))
 
 ---
 [ColdBrew cookiecutter]: /getting-started

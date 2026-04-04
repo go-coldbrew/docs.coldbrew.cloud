@@ -211,6 +211,25 @@ OpenTelemetry tracing spans are created by the `otelgrpc` stats handler configur
 {: .note }
 Health checks, ready checks, and gRPC reflection are **excluded by default** via `FilterMethods`. This prevents observability noise from Kubernetes probes. See the [FAQ](/faq) for how to customize this.
 
+### Interceptor Chain Overhead
+
+The full interceptor chain adds **~10–12% overhead** compared to bare gRPC (no interceptors). The bottleneck at high concurrency is gRPC HTTP/2 transport and Go runtime scheduling — not the interceptors themselves.
+
+End-to-end throughput measured on Apple M1 Pro (loopback, [ghz](https://ghz.sh/) load test, simple Echo handler):
+
+| Configuration | RPS @ c=1 | RPS @ c=50 | RPS @ c=200 | Avg @ c=1 | P99 @ c=200 |
+|---------------|-----------|------------|-------------|-----------| ------------|
+| **Default** (all interceptors) | 5,500 | 40,900 | 50,000 | 0.12ms | 7.9ms |
+| **Tuned** (error-only logging, no histograms) | 6,300 | 42,700 | 53,200 | 0.10ms | 7.3ms |
+| **No interceptors** (bare gRPC) | 7,000 | 46,600 | 55,800 | 0.09ms | 7.2ms |
+
+Per-interceptor micro-benchmark: **~4.8µs, ~1.8KB, ~45 allocs** per unary request. Profile with:
+```bash
+go test -run='^$' -bench=BenchmarkDefaultInterceptors -benchmem ./...
+```
+
+The tuned configuration uses `RESPONSE_TIME_LOG_ERROR_ONLY=true` and `ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false`. See the [Configuration Reference](/config-reference#example-high-throughput-production) for the full set of tuning knobs.
+
 ### Adding Custom Interceptors
 
 You can prepend your own interceptors to the chain:
