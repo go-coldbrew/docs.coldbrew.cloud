@@ -38,6 +38,48 @@ Showing top 5 nodes out of 45
          0     0%   100%       20ms 66.67%  github.com/ankurs/MyApp/proto.RegisterMySvcHandlerClient.func3
 ```
 
+### Profiling under gRPC load
+
+To understand where CPU time goes under realistic load, combine pprof with a gRPC load generator like [ghz](https://ghz.sh/):
+
+```bash
+# Terminal 1: start your service
+make run
+
+# Terminal 2: generate sustained gRPC load
+ghz --insecure --call your.package.Service/Method \
+  -d '{"msg":"hello"}' -c 100 --duration 25s localhost:9090
+
+# Terminal 3: capture a 15-second CPU profile while load is running
+curl -s "http://localhost:9091/debug/pprof/profile?seconds=15" -o cpu.prof
+go tool pprof -top -cum cpu.prof
+```
+
+Here's what a typical ColdBrew CPU profile looks like under load (Apple M1 Pro, c=100):
+
+| Component | Cumulative CPU | What it does |
+|-----------|---------------|--------------|
+| `ResponseTimeLoggingInterceptor` | ~44% | JSON log serialization + stdout write per request |
+| gRPC HTTP/2 transport | ~15% | Frame reading/writing, buffer flush |
+| Go runtime (scheduling, GC) | ~15% | Goroutine scheduling, garbage collection |
+| `TraceIdInterceptor` | ~6% | Trace ID extraction and propagation |
+| `errors/notifier.SetTraceIdWithValue` | ~5% | Setting trace ID on error notifier context |
+| `otelgrpc.TagRPC` | ~1% | OpenTelemetry span creation |
+| Prometheus metrics | ~1% | Histogram bucket recording |
+
+{: .important }
+**Cumulative CPU does not equal throughput impact.** Response time logging shows 44% cumulative CPU because `os.(*File).Write` blocks the goroutine in a syscall — but other goroutines run during that time. Disabling logging yields only ~6% more RPS, because the real bottleneck is gRPC transport I/O and goroutine scheduling. Always validate pprof findings with actual throughput measurements.
+
+For allocation profiling under load:
+
+```bash
+# Capture heap profile while load is running
+curl -s "http://localhost:9091/debug/pprof/heap?debug=0" -o heap.prof
+go tool pprof -alloc_objects -top heap.prof
+```
+
+Top allocation sources under load are gRPC metadata copying (~27%), otelgrpc span creation (~13%), and options context store (~10%). These are largely inherent to gRPC's per-request metadata model.
+
 ### Analyzing profiles
 
 The `go tool pprof` command can also be used to analyze profiles to find the root cause of performance issues. For more information, please refer to the [pprof walkthrough] and the [diagnostics doc].

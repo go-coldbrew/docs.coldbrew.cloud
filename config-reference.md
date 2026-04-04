@@ -88,7 +88,7 @@ cfg := config.GetColdBrewConfig()
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `DISABLE_PROMETHEUS` | bool | `false` | Disable Prometheus metrics endpoint at `/metrics` |
-| `ENABLE_PROMETHEUS_GRPC_HISTOGRAM` | bool | `true` | Enable gRPC request latency histograms |
+| `ENABLE_PROMETHEUS_GRPC_HISTOGRAM` | bool | `true` | Enable gRPC request latency histograms (`grpc_server_handling_seconds`). When `false`, latency percentile queries and alerts stop working — only counters remain |
 | `PROMETHEUS_GRPC_HISTOGRAM_BUCKETS` | []float64 | `""` | Custom histogram buckets (comma-separated seconds, e.g., `0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10`) |
 
 ## New Relic
@@ -183,13 +183,30 @@ For services at 70k+ QPS where observability overhead matters:
 ```bash
 export APP_NAME=myservice
 export ENVIRONMENT=production
-export LOG_LEVEL=warn                       # suppresses info-level response time logs
-# export OTLP_ENDPOINT=your-collector:4317  # uncomment if using OTLP tracing
-export OTLP_SAMPLING_RATIO=0.05              # only applies when OTLP_ENDPOINT is set
-export ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false
+export LOG_LEVEL=warn                          # suppresses info-level response time logs
+export RESPONSE_TIME_LOG_ERROR_ONLY=true       # skip per-request logging for successful RPCs
+# export OTLP_ENDPOINT=your-collector:4317     # uncomment if using OTLP tracing
+export OTLP_SAMPLING_RATIO=0.05                # only applies when OTLP_ENDPOINT is set
+export ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false   # see warning below
 export DISABLE_NEW_RELIC=true
+export DISABLE_UNIX_GATEWAY=false              # Unix socket for HTTP gateway (1.9x faster)
 export HTTP_COMPRESSION_MIN_SIZE=512
 ```
+
+### Measured tuning impact
+
+End-to-end throughput on Apple M1 Pro (loopback, [ghz](https://ghz.sh/) load test, simple Echo handler):
+
+| Configuration | c=200 RPS | c=200 P99 | Change |
+|---------------|-----------|-----------|--------|
+| **Default** (all interceptors, info logging) | 50,000 | 7.9ms | baseline |
+| **Tuned** (above config) | 53,200 | 7.3ms | +6% RPS |
+| **No interceptors** (bare gRPC) | 55,800 | 7.2ms | +12% RPS |
+
+The full interceptor chain (logging, tracing, metrics, panic recovery) adds ~10–12% overhead. Most of that is I/O-bound (log writes, gRPC transport) rather than CPU-bound, which is why tuning yields a modest but real improvement. See the [Architecture page](/architecture#interceptor-chain-overhead) for the full breakdown.
+
+{: .warning }
+Setting `ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false` removes the `grpc_server_handling_seconds` metric entirely. This means **latency percentile queries and alerts** (e.g., `histogram_quantile(0.99, ...)`) will stop working. You will still have `grpc_server_handled_total` (request count by status code) and `grpc_server_started_total` (request count started). Only disable histograms if you have an alternative latency signal (e.g., distributed tracing percentiles, or an external load balancer metric).
 
 ---
 
