@@ -305,7 +305,9 @@ By default, the HTTP gateway connects to the gRPC server via TCP loopback (`loca
 
 **Option 1: Unix domain socket (opt-in, zero code changes)**
 
-Set `DISABLE_UNIX_GATEWAY=false` to route the gateway's internal connection through a Unix socket at `/tmp/coldbrew-{pid}.sock`. This reduces gateway-to-gRPC latency from ~67µs to ~36µs (**1.9x improvement**) by bypassing TCP overhead. The TCP gRPC port remains available for external clients. If socket creation fails, the gateway silently falls back to TCP.
+Set `DISABLE_UNIX_GATEWAY=false` to route the gateway's internal connection through a Unix socket. This reduces gateway-to-gRPC latency from ~67µs to ~36µs (**1.9x improvement**) by bypassing TCP overhead. The TCP gRPC port remains available for external clients. If socket creation fails, the gateway silently falls back to TCP.
+
+When gRPC TLS is configured (`GRPC_TLS_CERT_FILE` + `GRPC_TLS_KEY_FILE`), the unix socket is automatically skipped — `grpc.Server` applies TLS to all listeners, and the gateway falls back to TCP with proper TLS credentials.
 
 **Option 2: In-process gateway via `DoHTTPtoGRPC` (maximum performance)**
 

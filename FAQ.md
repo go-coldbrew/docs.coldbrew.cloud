@@ -225,7 +225,7 @@ Two options, depending on how much latency reduction you need:
 export DISABLE_UNIX_GATEWAY=false
 ```
 
-This routes the gateway's internal connection through a Unix socket instead of TCP loopback, reducing latency from ~67µs to ~36µs (**1.9x faster**). No code changes required — just set the environment variable.
+This routes the gateway's internal connection through a Unix socket instead of TCP loopback, reducing latency from ~67µs to ~36µs (**1.9x faster**). No code changes required — just set the environment variable. Note: automatically skipped when gRPC TLS is configured.
 
 **Option 2: In-process gateway via `DoHTTPtoGRPC` (fastest)**
 
