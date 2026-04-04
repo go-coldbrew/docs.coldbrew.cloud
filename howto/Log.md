@@ -56,11 +56,11 @@ func init() {
 ```
 
 {: .note }
-The gokit and logrus backends are deprecated. Both upstream libraries are in maintenance mode and no longer actively developed. Migrate to the slog backend for better performance and long-term support. Migration requires no code changes — just remove the explicit backend configuration and ColdBrew will use slog by default.
+The gokit and logrus backends are deprecated. Both upstream libraries are in maintenance mode and no longer actively developed. Migrate to the slog backend for better performance and long-term support. No new logging code is required; if you explicitly configured one of these backends, remove that backend selection and ColdBrew will use slog by default.
 
-## Context aware logs
+## Context-aware logs
 
-In any service there a set of common items that you want to log with every log message. These items are usually things like the request-id, trace, user-id, etc. It is useful to have these items in the log message so that you can filter on them in your log aggregation system. This is especially useful when you have multiple points of logs and you want to be able to trace a request through the system.
+In any service there is a set of common items that you want to log with every log message. These items are usually things like the request-id, trace, user-id, etc. It is useful to have these items in the log message so that you can filter on them in your log aggregation system. This is especially useful when you have multiple points of logs and you want to be able to trace a request through the system.
 
 ColdBrew provides a way to add these items to the log message using the `log.AddToContext` function. This function takes a `context.Context` and `key, value`. AddToContext adds log fields to context. Any info added here will be added to all logs using this context.
 
@@ -70,7 +70,7 @@ import (
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-    ctx = r.Context()
+    ctx := r.Context()
     ctx = log.AddToContext(ctx, "request-id", "1234")
     ctx = log.AddToContext(ctx, "trace", "5678")
     ctx = log.AddToContext(ctx, "user-id", "abcd")
@@ -157,7 +157,7 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-    ctx = r.Context()
+    ctx := r.Context()
     ctx = log.AddToContext(ctx, "request-id", "1234")
     ctx = log.AddToContext(ctx, "trace", "5678")
     ctx = log.AddToContext(ctx, "user-id", "abcd")

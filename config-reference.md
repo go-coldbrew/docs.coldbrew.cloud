@@ -149,7 +149,6 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | `HTTP_HEADER_PREFIX` | `HTTP_HEADER_PREFIXES` | Single prefix replaced by comma-separated list |
 | `DISABLE_PORMETHEUS` | `DISABLE_PROMETHEUS` | Typo variant — both work, use the correct spelling |
 | `OTLP_USE_OPENTRACING_BRIDGE` | Remove | Legacy OpenTracing bridge — remove once all instrumentation uses OpenTelemetry |
-| `GRPCClientInterceptor()` | Remove call | No-op since interceptors v0.1.15 — safe to delete |
 
 ---
 
