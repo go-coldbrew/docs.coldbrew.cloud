@@ -25,7 +25,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 
 | Feature | Description |
 |---------|-------------|
-| **gRPC + REST Gateway** | Define your API once in protobuf — get gRPC, REST, and [Swagger docs](/architecture#self-documenting-apis) automatically via [grpc-gateway] |
+| **gRPC + REST Gateway** | Define your API once in protobuf — get gRPC, REST, and [Swagger docs](/architecture#self-documenting-apis) automatically via [grpc-gateway]. HTTP gateway supports JSON, `application/proto`, and `application/protobuf` [content types](/howto/APIs#http-content-type) out of the box |
 | **Structured Logging** | Pluggable backends — [slog] (default), zap, go-kit, logrus — with per-request context fields and trace ID propagation |
 | **Distributed Tracing** | [OpenTelemetry] and [New Relic] support with automatic span creation in interceptors — traces can be sent to any OTLP-compatible backend including [Jaeger] |
 | **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
