@@ -215,6 +215,22 @@ Yes — ColdBrew is Kubernetes-native by design. Out of the box you get:
 
 ColdBrew also follows [12-factor app](https://12factor.net/) principles: no config files, stateless processes, port binding, and log streams. See the [Production Deployment guide](/howto/production) for K8s manifests, ServiceMonitor setup, and graceful shutdown tuning, and the [Architecture](/architecture) page for the full design principles table.
 
+## How can I improve HTTP gateway performance?
+
+Two options, depending on how much latency reduction you need:
+
+**Option 1: Unix domain socket (easiest)**
+
+```bash
+export DISABLE_UNIX_GATEWAY=false
+```
+
+This routes the gateway's internal connection through a Unix socket instead of TCP loopback, reducing latency from ~67µs to ~36µs (**1.9x faster**). No code changes required — just set the environment variable.
+
+**Option 2: In-process gateway via `DoHTTPtoGRPC` (fastest)**
+
+Use `RegisterHandlerServer` instead of `RegisterHandlerFromEndpoint` in your `InitHTTP`, and wrap each gRPC method with `interceptors.DoHTTPtoGRPC()`. This eliminates all network overhead (~19µs) while preserving the full interceptor chain. Requires per-method wrappers — see the [Architecture page](/architecture#gateway-performance-options) for a code example.
+
 ## Where can I get help?
 
 - **[GitHub Discussions](https://github.com/go-coldbrew/core/discussions)** — Ask questions, share ideas

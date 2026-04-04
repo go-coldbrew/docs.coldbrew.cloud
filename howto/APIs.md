@@ -636,6 +636,55 @@ Custom routes registered via `HandlePath` go through ColdBrew's HTTP middleware 
 {: .note}
 For routes that need to bypass the grpc-gateway marshalling entirely (e.g., streaming file uploads), `HandlePath` gives you raw `http.ResponseWriter` and `*http.Request` — no proto encoding/decoding involved.
 
+## In-Process Gateway with DoHTTPtoGRPC
+
+By default, ColdBrew's HTTP gateway connects to the gRPC server via a network hop (TCP or Unix socket). For maximum performance, you can use `RegisterHandlerServer` instead of `RegisterHandlerFromEndpoint` to handle HTTP requests in-process — eliminating all network overhead.
+
+The challenge is that `RegisterHandlerServer` bypasses the gRPC interceptor chain (no logging, tracing, metrics, or panic recovery). ColdBrew's `interceptors.DoHTTPtoGRPC()` solves this by wrapping each method call through the full interceptor chain.
+
+### How to use
+
+1. In `InitHTTP`, use `RegisterHandlerServer` and pass the gRPC server directly:
+
+```go
+func (s *svc) InitHTTP(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+    return proto.RegisterMyServiceHandlerServer(ctx, mux, s)
+}
+```
+
+2. Wrap each public gRPC method with `DoHTTPtoGRPC`:
+
+```go
+func (s *svc) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.EchoResponse, error) {
+    handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+        return s.echo(ctx, req.(*proto.EchoRequest))
+    }
+    r, err := interceptors.DoHTTPtoGRPC(ctx, s, handler, req)
+    if err != nil {
+        return nil, err
+    }
+    return r.(*proto.EchoResponse), nil
+}
+
+func (s *svc) echo(ctx context.Context, req *proto.EchoRequest) (*proto.EchoResponse, error) {
+    // ... actual implementation ...
+}
+```
+
+The public method (`Echo`) is the wrapper that grpc-gateway and gRPC clients both call. The private method (`echo`) contains the actual business logic. `DoHTTPtoGRPC` detects whether the call came via the HTTP gateway (using `runtime.RPCMethod`) and applies the interceptor chain accordingly.
+
+{: .note}
+The interceptor chain is cached on first invocation. All interceptor configuration (`AddUnaryServerInterceptor`, `SetFilterFunc`, etc.) must be finalized before the first call to `DoHTTPtoGRPC`.
+
+### When to use
+
+| Approach | Latency | Setup |
+|----------|---------|-------|
+| `RegisterHandlerFromEndpoint` (default) | ~67µs (TCP) or ~36µs (Unix socket) | Zero code changes |
+| `RegisterHandlerServer` + `DoHTTPtoGRPC` | ~19µs (in-process) | Per-method wrapper |
+
+Use `DoHTTPtoGRPC` when HTTP gateway latency is critical and you're willing to add per-method wrappers. For most services, enabling Unix sockets (`DISABLE_UNIX_GATEWAY=false`) provides a good balance of performance and simplicity.
+
 ---
 [google/rpc/status.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/status.proto
 [google/rpc/code.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto

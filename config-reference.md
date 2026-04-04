@@ -34,6 +34,7 @@ cfg := config.GetColdBrewConfig()
 | `APP_NAME` | string | `""` | Application name (used in logs, metrics, New Relic) |
 | `ENVIRONMENT` | string | `""` | Environment name (e.g., production, staging, development) |
 | `RELEASE_NAME` | string | `""` | Release/version name |
+| `DISABLE_UNIX_GATEWAY` | bool | `true` | Disable Unix domain socket for HTTP gateway's internal gRPC connection. Set to `false` to enable (~1.9x faster than TCP loopback) |
 
 ## Logging
 
