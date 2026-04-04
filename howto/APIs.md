@@ -744,7 +744,7 @@ End-to-end gRPC unary call latency with default proto codec (Apple M1 Pro):
 | 50 items (~10KB) | 393µs | 356µs | 295µs |
 | 500 items (~100KB) | 2,834µs | 3,061µs | 2,628µs |
 
-*\*Bufconn is a test utility (`grpc/test/bufconn`) — no keepalive, backpressure, or connection lifecycle. These numbers represent a theoretical in-process lower bound, not a production transport. For production in-process calls, use [`DoHTTPtoGRPC`](#in-process-gateway-with-dohttptogrpc) which skips serialization entirely and is even faster.*
+*\*Bufconn is a test utility (`google.golang.org/grpc/test/bufconn`) — no keepalive, backpressure, or connection lifecycle. These numbers represent a theoretical in-process lower bound, not a production transport. For production in-process calls, use [`DoHTTPtoGRPC`](#in-process-gateway-with-dohttptogrpc) which skips serialization entirely and is even faster.*
 
 Key takeaways:
 
