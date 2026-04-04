@@ -223,7 +223,7 @@ End-to-end throughput measured on Apple M1 Pro (loopback, [ghz](https://ghz.sh/)
 | **Tuned** (error-only logging, no histograms) | 6,300 | 42,700 | 53,200 | 0.10ms | 7.3ms |
 | **No interceptors** (bare gRPC) | 7,000 | 46,600 | 55,800 | 0.09ms | 7.2ms |
 
-Per-interceptor micro-benchmark: **~4.5µs, ~1.8KB, ~42 allocs** per unary request. Profile with:
+Per-interceptor micro-benchmark: **~4.1µs, ~1.5KB, ~37 allocs** per unary request. Profile with:
 ```bash
 go test -run='^$' -bench=BenchmarkDefaultInterceptors -benchmem ./...
 ```
