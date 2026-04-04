@@ -213,7 +213,7 @@ Health checks, ready checks, and gRPC reflection are **excluded by default** via
 
 ### Interceptor Chain Overhead
 
-The full interceptor chain adds **~10–12% overhead** compared to bare gRPC (no interceptors). The bottleneck at high concurrency is gRPC HTTP/2 transport and Go runtime scheduling — not the interceptors themselves.
+The full interceptor chain adds **~10–12% overhead** compared to bare gRPC (no interceptors). Most of that overhead comes from per-request log writes (I/O), not the interceptor framework itself. Setting `RESPONSE_TIME_LOG_ERROR_ONLY=true` closes most of the gap (see Tuned row below).
 
 End-to-end throughput measured on Apple M1 Pro (loopback, [ghz](https://ghz.sh/) load test, simple Echo handler):
 

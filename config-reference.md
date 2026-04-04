@@ -204,7 +204,7 @@ End-to-end throughput on Apple M1 Pro (loopback, [ghz](https://ghz.sh/) load tes
 | **Tuned** (above config) | 53,200 | 7.3ms | +6% RPS |
 | **No interceptors** (bare gRPC) | 55,800 | 7.2ms | +12% RPS |
 
-The full interceptor chain (logging, tracing, metrics, panic recovery) adds ~10–12% overhead. Most of that is I/O-bound (log writes, gRPC transport) rather than CPU-bound, which is why tuning yields a modest but real improvement. See the [Architecture page](/architecture#interceptor-chain-overhead) for the full breakdown.
+Most of the interceptor chain overhead comes from per-request log writes. Setting `RESPONSE_TIME_LOG_ERROR_ONLY=true` closes most of the gap. See the [Architecture page](/architecture#interceptor-chain-overhead) for the full breakdown.
 
 {: .warning }
 Setting `ENABLE_PROMETHEUS_GRPC_HISTOGRAM=false` removes the `grpc_server_handling_seconds` metric entirely. This means **latency percentile queries and alerts** (e.g., `histogram_quantile(0.99, ...)`) will stop working. You will still have `grpc_server_handled_total` (request count by status code) and `grpc_server_started_total` (request count started). Only disable histograms if you have an alternative latency signal (e.g., distributed tracing percentiles, or an external load balancer metric).
