@@ -183,7 +183,8 @@ For services at 70k+ QPS where observability overhead matters:
 ```bash
 export APP_NAME=myservice
 export ENVIRONMENT=production
-export LOG_LEVEL=warn                          # suppresses info-level response time logs
+export LOG_LEVEL=warn
+export RESPONSE_TIME_LOG_LEVEL=warn            # must be >= LOG_LEVEL to take effect
 export RESPONSE_TIME_LOG_ERROR_ONLY=true       # skip per-request logging for successful RPCs
 # export OTLP_ENDPOINT=your-collector:4317     # uncomment if using OTLP tracing
 export OTLP_SAMPLING_RATIO=0.05                # only applies when OTLP_ENDPOINT is set
@@ -197,8 +198,8 @@ export HTTP_COMPRESSION_MIN_SIZE=512
 
 End-to-end throughput on Apple M1 Pro (loopback, [ghz](https://ghz.sh/) load test, simple Echo handler):
 
-| Configuration | c=200 RPS | c=200 P99 | Change |
-|---------------|-----------|-----------|--------|
+| Configuration | RPS @ c=200 | P99 @ c=200 | Change |
+|---------------|-------------|-------------|--------|
 | **Default** (all interceptors, info logging) | 50,000 | 7.9ms | baseline |
 | **Tuned** (above config) | 53,200 | 7.3ms | +6% RPS |
 | **No interceptors** (bare gRPC) | 55,800 | 7.2ms | +12% RPS |

@@ -217,8 +217,8 @@ The full interceptor chain adds **~10–12% overhead** compared to bare gRPC (no
 
 End-to-end throughput measured on Apple M1 Pro (loopback, [ghz](https://ghz.sh/) load test, simple Echo handler):
 
-| Configuration | c=1 RPS | c=50 RPS | c=200 RPS | c=1 avg | c=200 P99 |
-|---------------|---------|----------|-----------|---------|-----------|
+| Configuration | RPS @ c=1 | RPS @ c=50 | RPS @ c=200 | Avg @ c=1 | P99 @ c=200 |
+|---------------|-----------|------------|-------------|-----------| ------------|
 | **Default** (all interceptors) | 5,500 | 40,900 | 50,000 | 0.12ms | 7.9ms |
 | **Tuned** (error-only logging, no histograms) | 6,300 | 42,700 | 53,200 | 0.10ms | 7.3ms |
 | **No interceptors** (bare gRPC) | 7,000 | 46,600 | 55,800 | 0.09ms | 7.2ms |
