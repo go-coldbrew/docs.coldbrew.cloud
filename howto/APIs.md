@@ -180,6 +180,33 @@ Content-Length: 20
 echo: proto message%
 ```
 
+### When to use proto content type for performance
+
+JSON is the default and best choice for browser clients and debugging. But for **service-to-service HTTP calls** (or mobile clients that can handle binary), `application/proto` can significantly reduce latency:
+
+| Aspect | JSON | Proto binary |
+|--------|------|-------------|
+| **Serialization speed** | ~3-5x slower (reflection-based, text encoding) | Native proto marshal (or vtprotobuf for 4x faster) |
+| **Payload size** | ~2-3x larger (field names, base64 for bytes, text numbers) | Compact binary (varint, field tags only) |
+| **CPU cost** | Higher (string parsing, escaping, number formatting) | Lower (direct binary read/write) |
+| **Human-readable** | Yes | No (use `grpcurl` or Swagger UI for debugging) |
+
+To use proto format, set the `Content-Type` and `Accept` headers:
+
+```bash
+# Send proto, receive proto
+curl -X POST \
+  -H 'Content-Type: application/proto' \
+  -H 'Accept: application/proto' \
+  --data-binary @request.bin \
+  http://localhost:9091/api/v1/example/echo
+```
+
+For Go service-to-service calls, use the gRPC client directly instead of HTTP — it already uses proto binary encoding. The HTTP proto content type is most useful for non-gRPC clients (mobile apps, polyglot services) that want binary performance without the gRPC protocol overhead.
+
+{: .note}
+ColdBrew supports `application/proto` and `application/protobuf` out of the box — no configuration needed. Both map to the same proto binary marshaller.
+
 ## Returning HTTP status codes from gRPC APIs
 
 ### Overview
@@ -684,6 +711,51 @@ The interceptor chain is cached on first invocation. All interceptor configurati
 | `RegisterHandlerServer` + `DoHTTPtoGRPC` | ~19µs (in-process) | Per-method wrapper |
 
 Use `DoHTTPtoGRPC` when HTTP gateway latency is critical and you're willing to add per-method wrappers. For most services, enabling Unix sockets (`DISABLE_UNIX_GATEWAY=false`) provides a good balance of performance and simplicity.
+
+### Payload size impact
+
+How does payload size affect gateway performance? We benchmarked with realistic proto messages containing nested structs with strings, numbers, maps, repeated fields, and timestamps — at three sizes: 1 item (~200B), 50 items (~10KB), and 500 items (~100KB).
+
+#### Codec: vtprotobuf vs standard proto
+
+Pure serialization cost, no network (Apple M1 Pro):
+
+| Payload | Proto Marshal | VTProto Marshal | Speedup |
+|---------|--------------|-----------------|---------|
+| 1 item (~200B) | 1.1µs / 17 allocs | 0.28µs / 1 alloc | **4x faster** |
+| 50 items (~10KB) | 53µs / 801 allocs | 12µs / 1 alloc | **4.3x faster** |
+| 500 items (~100KB) | 529µs / 8,001 allocs | 122µs / 1 alloc | **4.3x faster** |
+
+| Payload | Proto Unmarshal | VTProto Unmarshal | Speedup |
+|---------|----------------|-------------------|---------|
+| 1 item (~200B) | 1.4µs / 40 allocs | 0.58µs / 23 allocs | **2.5x faster** |
+| 50 items (~10KB) | 69µs / 1,908 allocs | 29µs / 1,107 allocs | **2.4x faster** |
+| 500 items (~100KB) | 684µs / 19,011 allocs | 290µs / 11,010 allocs | **2.4x faster** |
+
+vtprotobuf marshal produces **a single allocation** regardless of payload size, and is consistently 4x faster. Unmarshal is 2.4x faster with 40-70% fewer allocations.
+
+#### Transport: TCP vs Unix socket vs in-process
+
+End-to-end gRPC unary call latency with default proto codec (Apple M1 Pro):
+
+| Payload | TCP | Unix socket | Bufconn (in-process) |
+|---------|-----|-------------|---------------------|
+| 1 item (~200B) | 85µs | 48µs | 30µs |
+| 50 items (~10KB) | 393µs | 356µs | 295µs |
+| 500 items (~100KB) | 2,834µs | 3,061µs | 2,628µs |
+
+Key takeaways:
+
+- **Transport matters most for small payloads.** At 1 item, Unix socket (48µs) vs TCP (85µs) is a 1.8x improvement — the fixed transport overhead dominates when serialization is cheap.
+- **Serialization dominates at scale.** At 500 items, TCP and Unix socket converge because proto marshal/unmarshal (1.2ms total) dwarfs the ~40µs transport difference. This is where vtprotobuf and in-process calls (`DoHTTPtoGRPC`) have the most impact.
+- **vtprotobuf is ColdBrew's default** and provides the biggest single improvement. If you're not already using generated vtproto files, see the [vtprotobuf howto](/howto/vtproto).
+- **Both optimizations compound.** For maximum throughput: use vtprotobuf (default) + Unix socket for easy wins, or vtprotobuf + `DoHTTPtoGRPC` for latency-critical paths.
+
+{: .note}
+These benchmarks measure the gRPC layer only — the HTTP JSON↔proto conversion at the boundary is identical for all approaches. For large responses, consider using [`application/proto` content type](#when-to-use-proto-content-type-for-performance) to avoid JSON marshalling overhead entirely.
+
+{: .note}
+Benchmark source: [`core/benchmarks/`](https://github.com/go-coldbrew/core/tree/main/benchmarks) — run with `cd benchmarks && go test -bench=. -benchmem ./...`
 
 ---
 [google/rpc/status.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/status.proto
