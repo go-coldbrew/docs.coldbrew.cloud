@@ -27,6 +27,7 @@ const howtoPages = [
   "/howto/vtproto/",
   "/howto/production/",
   "/howto/testing/",
+  "/howto/workers/",
 ];
 
 test.describe("Page Loading", () => {
