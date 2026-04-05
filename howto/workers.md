@@ -292,6 +292,73 @@ Worker lifecycle events (panics, restarts, backoff, timeouts) are logged via [go
 {"level":"info","msg":"worker resumed","event":"..."}
 ```
 
+## Metrics
+
+Workers support pluggable metrics via the `Metrics` interface. Pass metrics at the root level — all workers and their children inherit them automatically.
+
+### Built-in Prometheus metrics
+
+```go
+if err := workers.Run(ctx, myWorkers, workers.WithMetrics(workers.NewPrometheusMetrics("myapp"))); err != nil {
+    log.Fatal(err)
+}
+```
+
+This registers the following metrics (auto-registered via `promauto`):
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `myapp_worker_started_total{worker}` | Counter | Total worker starts |
+| `myapp_worker_stopped_total{worker}` | Counter | Total worker stops |
+| `myapp_worker_panicked_total{worker}` | Counter | Total worker panics |
+| `myapp_worker_failed_total{worker}` | Counter | Total worker failures |
+| `myapp_worker_restarted_total{worker}` | Counter | Total worker restarts |
+| `myapp_worker_run_duration_seconds{worker}` | Histogram | Duration of worker run cycles |
+| `myapp_worker_active_count` | Gauge | Currently active workers |
+
+`NewPrometheusMetrics` is safe to call multiple times with the same namespace — it returns the cached instance.
+
+### No metrics (default)
+
+```go
+_ = workers.Run(ctx, myWorkers) // uses BaseMetrics{} (no-op) — zero overhead
+```
+
+### Custom metrics
+
+Implement the `Metrics` interface for your own backend (Datadog, StatsD, etc.). Embed `BaseMetrics` for forward compatibility — new methods added to the interface get safe no-op defaults instead of breaking your build:
+
+```go
+type myDatadogMetrics struct {
+    workers.BaseMetrics // forward-compatible — new methods get no-op defaults
+    client *datadog.Client
+}
+
+func (m *myDatadogMetrics) WorkerStarted(name string) {
+    m.client.Incr("worker.started", []string{"worker:" + name}, 1)
+}
+
+func (m *myDatadogMetrics) WorkerFailed(name string, err error) {
+    m.client.Incr("worker.failed", []string{"worker:" + name}, 1)
+}
+
+// All other Metrics methods (Stopped, Panicked, Restarted, etc.)
+// default to no-op via BaseMetrics.
+```
+
+### Per-worker override
+
+Children inherit metrics from the root by default. Override for specific workers via the builder. Use `WorkerContext.Add` inside a manager worker:
+
+```go
+workers.NewWorker("manager", func(ctx workers.WorkerContext) error {
+    // This child uses custom metrics instead of the inherited root metrics.
+    ctx.Add(workers.NewWorker("special", fn).WithMetrics(customMetrics))
+    <-ctx.Done()
+    return ctx.Err()
+})
+```
+
 ## ColdBrew Integration (Phase 2)
 
 The workers package is standalone — any Go service can use it. ColdBrew integration via `CBServiceV2` is planned for a future core release, where workers will be started/stopped as part of the ColdBrew service lifecycle.
