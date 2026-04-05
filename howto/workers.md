@@ -292,6 +292,60 @@ Worker lifecycle events (panics, restarts, backoff, timeouts) are logged via [go
 {"level":"info","msg":"worker resumed","event":"..."}
 ```
 
+## Metrics
+
+Workers support pluggable metrics via the `Metrics` interface. Pass metrics at the root level — all workers and their children inherit them automatically.
+
+### Built-in Prometheus metrics
+
+```go
+workers.Run(ctx, myWorkers, workers.WithMetrics(workers.NewPrometheusMetrics("myapp")))
+```
+
+This registers the following metrics (auto-registered via `promauto`):
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `myapp_worker_started_total{worker}` | Counter | Total worker starts |
+| `myapp_worker_stopped_total{worker}` | Counter | Total worker stops |
+| `myapp_worker_panicked_total{worker}` | Counter | Total worker panics |
+| `myapp_worker_failed_total{worker}` | Counter | Total worker failures |
+| `myapp_worker_restarted_total{worker}` | Counter | Total worker restarts |
+| `myapp_worker_run_duration_seconds{worker}` | Histogram | Duration of worker run cycles |
+| `myapp_worker_active_count` | Gauge | Currently active workers |
+
+`NewPrometheusMetrics` is safe to call multiple times with the same namespace — it returns the cached instance.
+
+### No metrics (default)
+
+```go
+workers.Run(ctx, myWorkers) // uses NoopMetrics — zero overhead
+```
+
+### Custom metrics
+
+Implement the `Metrics` interface for your own backend (Datadog, StatsD, etc.):
+
+```go
+type Metrics interface {
+    WorkerStarted(name string)
+    WorkerStopped(name string)
+    WorkerPanicked(name string)
+    WorkerFailed(name string, err error)
+    WorkerRestarted(name string, attempt int)
+    ObserveRunDuration(name string, duration time.Duration)
+    SetActiveWorkers(count int)
+}
+```
+
+### Per-worker override
+
+Children inherit metrics from the root by default. Override for specific workers:
+
+```go
+ctx.Add(workers.NewWorker("special", fn).WithMetrics(customMetrics))
+```
+
 ## ColdBrew Integration (Phase 2)
 
 The workers package is standalone — any Go service can use it. ColdBrew integration via `CBServiceV2` is planned for a future core release, where workers will be started/stopped as part of the ColdBrew service lifecycle.
