@@ -16,7 +16,7 @@ description: "How to use go-coldbrew/workers to manage background goroutines wit
 
 Every worker runs inside its own supervisor subtree:
 
-```
+```text
 Root Supervisor
 ├── Worker-A supervisor
 │   ├── Worker-A run func
@@ -41,10 +41,12 @@ import "github.com/go-coldbrew/workers"
 ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 defer cancel()
 
-workers.Run(ctx, []*workers.Worker{
+if err := workers.Run(ctx, []*workers.Worker{
     workers.NewWorker("kafka", consume),
     workers.NewWorker("cleanup", cleanup).Every(5 * time.Minute).WithRestart(true),
-})
+}); err != nil {
+    log.Fatal(err)
+}
 ```
 
 `Run` blocks until `ctx` is cancelled and all workers have exited.
@@ -55,7 +57,7 @@ Use `NewWorker` with a name and a run function. The run function receives a `Wor
 
 ```go
 w := workers.NewWorker("my-worker", func(ctx workers.WorkerContext) error {
-    log.Info(ctx, "msg", "started", "worker", ctx.Name(), "attempt", ctx.Attempt())
+    log.Info(ctx, "msg", "started")
     // Do work...
     <-ctx.Done()
     return ctx.Err()
@@ -286,7 +288,6 @@ Worker lifecycle events (panics, restarts, backoff, timeouts) are logged via [go
 The workers package is standalone — any Go service can use it. ColdBrew integration via `CBServiceV2` is planned for a future core release, where workers will be started/stopped as part of the ColdBrew service lifecycle.
 
 [workers]: https://github.com/go-coldbrew/workers
-[workers-docs]: https://pkg.go.dev/github.com/go-coldbrew/workers
 [suture]: https://github.com/thejerf/suture
 [tracing]: https://github.com/go-coldbrew/tracing
 [Log]: https://github.com/go-coldbrew/log
