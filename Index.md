@@ -126,6 +126,7 @@ ColdBrew is modular — use the full framework or pick individual packages:
 | [**options**](https://github.com/go-coldbrew/options) | Request-scoped key-value store via context |
 | [**grpcpool**](https://github.com/go-coldbrew/grpcpool) | Round-robin gRPC connection pool |
 | [**data-builder**](https://github.com/go-coldbrew/data-builder) | Dependency injection with parallel execution |
+| [**workers**](https://github.com/go-coldbrew/workers) | Background worker lifecycle with panic recovery and restart |
 
 Each package can be used independently — you don't need `core` to use `errors` or `log`.
 
