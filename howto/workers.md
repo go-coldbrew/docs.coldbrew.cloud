@@ -36,7 +36,15 @@ Root Supervisor
 ## Quick Start
 
 ```go
-import "github.com/go-coldbrew/workers"
+import (
+    "context"
+    "log"
+    "os"
+    "os/signal"
+    "time"
+
+    "github.com/go-coldbrew/workers"
+)
 
 ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 defer cancel()
@@ -271,7 +279,7 @@ err := workers.Run(ctx, []*workers.Worker{w1, w2, w3})
 workers.RunWorker(ctx, w)
 ```
 
-`RunWorker` is a convenience for `Run(ctx, []*Worker{w})`. Useful for dynamic managers spawning children in goroutines.
+`RunWorker` is a convenience for `workers.Run(ctx, []*workers.Worker{w})`. Useful for dynamic managers spawning children in goroutines.
 
 ## Logging
 
