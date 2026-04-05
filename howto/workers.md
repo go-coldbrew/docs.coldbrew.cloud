@@ -319,23 +319,29 @@ This registers the following metrics (auto-registered via `promauto`):
 ### No metrics (default)
 
 ```go
-workers.Run(ctx, myWorkers) // uses NoopMetrics — zero overhead
+workers.Run(ctx, myWorkers) // uses BaseMetrics (no-op) — zero overhead
 ```
 
 ### Custom metrics
 
-Implement the `Metrics` interface for your own backend (Datadog, StatsD, etc.):
+Implement the `Metrics` interface for your own backend (Datadog, StatsD, etc.). Embed `BaseMetrics` for forward compatibility — new methods added to the interface get safe no-op defaults instead of breaking your build:
 
 ```go
-type Metrics interface {
-    WorkerStarted(name string)
-    WorkerStopped(name string)
-    WorkerPanicked(name string)
-    WorkerFailed(name string, err error)
-    WorkerRestarted(name string, attempt int)
-    ObserveRunDuration(name string, duration time.Duration)
-    SetActiveWorkers(count int)
+type myDatadogMetrics struct {
+    workers.BaseMetrics // forward-compatible — new methods get no-op defaults
+    client *datadog.Client
 }
+
+func (m *myDatadogMetrics) WorkerStarted(name string) {
+    m.client.Incr("worker.started", []string{"worker:" + name}, 1)
+}
+
+func (m *myDatadogMetrics) WorkerFailed(name string, err error) {
+    m.client.Incr("worker.failed", []string{"worker:" + name}, 1)
+}
+
+// All other Metrics methods (Stopped, Panicked, Restarted, etc.)
+// default to no-op via BaseMetrics.
 ```
 
 ### Per-worker override
