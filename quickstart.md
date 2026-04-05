@@ -317,6 +317,39 @@ Three jobs in a single `test` stage:
 
 Go module caching is enabled for faster builds.
 
+## Configuration
+
+ColdBrew uses environment variables for configuration. Common settings:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GRPC_PORT` | `9090` | gRPC server port |
+| `HTTP_PORT` | `9091` | HTTP gateway port |
+| `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
+| `JSON_LOGS` | `true` | JSON formatted logs |
+| `ENVIRONMENT` | `""` | Environment name |
+| `TRACE_HEADER_NAME` | `x-trace-id` | Header name for trace propagation |
+| `NEW_RELIC_APPNAME` | `""` | New Relic application name |
+| `NEW_RELIC_LICENSE_KEY` | `""` | New Relic license key |
+| `SENTRY_DSN` | `""` | Sentry DSN for error tracking |
+
+See the **[Configuration Reference](/config-reference)** for the complete list of 40+ environment variables including gRPC keepalive, TLS, OpenTelemetry OTLP, Prometheus histogram buckets, and graceful shutdown tuning.
+
+## Adding Interceptors
+
+ColdBrew comes with a comprehensive set of [interceptors](/howto/interceptors) pre-configured. To add custom interceptors:
+
+```go
+import "github.com/go-coldbrew/interceptors"
+
+func init() {
+    interceptors.AddUnaryServerInterceptor(myCustomInterceptor)
+}
+```
+
+{: .warning }
+Interceptor configuration functions must be called during `init()` — they are not safe for concurrent use.
+
 ## What's Built In (You Didn't Have to Configure)
 
 Everything below was set up automatically by ColdBrew:
@@ -463,7 +496,6 @@ Your service starts on `:9090` (gRPC) and `:9091` (HTTP) with metrics, health ch
 
 ## Next Steps
 
-- **[Using ColdBrew](/using)** — Configure ports, environment variables, and interceptors
 - **[How-To Guides](/howto)** — Tracing, logging, metrics, error handling, and more
 - **[Production Deployment](/howto/production)** — Kubernetes manifests, health probes, tracing, and graceful shutdown
 - **[Integrations](/integrations)** — Connect New Relic, Prometheus, Sentry, Jaeger
