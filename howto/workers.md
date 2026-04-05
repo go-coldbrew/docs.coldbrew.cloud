@@ -299,7 +299,9 @@ Workers support pluggable metrics via the `Metrics` interface. Pass metrics at t
 ### Built-in Prometheus metrics
 
 ```go
-workers.Run(ctx, myWorkers, workers.WithMetrics(workers.NewPrometheusMetrics("myapp")))
+if err := workers.Run(ctx, myWorkers, workers.WithMetrics(workers.NewPrometheusMetrics("myapp"))); err != nil {
+    log.Fatal(err)
+}
 ```
 
 This registers the following metrics (auto-registered via `promauto`):
@@ -319,7 +321,7 @@ This registers the following metrics (auto-registered via `promauto`):
 ### No metrics (default)
 
 ```go
-workers.Run(ctx, myWorkers) // uses BaseMetrics (no-op) — zero overhead
+_ = workers.Run(ctx, myWorkers) // uses BaseMetrics{} (no-op) — zero overhead
 ```
 
 ### Custom metrics
@@ -346,10 +348,15 @@ func (m *myDatadogMetrics) WorkerFailed(name string, err error) {
 
 ### Per-worker override
 
-Children inherit metrics from the root by default. Override for specific workers:
+Children inherit metrics from the root by default. Override for specific workers via the builder. Use `WorkerContext.Add` inside a manager worker:
 
 ```go
-ctx.Add(workers.NewWorker("special", fn).WithMetrics(customMetrics))
+workers.NewWorker("manager", func(ctx workers.WorkerContext) error {
+    // This child uses custom metrics instead of the inherited root metrics.
+    ctx.Add(workers.NewWorker("special", fn).WithMetrics(customMetrics))
+    <-ctx.Done()
+    return ctx.Err()
+})
 ```
 
 ## ColdBrew Integration (Phase 2)
