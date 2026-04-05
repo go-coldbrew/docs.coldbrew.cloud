@@ -58,7 +58,8 @@ Use `NewWorker` with a name and a run function. The run function receives a `Wor
 ```go
 w := workers.NewWorker("my-worker", func(ctx workers.WorkerContext) error {
     log.Info(ctx, "msg", "started")
-    // Do work...
+    // Worker name and attempt are automatically added to the log context
+    // by the framework — all log calls using this ctx include them.
     <-ctx.Done()
     return ctx.Err()
 })
