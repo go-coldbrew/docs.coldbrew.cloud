@@ -1,4 +1,6 @@
 ---
+layout: null
+sitemap: false
 ---
 User-agent: *
 Allow: /
