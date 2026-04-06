@@ -354,6 +354,10 @@ func init() {
 {: .warning }
 Interceptor configuration functions must be called during `init()` — they are not safe for concurrent use.
 
+## Private Modules
+
+If your service depends on private Go modules, GOPRIVATE is pre-configured in the Makefile, Dockerfile, and CI workflows from the `goprivate` value you set during project creation. You just need to set up authentication for your platform. See the [Private Modules guide](/howto/private-modules/) for GitHub, GitLab, Docker, and CI setup.
+
 ## What's Built In (You Didn't Have to Configure)
 
 Everything below was set up automatically by ColdBrew:
