@@ -134,6 +134,42 @@ func main() {
 }
 ```
 
+## Proto Validation
+
+ColdBrew includes a [protovalidate](https://github.com/bufbuild/protovalidate) interceptor in the default chain. It validates incoming messages using annotations defined in your `.proto` files and returns `InvalidArgument` on failure. Validation runs on both gRPC and HTTP gateway requests — the HTTP gateway translates to gRPC internally, so the interceptor covers both transports from a single annotation.
+
+### Adding validation rules
+
+First, add `buf.build/bufbuild/protovalidate` to your `buf.yaml` deps and run `buf dep update`. Then add annotations to your proto:
+
+```protobuf
+import "buf/validate/validate.proto";
+
+message CreateUserRequest {
+    string email = 1 [(buf.validate.field).string.email = true];
+    string name = 2 [(buf.validate.field).string.min_len = 1];
+    int32 age = 3 [(buf.validate.field).int32 = {gte: 0, lte: 150}];
+}
+```
+
+No code changes needed — the interceptor validates automatically.
+
+### Custom constraints
+
+Add custom validation options during `init()`:
+
+```go
+func init() {
+    interceptors.SetProtoValidateOptions(
+        protovalidate.WithCustomConstraints(myConstraints...),
+    )
+}
+```
+
+### Disabling
+
+Set `DISABLE_PROTO_VALIDATE=true` to skip validation entirely.
+
 ## Adding custom interceptors to Default interceptors
 
 You can add your own interceptors to the [Default Interceptors] by appending to the list of interceptors.
