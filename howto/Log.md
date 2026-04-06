@@ -2,6 +2,7 @@
 layout: default
 title: "Log"
 parent: "How To"
+nav_order: 3
 description: "Context-aware logging and trace ID propagation in ColdBrew"
 ---
 ## Table of contents

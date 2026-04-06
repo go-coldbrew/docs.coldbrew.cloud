@@ -2,6 +2,7 @@
 layout: default
 title: "Workers"
 parent: "How To"
+nav_order: 15
 description: "How to use go-coldbrew/workers to manage background goroutines with panic recovery, restart, and structured shutdown."
 ---
 ## Table of contents

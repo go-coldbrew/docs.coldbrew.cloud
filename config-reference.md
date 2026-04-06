@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Configuration Reference"
-nav_order: 5
+nav_order: 4
 description: "Complete environment variable reference for ColdBrew Go microservice framework configuration"
 permalink: /config-reference
 ---

@@ -2,8 +2,8 @@
 layout: default
 title: Integrations
 permalink: /integrations
-description: ColdBrew integrations with other services and tools
-nav_order: 7
+description: "ColdBrew integrations with Prometheus, New Relic, Sentry, OpenTelemetry, Buf, Jaeger, and vtprotobuf for observability and code generation"
+nav_order: 6
 ---
 # Integrations
 {: .no_toc }

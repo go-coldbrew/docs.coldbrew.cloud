@@ -32,13 +32,13 @@ test.describe("Tables", () => {
     const tables = page.locator("table");
     expect(await tables.count()).toBeGreaterThanOrEqual(1);
     // Check that the status code table exists
-    const pageText = await page.locator("main, .main-content").textContent();
+    const pageText = await page.locator("main, .main-content").first().textContent();
     expect(pageText).toContain("gRPC status code");
   });
 
   test("integrations page renders content", async ({ page }) => {
     await page.goto("/integrations/");
-    const pageText = await page.locator("main, .main-content").textContent();
+    const pageText = await page.locator("main, .main-content").first().textContent();
     expect(pageText).toContain("Prometheus");
     expect(pageText).toContain("New Relic");
   });
@@ -84,7 +84,7 @@ test.describe("Callouts", () => {
 
   test("metrics page has warning about hystrix", async ({ page }) => {
     await page.goto("/howto/Metrics/");
-    const pageText = await page.locator("main, .main-content").textContent();
+    const pageText = await page.locator("main, .main-content").first().textContent();
     expect(pageText).toContain("unmaintained");
   });
 });

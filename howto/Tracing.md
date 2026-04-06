@@ -2,6 +2,7 @@
 layout: default
 title: "Tracing"
 parent: "How To"
+nav_order: 5
 description: "Set up distributed tracing in ColdBrew with OpenTelemetry and New Relic for gRPC services"
 ---
 ## Table of contents

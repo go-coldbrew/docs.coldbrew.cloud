@@ -2,6 +2,7 @@
 layout: default
 title: "Errors"
 parent: "How To"
+nav_order: 4
 description: "How to use go-coldbrew/errors package to handle errors in Go."
 ---
 ## Table of contents

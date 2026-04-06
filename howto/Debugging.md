@@ -2,6 +2,7 @@
 layout: default
 title: "Debugging"
 parent: "How To"
+nav_order: 8
 description: "Debugging ColdBrew services with pprof and log overrides"
 ---
 ## Table of contents

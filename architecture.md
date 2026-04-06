@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Architecture"
-nav_order: 5
+nav_order: 3
 description: "ColdBrew architecture: request lifecycle, interceptor chain, and package dependencies"
 permalink: /architecture
 ---
