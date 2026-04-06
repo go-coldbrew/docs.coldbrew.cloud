@@ -38,6 +38,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **gRPC Reflection** | Server reflection enabled by default — works with [grpcurl], [grpcui], and Postman |
 | **HTTP Compression** | Automatic gzip and [zstd] compression for all HTTP gateway responses (content-negotiated via `Accept-Encoding`) |
 | **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
+| **Request Validation** | [Protovalidate] annotations enforced automatically — define validation rules in your proto, get `InvalidArgument` errors for free |
 | **CI/CD Pipelines** | Ready-to-use [GitHub Actions] and [GitLab CI] workflows for build, test, lint, coverage, and benchmarks |
 
 ## Quick Start
@@ -100,9 +101,10 @@ Run `buf generate` — it creates typed Go interfaces from your proto definition
                     │  │ Gateway  │──► │                     │  │
                     │  │ (grpc-  │    │  ► Response Time    │  │
    gRPC Request ──► │  │ gateway)│    │  ► Trace ID         │  │
-                    │  └─────────┘    │  ► OpenTelemetry     │  │
-                    │       │         │  ► Prometheus        │  │
-                    │       ▼         │  ► Error Notify      │  │
+                    │  └─────────┘    │  ► Proto Validate   │  │
+                    │       │         │  ► OpenTelemetry     │  │
+                    │       ▼         │  ► Prometheus        │  │
+                    │                 │  ► Error Notify      │  │
                     │  ┌─────────┐    │  ► Panic Recovery    │  │
                     │  │  gRPC   │──► │                     │  │──► Your Handler
                     │  │ Server  │    │                     │  │
@@ -188,3 +190,4 @@ ColdBrew composes proven Go libraries — not replacements:
 [GitLab CI]: https://docs.gitlab.com/ci/
 [slog]: https://pkg.go.dev/log/slog
 [zstd]: https://datatracker.ietf.org/doc/html/rfc8878
+[Protovalidate]: https://github.com/bufbuild/protovalidate
