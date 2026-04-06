@@ -136,7 +136,7 @@ func main() {
 
 ## Proto Validation
 
-ColdBrew includes a [protovalidate](https://github.com/bufbuild/protovalidate) interceptor in the default chain. It validates incoming messages using annotations defined in your `.proto` files and returns `InvalidArgument` on failure.
+ColdBrew includes a [protovalidate](https://github.com/bufbuild/protovalidate) interceptor in the default chain. It validates incoming messages using annotations defined in your `.proto` files and returns `InvalidArgument` on failure. Validation runs on both gRPC and HTTP gateway requests — the HTTP gateway translates to gRPC internally, so the interceptor covers both transports from a single annotation.
 
 ### Adding validation rules
 

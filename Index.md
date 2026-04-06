@@ -38,7 +38,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **gRPC Reflection** | Server reflection enabled by default — works with [grpcurl], [grpcui], and Postman |
 | **HTTP Compression** | Automatic gzip and [zstd] compression for all HTTP gateway responses (content-negotiated via `Accept-Encoding`) |
 | **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
-| **Request Validation** | [Protovalidate] annotations enforced automatically — define validation rules in your proto, get `InvalidArgument` errors for free |
+| **Request Validation** | [Protovalidate] annotations enforced automatically on both gRPC and HTTP requests — define validation rules in your proto, get `InvalidArgument` errors for free |
 | **CI/CD Pipelines** | Ready-to-use [GitHub Actions] and [GitLab CI] workflows for build, test, lint, coverage, and benchmarks |
 
 ## Quick Start

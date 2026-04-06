@@ -208,14 +208,18 @@ Let's add a `Greet` endpoint to your service.
 Add to `proto/echoserver.proto`:
 
 ```protobuf
+import "buf/validate/validate.proto";
+
 message GreetRequest {
-    string name = 1;
+    string name = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 message GreetResponse {
     string greeting = 1;
 }
 ```
+
+The `min_len = 1` annotation ensures the name is not empty. ColdBrew validates this automatically on both gRPC and HTTP requests — sending an empty name returns `InvalidArgument`.
 
 Add the RPC method to your service block:
 
@@ -358,6 +362,7 @@ Everything below was set up automatically by ColdBrew:
 - **Distributed tracing** support (OpenTelemetry, Jaeger, New Relic)
 - **Prometheus metrics** for every gRPC method (latency, error rate, in-flight)
 - **gRPC interceptors** for logging, tracing, metrics, error notification, panic recovery
+- **Request validation** via [protovalidate](https://github.com/bufbuild/protovalidate) — define rules in proto, enforced automatically on both gRPC and HTTP requests
 - **Health checks** for Kubernetes liveness/readiness probes
 - **Graceful shutdown** on SIGTERM/SIGINT (Kubernetes pod termination)
 - **pprof profiling** endpoints for debugging
