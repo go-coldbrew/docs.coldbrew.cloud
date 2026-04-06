@@ -146,7 +146,9 @@ ColdBrew handles all of it. You write business logic, ColdBrew handles everythin
 | Nothing | Prometheus metrics at `/metrics` — per-method latency, error rate, QPS |
 | Nothing | Health/ready probes, graceful shutdown, [pprof] profiling |
 | Nothing | Interceptor chain: logging, tracing, metrics, panic recovery |
+| Proto validation annotations | Request validation via [Protovalidate] — `InvalidArgument` on failure, covers gRPC and HTTP |
 | Nothing | [vtprotobuf] codec — up to ~4x faster proto marshal |
+| Nothing | HTTP content negotiation — JSON, `application/proto`, `application/protobuf` out of the box |
 | Nothing | HTTP [gzip/zstd][zstd] compression, container-aware [GOMAXPROCS][automaxprocs] |
 
 New services inherit all of this automatically via the [cookiecutter template](/getting-started) — zero boilerplate to write, zero infrastructure to maintain.
@@ -157,7 +159,7 @@ ColdBrew composes proven Go libraries — not replacements:
 
 | Category | Libraries |
 |----------|----------|
-| **API** | [grpc] + [grpc-gateway] — gRPC server with automatic REST gateway and Swagger UI |
+| **API** | [grpc] + [grpc-gateway] — gRPC server with automatic REST gateway and Swagger UI; [Protovalidate] — request validation |
 | **Observability** | [OpenTelemetry] + [Jaeger] — distributed tracing; [Prometheus] + [go-grpc-middleware] — metrics |
 | **Monitoring** | [New Relic] — APM; [Sentry] — error tracking and alerting |
 | **Performance** | [vtprotobuf] — fast serialization; [klauspost/compress][zstd] — gzip/zstd HTTP compression |
