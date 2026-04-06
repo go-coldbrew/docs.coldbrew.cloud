@@ -2,6 +2,7 @@
 layout: default
 title: "Signal Handling and Graceful Shutdown"
 parent: "How To"
+nav_order: 9
 description: "How POSIX signal handling works in ColdBrew"
 ---
 ## Table of contents

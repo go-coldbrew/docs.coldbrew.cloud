@@ -2,7 +2,8 @@
 layout: default
 title: "Metrics"
 parent: "How To"
-description: "Prometheus metrics and custom metrics in ColdBrew"
+nav_order: 6
+description: "Prometheus metrics and custom metrics in ColdBrew: default runtime metrics, custom counters and histograms, and Hystrix circuit breaker monitoring"
 ---
 ## Table of contents
 {: .no_toc .text-delta }

@@ -2,7 +2,8 @@
 layout: default
 title: "gRPC"
 parent: "How To"
-description: "How to use gRPC with ColdBrew"
+nav_order: 2
+description: "How to use gRPC with ColdBrew: connection pooling, client setup with grpcpool, and building gRPC-first microservices in Go"
 ---
 ## Table of contents
 {: .no_toc .text-delta }

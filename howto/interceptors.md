@@ -2,6 +2,7 @@
 layout: default
 title: "Interceptors"
 parent: "How To"
+nav_order: 7
 description: "Configuring gRPC interceptors in ColdBrew"
 ---
 ## Table of contents

@@ -2,6 +2,7 @@
 layout: default
 title: "VTProtobuf (Fast Serialization)"
 parent: "How To"
+nav_order: 12
 description: "How ColdBrew uses vtprotobuf for faster gRPC serialization with automatic fallback to standard protobuf"
 ---
 ## Table of contents

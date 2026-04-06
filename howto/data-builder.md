@@ -2,6 +2,7 @@
 layout: default
 title: "Data Builder"
 parent: "How To"
+nav_order: 11
 description: "How to use go-coldbrew/data-builder package to orchestrate data-processing logic in Go."
 ---
 ## Table of contents

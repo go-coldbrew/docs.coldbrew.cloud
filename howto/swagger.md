@@ -2,6 +2,7 @@
 layout: default
 title: "Swagger / Open API Support"
 parent: "How To"
+nav_order: 10
 description: "How ColdBrew supports Swagger / Open API"
 ---
 ## Table of contents

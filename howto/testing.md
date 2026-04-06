@@ -2,6 +2,7 @@
 layout: default
 title: "Testing"
 parent: "How To"
+nav_order: 14
 description: "Unit tests, mocks, benchmarks, and coverage reports in ColdBrew services"
 ---
 ## Table of contents

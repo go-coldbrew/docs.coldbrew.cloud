@@ -2,6 +2,7 @@
 layout: default
 title: "Private Modules"
 parent: "How To"
+nav_order: 16
 description: "Configure Go private modules for GitHub and GitLab private repositories in ColdBrew services"
 ---
 ## Table of contents

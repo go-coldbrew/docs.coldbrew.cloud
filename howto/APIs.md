@@ -2,6 +2,7 @@
 layout: default
 title: "Building and Configuring APIs"
 parent: "How To"
+nav_order: 1
 description: "Build gRPC and REST APIs with ColdBrew using protobuf definitions and grpc-gateway HTTP annotations"
 ---
 ## Table of contents

@@ -2,6 +2,7 @@
 layout: default
 title: "Production Deployment"
 parent: "How To"
+nav_order: 13
 description: "Deploy ColdBrew Go services to production with Kubernetes manifests, health probes, Prometheus, distributed tracing, and graceful shutdown"
 ---
 ## Table of contents
