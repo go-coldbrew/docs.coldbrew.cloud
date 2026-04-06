@@ -37,11 +37,11 @@ git config --global url."git@gitlab.com:".insteadOf "https://gitlab.com/"
 # GitHub
 echo "machine github.com login x-access-token password YOUR_PAT" >> ~/.netrc
 
-# GitLab (needs read_api scope)
+# GitLab (needs read_repository scope)
 echo "machine gitlab.com login your-username password YOUR_PAT" >> ~/.netrc
 ```
 
-### Option 3: GOAUTH (Go 1.24+)
+### Option 3: GOAUTH
 
 ```bash
 export GOAUTH=netrc
@@ -99,14 +99,14 @@ before_script:
 
 GitLab projects nested more than one level deep (e.g., `gitlab.com/org/group/subgroup/repo`) require special handling because Go's module discovery makes unauthenticated HTTP requests to determine the repository path.
 
-For Go 1.24+, use GOAUTH:
+Use GOAUTH with `.netrc`:
 
 ```yaml
 variables:
   GOAUTH: "netrc"
 ```
 
-For older Go versions, set `GONOSUMCHECK` and `GONOSUMDB` alongside GOPRIVATE.
+Also set `GONOSUMDB` and `GONOPROXY` alongside GOPRIVATE to ensure Go doesn't try the public checksum database or proxy for nested subgroup paths.
 
 ## Troubleshooting
 
