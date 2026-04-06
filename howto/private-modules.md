@@ -59,7 +59,13 @@ The generated `Dockerfile` includes GOPRIVATE as a build arg. For authentication
 docker build --build-arg GITHUB_TOKEN=your_pat .
 ```
 
-The Dockerfile has a commented-out section that uses this arg to create a `.netrc` file in the build stage.
+The Dockerfile has a commented-out section that uses this arg to create a `.netrc` file in the build stage. Since ColdBrew uses a multi-stage build, credentials in the build stage are **not** included in the final image.
+
+For even stronger isolation, use a BuildKit secret mount instead of a build arg:
+
+```bash
+docker build --secret id=netrc,src=$HOME/.netrc .
+```
 
 ### SSH agent forwarding
 
@@ -114,5 +120,5 @@ Also set `GONOSUMDB` and `GONOPROXY` alongside GOPRIVATE to ensure Go doesn't tr
 |-------|-------|-----|
 | `410 Gone` | Module proxy can't access private repo | Ensure GOPRIVATE is set correctly |
 | `404 Not Found` | Git can't authenticate | Check `.netrc` or SSH config |
-| `remote: HTTP Basic: Access denied` | Token expired or wrong scope | Regenerate PAT with `repo` (GitHub) or `read_api` (GitLab) scope |
+| `remote: HTTP Basic: Access denied` | Token expired or wrong scope | Regenerate PAT with `repo` (GitHub) or `read_repository` (GitLab) scope |
 | `could not read Username` | Git prompting for credentials in non-interactive mode | Add `.netrc` or SSH config — don't rely on interactive auth in CI/Docker |
