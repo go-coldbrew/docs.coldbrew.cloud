@@ -102,9 +102,8 @@ Run `buf generate` — it creates typed Go interfaces from your proto definition
                     │  │ (grpc-  │    │  ► Response Time    │  │
    gRPC Request ──► │  │ gateway)│    │  ► Trace ID         │  │
                     │  └─────────┘    │  ► Proto Validate   │  │
-                    │       │         │  ► OpenTelemetry     │  │
-                    │       ▼         │  ► Prometheus        │  │
-                    │                 │  ► Error Notify      │  │
+                    │       │         │  ► Prometheus        │  │
+                    │       ▼         │  ► Error Notify      │  │
                     │  ┌─────────┐    │  ► Panic Recovery    │  │
                     │  │  gRPC   │──► │                     │  │──► Your Handler
                     │  │ Server  │    │                     │  │

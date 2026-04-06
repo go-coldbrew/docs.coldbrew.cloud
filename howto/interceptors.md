@@ -140,7 +140,7 @@ ColdBrew includes a [protovalidate](https://github.com/bufbuild/protovalidate) i
 
 ### Adding validation rules
 
-Add `buf/validate/validate.proto` import and annotations to your proto:
+First, add `buf.build/bufbuild/protovalidate` to your `buf.yaml` deps and run `buf dep update`. Then add annotations to your proto:
 
 ```protobuf
 import "buf/validate/validate.proto";
