@@ -116,7 +116,7 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | `OTLP_INSECURE` | bool | `false` | Disable TLS for OTLP connection (development only) |
 | `OTLP_SAMPLING_RATIO` | float64 | `0.1` | Trace sampling ratio (0.0–1.0, where 1.0 = sample all) |
 | `OTLP_USE_OPENTRACING_BRIDGE` | bool | `false` | **Deprecated.** Ignored — OpenTracing bridge has been removed. If set to `true`, a warning is logged at startup |
-| `OTEL_USE_LEGACY_INSTRUMENTATION` | bool | `false` | Revert to the deprecated `otelgrpc` contrib package for gRPC OpenTelemetry instrumentation. Set to `true` only for rollback |
+| `OTEL_USE_LEGACY_INSTRUMENTATION` | bool | `false` | Revert to legacy `otelgrpc`-based gRPC OpenTelemetry instrumentation. Set to `true` only for rollback |
 | `ENABLE_OTEL_METRICS` | bool | `false` | Enable OpenTelemetry metrics export via OTLP alongside Prometheus. Does not replace Prometheus |
 | `OTEL_METRICS_INTERVAL` | int | `60` | Export interval in seconds for OTEL metrics (only applies when `ENABLE_OTEL_METRICS=true`) |
 
