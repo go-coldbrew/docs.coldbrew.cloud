@@ -82,10 +82,12 @@ test.describe("External Links (sample)", () => {
 
     for (const url of pkgLinks) {
       const response = await request.get(url);
+      // Accept 429 (rate limited) — the URL exists, the server is just throttling CI runners.
+      const status = response.status();
       expect(
-        response.status(),
-        `${url} returned ${response.status()}`
-      ).toBeLessThan(400);
+        status < 400 || status === 429,
+        `${url} returned ${status}`
+      ).toBeTruthy();
     }
   });
 
