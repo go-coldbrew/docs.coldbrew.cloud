@@ -79,7 +79,7 @@ curl -s "http://localhost:9091/debug/pprof/heap?debug=0" -o heap.prof
 go tool pprof -alloc_objects -top heap.prof
 ```
 
-Top allocation sources under load are gRPC metadata copying (~27%), otelgrpc span creation (~13%), and options context store (~10%). These are largely inherent to gRPC's per-request metadata model.
+Top allocation sources under load are gRPC metadata copying (~27%), OpenTelemetry span creation (~13%), and options context store (~10%). These are largely inherent to gRPC's per-request metadata model.
 
 ### Analyzing profiles
 

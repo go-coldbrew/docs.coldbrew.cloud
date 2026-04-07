@@ -67,7 +67,7 @@ See the [Tracing How-To](/howto/Tracing/#trace-id-propagation) for details.
 
 The OpenTracing bridge has been removed. ColdBrew now uses OpenTelemetry natively:
 
-1. Remove any direct `opentracing.GlobalTracer()` calls — use `otel.Tracer()` instead
+1. Remove any direct `opentracing.GlobalTracer()` calls — use `otel.Tracer("my-service")` instead
 2. The `tracing.NewInternalSpan()`, `tracing.NewDatastoreSpan()`, and `tracing.NewExternalSpan()` functions use OpenTelemetry natively
 3. If you had `OTLP_USE_OPENTRACING_BRIDGE=true`, remove it — the setting is now ignored (a warning is logged if set)
 4. See the [Tracing How-To](/howto/Tracing/) and [Integrations](/integrations) guides for setup details
