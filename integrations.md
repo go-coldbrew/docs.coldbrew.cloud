@@ -156,14 +156,13 @@ To configure generic OpenTelemetry, you can use the [OTLPConfig] struct:
 
 ```go
 type OTLPConfig struct {
-    Endpoint             string            // OTLP gRPC endpoint (e.g., "localhost:4317")
-    Headers              map[string]string // Custom headers (e.g., API keys)
-    ServiceName          string            // Name of your service
-    ServiceVersion       string            // Version of your service
-    SamplingRatio        float64           // Sampling ratio (0.0 to 1.0)
-    Compression          string            // "gzip" or "none"
-    UseOpenTracingBridge bool              // Deprecated: enable legacy OpenTracing bridge
-    Insecure             bool              // Disable TLS (for local development)
+    Endpoint       string            // OTLP gRPC endpoint (e.g., "localhost:4317")
+    Headers        map[string]string // Custom headers (e.g., API keys)
+    ServiceName    string            // Name of your service
+    ServiceVersion string            // Version of your service
+    SamplingRatio  float64           // Sampling ratio (0.0 to 1.0)
+    Compression    string            // "gzip" or "none"
+    Insecure       bool              // Disable TLS (for local development)
 }
 ```
 
@@ -174,12 +173,11 @@ import "github.com/go-coldbrew/core"
 
 func main() {
     config := core.OTLPConfig{
-        Endpoint:             "localhost:4317",
-        ServiceName:          "my-service",
-        ServiceVersion:       "v1.0.0",
-        SamplingRatio:        0.1,
-        // UseOpenTracingBridge: true, // only needed for legacy OpenTracing code
-        Insecure:             true,  // for local development
+        Endpoint:       "localhost:4317",
+        ServiceName:    "my-service",
+        ServiceVersion: "v1.0.0",
+        SamplingRatio:  0.1,
+        Insecure:       true, // for local development
     }
     err := core.SetupOpenTelemetry(config)
     if err != nil {
@@ -201,12 +199,11 @@ import "github.com/go-coldbrew/core"
 
 func main() {
     config := core.OTLPConfig{
-        Endpoint:             "localhost:4317",  // Jaeger OTLP endpoint
-        ServiceName:          "my-service",
-        ServiceVersion:       "v1.0.0",
-        SamplingRatio:        0.1,
-        // UseOpenTracingBridge: true, // only needed for legacy OpenTracing code
-        Insecure:             true,
+        Endpoint:       "localhost:4317", // Jaeger OTLP endpoint
+        ServiceName:    "my-service",
+        ServiceVersion: "v1.0.0",
+        SamplingRatio:  0.1,
+        Insecure:       true,
     }
     err := core.SetupOpenTelemetry(config)
     if err != nil {

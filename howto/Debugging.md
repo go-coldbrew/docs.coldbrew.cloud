@@ -65,7 +65,7 @@ Here's what a typical ColdBrew CPU profile looks like under load (Apple M1 Pro, 
 | Go runtime (scheduling, GC) | ~15% | Goroutine scheduling, garbage collection |
 | `TraceIdInterceptor` | ~6% | Trace ID extraction and propagation |
 | `errors/notifier.SetTraceIdWithValue` | ~5% | Setting trace ID on error notifier context |
-| `otelgrpc.TagRPC` | ~1% | OpenTelemetry span creation |
+| gRPC OpenTelemetry stats handler | ~1% | OpenTelemetry span creation |
 | Prometheus metrics | ~1% | Histogram bucket recording |
 
 {: .important }

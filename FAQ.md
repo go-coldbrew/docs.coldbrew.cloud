@@ -65,11 +65,12 @@ See the [Tracing How-To](/howto/Tracing/#trace-id-propagation) for details.
 
 ## How do I migrate from OpenTracing to OpenTelemetry?
 
-The `tracing` package supports both. To switch:
+The OpenTracing bridge has been removed. ColdBrew now uses OpenTelemetry natively:
 
-1. Update your tracing initialization to use OpenTelemetry's SDK
-2. The `tracing.NewInternalSpan()`, `tracing.NewDatastoreSpan()`, and `tracing.NewExternalSpan()` functions work with both backends
-3. See the [Tracing How-To](/howto/Tracing/) and [Integrations](/integrations) guides for setup details
+1. Remove any direct `opentracing.GlobalTracer()` calls — use `otel.Tracer()` instead
+2. The `tracing.NewInternalSpan()`, `tracing.NewDatastoreSpan()`, and `tracing.NewExternalSpan()` functions use OpenTelemetry natively
+3. If you had `OTLP_USE_OPENTRACING_BRIDGE=true`, remove it — the setting is now ignored (a warning is logged if set)
+4. See the [Tracing How-To](/howto/Tracing/) and [Integrations](/integrations) guides for setup details
 
 ## What is vtprotobuf and why does ColdBrew use it?
 
