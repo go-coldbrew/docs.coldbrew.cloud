@@ -71,6 +71,25 @@ If you are using ColdBrew packages in your app, you need to initialise Prometheu
 ColdBrew uses the [prometheus/client_golang] package to collect metrics. To see how to use it check out the [metrics documentation].
 
 
+## OpenTelemetry Metrics
+
+ColdBrew can export gRPC metrics via OTLP alongside Prometheus. This uses the native `grpc/stats/opentelemetry` package and shares the same OTLP endpoint as tracing.
+
+### Configuring
+
+Set the following environment variables as defined in [Config]:
+- `ENABLE_OTEL_METRICS`: Set to `true` to enable OTLP metrics export
+- `OTEL_METRICS_INTERVAL`: Export interval in seconds (default: `60`)
+- `OTLP_ENDPOINT`: OTLP gRPC endpoint (shared with tracing)
+
+### Using
+
+OTEL metrics are exported automatically when enabled — no code changes required. Standard gRPC server/client metrics (`grpc.server.call.duration`, `grpc.client.call.duration`, etc.) are exported via OTLP.
+
+Custom application metrics registered with `promauto` are **not** exported via OTLP — they remain Prometheus-only. To export custom metrics via OTLP, use the [OpenTelemetry Go SDK](https://opentelemetry.io/docs/languages/go/) directly with the global MeterProvider (available via `otel.GetMeterProvider()` or `core.OTELMeterProvider()`).
+
+See the [Metrics How-To](/howto/Metrics/) for details on which metrics are exported and how OTEL metrics relate to Prometheus.
+
 ## Sentry
 
 [Sentry] is an error tracking tool that helps to monitor and fix crashes in real time. It collects data about the errors and displays it in a dashboard. It also provides alerts when the service is not performing well.
