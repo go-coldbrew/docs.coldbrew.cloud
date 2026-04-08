@@ -311,6 +311,22 @@ env:
     value: "0.2"
 ```
 
+### OTEL metrics (alongside Prometheus)
+
+To export gRPC metrics via OTLP alongside Prometheus scraping, enable OTEL metrics on the same endpoint used for tracing:
+
+```yaml
+env:
+  - name: ENABLE_OTEL_METRICS
+    value: "true"
+  - name: OTEL_METRICS_INTERVAL
+    value: "60"  # seconds between OTLP metric exports
+  # OTLP_ENDPOINT is already set for tracing above
+```
+
+{: .note }
+This does not replace Prometheus — both `/metrics` scraping and OTLP push run in parallel. See the [Metrics How-To](/howto/Metrics/#opentelemetry-metrics-otlp-export) for details on exported metric names.
+
 ### What gets traced
 
 ColdBrew automatically creates spans for:

@@ -65,7 +65,7 @@ Here's what a typical ColdBrew CPU profile looks like under load (Apple M1 Pro, 
 | Go runtime (scheduling, GC) | ~15% | Goroutine scheduling, garbage collection |
 | `TraceIdInterceptor` | ~6% | Trace ID extraction and propagation |
 | `errors/notifier.SetTraceIdWithValue` | ~5% | Setting trace ID on error notifier context |
-| `otelgrpc.TagRPC` | ~1% | OpenTelemetry span creation |
+| gRPC OpenTelemetry stats handler | ~1% | OpenTelemetry span creation |
 | Prometheus metrics | ~1% | Histogram bucket recording |
 
 {: .important }
@@ -79,7 +79,7 @@ curl -s "http://localhost:9091/debug/pprof/heap?debug=0" -o heap.prof
 go tool pprof -alloc_objects -top heap.prof
 ```
 
-Top allocation sources under load are gRPC metadata copying (~27%), otelgrpc span creation (~13%), and options context store (~10%). These are largely inherent to gRPC's per-request metadata model.
+Top allocation sources under load are gRPC metadata copying (~27%), OpenTelemetry span creation (~13%), and options context store (~10%). These are largely inherent to gRPC's per-request metadata model.
 
 ### Analyzing profiles
 

@@ -115,7 +115,10 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 | `OTLP_COMPRESSION` | string | `gzip` | Compression type: `gzip` or `none` |
 | `OTLP_INSECURE` | bool | `false` | Disable TLS for OTLP connection (development only) |
 | `OTLP_SAMPLING_RATIO` | float64 | `0.1` | Trace sampling ratio (0.0–1.0, where 1.0 = sample all) |
-| `OTLP_USE_OPENTRACING_BRIDGE` | bool | `false` | **Deprecated.** Enable legacy OpenTracing bridge — only needed for services with unmigrated OpenTracing instrumentation |
+| `OTLP_USE_OPENTRACING_BRIDGE` | bool | `false` | **Deprecated.** Ignored — OpenTracing bridge has been removed. If set to `true`, a warning is logged at startup |
+| `OTEL_USE_LEGACY_INSTRUMENTATION` | bool | `false` | Revert to legacy `otelgrpc`-based gRPC OpenTelemetry instrumentation. Set to `true` only for rollback |
+| `ENABLE_OTEL_METRICS` | bool | `false` | Enable OpenTelemetry metrics export via OTLP alongside Prometheus. Does not replace Prometheus |
+| `OTEL_METRICS_INTERVAL` | int | `60` | Export interval in seconds for OTEL metrics (only applies when `ENABLE_OTEL_METRICS=true`) |
 
 ## Error Tracking
 
@@ -150,7 +153,7 @@ When `OTLP_ENDPOINT` is set, it takes precedence over New Relic OpenTelemetry co
 |----------|------------|-------|
 | `HTTP_HEADER_PREFIX` | `HTTP_HEADER_PREFIXES` | Single prefix replaced by comma-separated list |
 | `DISABLE_PORMETHEUS` | `DISABLE_PROMETHEUS` | Typo variant — both work, use the correct spelling |
-| `OTLP_USE_OPENTRACING_BRIDGE` | Remove | Legacy OpenTracing bridge — remove once all instrumentation uses OpenTelemetry |
+| `OTLP_USE_OPENTRACING_BRIDGE` | Remove | OpenTracing bridge has been removed — this field is now ignored (logs a warning if set to `true`) |
 
 ---
 

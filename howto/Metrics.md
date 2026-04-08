@@ -3,7 +3,7 @@ layout: default
 title: "Metrics"
 parent: "How To"
 nav_order: 6
-description: "Prometheus metrics and custom metrics in ColdBrew: default runtime metrics, custom counters and histograms, and Hystrix circuit breaker monitoring"
+description: "Prometheus and OpenTelemetry metrics in ColdBrew: default runtime metrics, OTLP export, custom counters and histograms, and Hystrix circuit breaker monitoring"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -51,6 +51,49 @@ These metrics will be automatically collected and exposed by ColdBrew on the `/m
 
 {: .note .note-info }
 To learn more about the Prometheus and the data types it supports, see [here](https://prometheus.io/docs/concepts/metric_types/)
+
+## OpenTelemetry Metrics (OTLP Export)
+
+In addition to Prometheus, ColdBrew can export gRPC metrics via OpenTelemetry's OTLP protocol. This is useful when your observability stack uses an OTLP-compatible backend (Grafana Cloud, Datadog, Honeycomb, etc.) and you want metrics alongside traces in the same pipeline.
+
+{: .important }
+OTEL metrics export is **opt-in** and runs **alongside** Prometheus — it does not replace the `/metrics` endpoint. Both can be active at the same time.
+
+### Enabling OTEL Metrics
+
+Set the following environment variables:
+
+```bash
+export ENABLE_OTEL_METRICS=true
+export OTEL_METRICS_INTERVAL=60    # export interval in seconds (default: 60)
+export OTLP_ENDPOINT=localhost:4317 # same endpoint used for traces
+```
+
+When enabled, ColdBrew exports standard [gRPC OpenTelemetry metrics](https://grpc.io/docs/guides/opentelemetry-metrics/) via the native `grpc/stats/opentelemetry` package:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `grpc.server.call.started` | Counter | Server RPCs started |
+| `grpc.server.call.duration` | Histogram | Server RPC duration |
+| `grpc.server.call.sent_total_compressed_message_size` | Histogram | Server response size |
+| `grpc.server.call.rcvd_total_compressed_message_size` | Histogram | Server request size |
+| `grpc.client.call.duration` | Histogram | Client RPC duration |
+| `grpc.client.attempt.started` | Counter | Client RPC attempts |
+
+{: .note }
+Health check, readiness, and server reflection RPCs are bucketed under a generic `"other"` method label to reduce cardinality — they still generate data points but won't create high-cardinality method attributes.
+
+### How it relates to Prometheus
+
+| Aspect | Prometheus (`/metrics`) | OTEL Metrics (OTLP) |
+|--------|------------------------|---------------------|
+| Protocol | Pull (scrape) | Push (OTLP gRPC) |
+| Metric names | `grpc_server_handled_total`, etc. | `grpc.server.call.duration`, etc. |
+| Custom app metrics | `promauto.NewCounter(...)` | Not exported (Prometheus only) |
+| Enabled by default | Yes | No (`ENABLE_OTEL_METRICS=true`) |
+| Endpoint config | None (built-in) | `OTLP_ENDPOINT` (shared with traces) |
+
+Both export pipelines use independent metric names and registries, so there is no conflict or double-counting.
 
 ## How to use Hystrix Metrics in Prometheus
 
