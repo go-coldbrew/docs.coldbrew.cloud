@@ -34,16 +34,19 @@ Answer the prompts:
 
 ```
 source_path [github.com/ankurs]: github.com/yourname
-app_name [MyApp]: EchoServer
+name [MyApp]: EchoServer
 grpc_package [com.github.ankurs]: com.github.yourname
 service_name [MySvc]: EchoSvc
-project_short_description [A Golang project.]: My first ColdBrew service
+project_short_description [EchoServer is a Golang project.]:
+goprivate []:
 docker_image [alpine:latest]:
 docker_build_image [golang]:
 Select docker_build_image_version:
 1 - 1.26
 2 - 1.25
 Choose from 1, 2 [1]: 1
+include_docker_compose [y/n] (y):
+local_services (postgres,mysql,...,adminer) [postgres,redis]:
 ```
 
 {: .note }
