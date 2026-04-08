@@ -40,6 +40,9 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
 | **Request Validation** | [Protovalidate] annotations enforced automatically on both gRPC and HTTP requests — define validation rules in your proto, get `InvalidArgument` errors for free |
 | **CI/CD Pipelines** | Ready-to-use [GitHub Actions] and [GitLab CI] workflows for build, test, lint, coverage, and benchmarks |
+| **Local Dev Stack** | Docker Compose with Postgres, Redis, [Prometheus], [Grafana] (pre-built dashboard), and [Jaeger] — `make local-stack PROFILES="deps obs"` |
+| **Application Metrics** | Interface-based metrics package with [promauto] registration — counter, histogram, gauge examples wired into handlers |
+| **Load Testing** | [ghz] gRPC load test config with `make loadtest` — results visible in Grafana dashboard in real-time |
 
 ## Quick Start
 
@@ -192,3 +195,6 @@ ColdBrew composes proven Go libraries — not replacements:
 [slog]: https://pkg.go.dev/log/slog
 [zstd]: https://datatracker.ietf.org/doc/html/rfc8878
 [Protovalidate]: https://github.com/bufbuild/protovalidate
+[Grafana]: https://grafana.com/
+[promauto]: https://pkg.go.dev/github.com/prometheus/client_golang/prometheus/promauto
+[ghz]: https://ghz.sh/

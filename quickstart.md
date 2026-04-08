@@ -66,16 +66,27 @@ EchoServer/
 │   ├── service.go           # Your business logic goes here
 │   ├── service_test.go      # Tests and benchmarks
 │   ├── healthcheck.go       # Kubernetes liveness/readiness probes
-│   └── healthcheck_test.go
+│   ├── healthcheck_test.go
+│   └── metrics/             # Application metrics (counter, histogram, gauge)
+│       ├── types.go         # Metrics interface (mockable)
+│       ├── metrics.go       # Prometheus implementation (promauto)
+│       ├── labels.go        # Label constants
+│       └── metrics_test.go
 ├── proto/
 │   └── echoserver.proto     # API definition (source of truth)
 ├── version/
 │   └── version.go           # Build-time version info
+├── deploy/local/            # Local dev infrastructure
+│   ├── prometheus.yml       # Prometheus scrape config
+│   └── grafana/             # Grafana provisioning + dashboard
+├── misc/loadtest/
+│   └── echo.json            # ghz gRPC load test config
 ├── third_party/OpenAPI/     # Swagger UI assets (embedded)
 ├── .github/workflows/
 │   └── go.yml               # GitHub Actions CI pipeline
 ├── .gitlab-ci.yml           # GitLab CI pipeline
-├── Makefile                 # Build, test, lint, run, Docker targets
+├── docker-compose.local.yml # Local dev stack (Postgres, Redis, Prometheus, Grafana, Jaeger)
+├── Makefile                 # Build, test, lint, run, Docker, local-stack targets
 ├── Dockerfile               # Multi-stage production build
 ├── .golangci.yml            # Linter configuration
 ├── .mockery.yaml            # Mock generation config
@@ -270,7 +281,33 @@ curl -s localhost:9091/api/v1/greet/World
 
 You defined the API once in protobuf and got both gRPC and REST for free.
 
-## Step 7: Run in Docker
+## Step 7: Local Dev Stack (Observability + Dependencies)
+
+Start infrastructure with docker-compose, then run your app locally:
+
+```bash
+# Start Postgres, Redis, Adminer
+make local-stack PROFILES="deps"
+
+# Or start full observability stack (+ Prometheus, Grafana, Jaeger)
+make local-stack PROFILES="deps obs"
+
+# Run the app (fast native build, no Docker)
+make run
+```
+
+With the `obs` profile, you get a pre-built Grafana dashboard showing request rate, error rate, latency percentiles, and Go runtime metrics. Traces flow to Jaeger automatically via the `OTLP_ENDPOINT` in `local.env`.
+
+```bash
+make loadtest    # Run a 10s gRPC load test to generate traffic
+```
+
+Open [http://localhost:3000](http://localhost:3000) (Grafana, admin/admin) and [http://localhost:16686](http://localhost:16686) (Jaeger) to see metrics and traces in real-time.
+
+{: .note }
+The local stack is infra-only — your app runs natively via `make run` for fast iteration. Use `make local-stack-down PROFILES="deps obs"` to stop everything.
+
+## Step 8: Run in Docker
 
 ```bash
 # Build the Docker image
@@ -282,7 +319,7 @@ make run-docker
 
 The Dockerfile uses a multi-stage build: compiles a static Go binary in the builder stage, then copies it to a minimal Alpine image. Ports 9090 (gRPC) and 9091 (HTTP) are exposed.
 
-## Step 8: Run Tests
+## Step 9: Run Tests
 
 ```bash
 make test     # Tests with race detector + coverage
@@ -292,7 +329,7 @@ make mock     # Generate mocks for interfaces (via mockery)
 
 Both `test` and `lint` should pass out of the box. See the [Testing How-To](/howto/testing/) for details on mocks, benchmarks, and coverage reports.
 
-## Step 9: CI/CD — Already Configured
+## Step 10: CI/CD — Already Configured
 
 Your project includes ready-to-use CI pipelines for both GitHub and GitLab. Delete whichever you don't need.
 
@@ -374,6 +411,9 @@ Everything below was set up automatically by ColdBrew:
 - **Race-detected tests** via `make test`
 - **Vulnerability scanning** via `make lint` (includes govulncheck)
 - **CI/CD pipelines** for GitHub Actions and GitLab CI (build, test, lint, benchmark)
+- **Local dev stack** — docker-compose with Postgres, Redis, Prometheus, Grafana (pre-built dashboard), and Jaeger
+- **Application metrics pattern** — interface-based `service/metrics/` package with counter, histogram, and gauge examples
+- **Load testing** — ghz gRPC load test config with `make loadtest`
 
 ## Alternative: Manual Setup (No Cookiecutter)
 

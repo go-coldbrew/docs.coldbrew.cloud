@@ -195,5 +195,30 @@ go test -race -coverpkg=.,./config/...,./service/... -coverprofile cover.out ./.
 
 To add coverage for new packages, append them to the `-coverpkg` flag in the Makefile.
 
+## Load Testing
+
+Projects generated from the [ColdBrew cookiecutter] include a [ghz](https://ghz.sh) load test config at `misc/loadtest/echo.json`:
+
+```bash
+make loadtest    # Run 10s gRPC load test at concurrency 10
+```
+
+The config uses gRPC reflection (no proto file path needed) and targets the Echo RPC. Edit the file to adjust duration, concurrency, or target a different RPC:
+
+```json
+{
+  "call": "com.github.yourname.YourSvc/Echo",
+  "host": "localhost:9090",
+  "insecure": true,
+  "reflect": true,
+  "data": { "msg": "hello" },
+  "duration": "10s",
+  "concurrency": 10
+}
+```
+
+{: .note }
+With the `obs` profile running (`make local-stack PROFILES="deps obs"`), load test results are visible in the Grafana dashboard and Jaeger traces in real-time.
+
 ---
 [ColdBrew cookiecutter]: /getting-started
