@@ -116,12 +116,12 @@ import (
     mockmetrics "github.com/yourname/yourapp/misc/mocks/metrics"
 )
 
-func TestEcho(t *testing.T) {
+func TestEchoMetrics(t *testing.T) {
     m := mockmetrics.NewMetrics(t)
     m.EXPECT().IncEchoTotal(metrics.OutcomeSuccess).Once()
     m.EXPECT().ObserveEchoDuration(metrics.OutcomeSuccess, mock.AnythingOfType("time.Duration")).Once()
 
-    s := &svc{monitoring: m, prefix: "test"}
+    s := &svc{Server: GetHealthCheckServer(), monitoring: m, prefix: "test"}
     resp, err := s.Echo(context.Background(), &proto.EchoRequest{Msg: "hello"})
     assert.NoError(t, err)
     assert.Equal(t, "test: hello", resp.Msg)
@@ -221,7 +221,7 @@ The config uses gRPC reflection (no proto file path needed) and targets the Echo
 ```
 
 {: .note }
-With the `obs` profile running (`make local-stack PROFILES="deps obs"`), load test results are visible in the Grafana dashboard and Jaeger traces in real-time.
+With the observability stack running (`make local-stack-obs`), load test results are visible in the Grafana dashboard and Jaeger traces in real-time.
 
 ---
 [ColdBrew cookiecutter]: /getting-started
