@@ -314,7 +314,7 @@ make local-exec SVC=postgres CMD="psql -U postgres"  # Exec into any service
 Open [http://localhost:3000](http://localhost:3000) (Grafana, admin/admin) and [http://localhost:16686](http://localhost:16686) (Jaeger) to see metrics and traces in real-time.
 
 {: .note }
-The local stack is infra-only — your app runs natively via `make run` for fast iteration. Use `make local-stack-down` to stop everything.
+The local stack is infra-only — your app runs natively via `make run` for fast iteration. Use `make local-stack-down` to stop everything. See the [Local Development How-To](/howto/local-dev/) for all 20 profiles, connection strings, Grafana dashboard customization, and troubleshooting.
 
 ## Step 8: Run in Docker
 
