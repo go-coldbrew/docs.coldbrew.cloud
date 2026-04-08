@@ -52,6 +52,7 @@ cfg := config.GetColdBrewConfig()
 | `GRPC_MAX_RECV_MSG_SIZE` | int | `4194304` | Maximum receive message size in bytes (default: 4MB) |
 | `DISABLE_VT_PROTOBUF` | bool | `false` | Disable [vtprotobuf](https://github.com/planetscale/vtprotobuf) marshaller for gRPC. See [vtprotobuf guide](/howto/vtproto) |
 | `DISABLE_PROTO_VALIDATE` | bool | `false` | Disable [protovalidate](https://github.com/bufbuild/protovalidate) interceptor. When disabled, proto validation annotations are ignored |
+| `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` | int | `60` | Default timeout for incoming unary gRPC requests without a deadline. Set to `0` to disable. Does not apply to stream RPCs |
 
 ## gRPC TLS
 
