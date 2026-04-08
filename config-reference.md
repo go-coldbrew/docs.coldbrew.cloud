@@ -69,7 +69,7 @@ cfg := config.GetColdBrewConfig()
 | `GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS` | int | `1800` | Maximum connection lifetime with ±10% jitter. Set to `-1` to disable this limit |
 | `GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_IN_SECONDS` | int | `30` | Grace period after max connection age before force-closing. Set to `-1` to disable this limit |
 
-To allow connections to remain open indefinitely, disable both `GRPC_SERVER_MAX_CONNECTION_IDLE_IN_SECONDS` and `GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS`.
+To allow connections to remain open indefinitely, set both `GRPC_SERVER_MAX_CONNECTION_IDLE_IN_SECONDS` and `GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS` to `-1`.
 
 ## HTTP Gateway
 

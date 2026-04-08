@@ -435,11 +435,9 @@ env:
   - name: GRPC_SERVER_MAX_CONNECTION_IDLE_IN_SECONDS
     value: "600"
   # Override: force connection refresh every hour instead of 30 minutes
+  # Change to "-1" to disable the connection age limit entirely (not recommended)
   - name: GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS
     value: "3600"
-  # Disable connection age limit entirely (not recommended)
-  # - name: GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS
-  #   value: "-1"
 ```
 
 ## Production checklist
