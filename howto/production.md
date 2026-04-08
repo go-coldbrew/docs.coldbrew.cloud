@@ -427,19 +427,17 @@ env:
 
 ### Connection keepalive
 
-For services behind load balancers with idle connection timeouts, configure keepalive:
+ColdBrew ships sane defaults for connection keepalive (idle: 300s, age: 1800s, grace: 30s). These ensure connections rotate for balanced load distribution and timely DNS updates. Override only if your service has specific requirements:
 
 ```yaml
 env:
-  # Close connections idle for more than 5 minutes
+  # Override: close idle connections after 10 minutes instead of 5
   - name: GRPC_SERVER_MAX_CONNECTION_IDLE_IN_SECONDS
-    value: "300"
-  # Force connection refresh every 30 minutes (with ±10% jitter)
+    value: "600"
+  # Override: force connection refresh every hour instead of 30 minutes
+  # Change to "-1" to disable the connection age limit entirely (not recommended)
   - name: GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS
-    value: "1800"
-  # Allow 30s grace period for in-flight RPCs on aged connections
-  - name: GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_IN_SECONDS
-    value: "30"
+    value: "3600"
 ```
 
 ## Production checklist

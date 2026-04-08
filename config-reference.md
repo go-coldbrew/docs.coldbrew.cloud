@@ -52,6 +52,7 @@ cfg := config.GetColdBrewConfig()
 | `GRPC_MAX_RECV_MSG_SIZE` | int | `4194304` | Maximum receive message size in bytes (default: 4MB) |
 | `DISABLE_VT_PROTOBUF` | bool | `false` | Disable [vtprotobuf](https://github.com/planetscale/vtprotobuf) marshaller for gRPC. See [vtprotobuf guide](/howto/vtproto) |
 | `DISABLE_PROTO_VALIDATE` | bool | `false` | Disable [protovalidate](https://github.com/bufbuild/protovalidate) interceptor. When disabled, proto validation annotations are ignored |
+| `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` | int | `60` | Default timeout for incoming unary gRPC requests without a deadline. Set to `0` to disable. Does not apply to stream RPCs |
 
 ## gRPC TLS
 
@@ -65,9 +66,11 @@ cfg := config.GetColdBrewConfig()
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `GRPC_SERVER_MAX_CONNECTION_IDLE_IN_SECONDS` | int | `0` | Close idle connections after this duration (0 = disabled) |
-| `GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS` | int | `0` | Maximum connection lifetime with ±10% jitter (0 = disabled) |
-| `GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_IN_SECONDS` | int | `0` | Grace period after max connection age before force-closing |
+| `GRPC_SERVER_MAX_CONNECTION_IDLE_IN_SECONDS` | int | `300` | Close idle connections after this duration. Set to `-1` to disable this limit |
+| `GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS` | int | `1800` | Maximum connection lifetime with ±10% jitter. Set to `-1` to disable this limit |
+| `GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_IN_SECONDS` | int | `30` | Grace period after max connection age before force-closing. Set to `-1` to disable this limit |
+
+To allow connections to remain open indefinitely, set both `GRPC_SERVER_MAX_CONNECTION_IDLE_IN_SECONDS` and `GRPC_SERVER_MAX_CONNECTION_AGE_IN_SECONDS` to `-1`.
 
 ## HTTP Gateway
 
