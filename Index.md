@@ -40,9 +40,9 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **Container-aware Runtime** | Auto-tunes GOMAXPROCS to match container CPU limits via [automaxprocs] |
 | **Request Validation** | [Protovalidate] annotations enforced automatically on both gRPC and HTTP requests — define validation rules in your proto, get `InvalidArgument` errors for free |
 | **CI/CD Pipelines** | Ready-to-use [GitHub Actions] and [GitLab CI] workflows for build, test, lint, coverage, and benchmarks |
-| **Local Dev Stack** | Docker Compose with Postgres, Redis, [Prometheus], [Grafana] (pre-built dashboard), and [Jaeger] — `make local-stack PROFILES="deps obs"` |
-| **Application Metrics** | Interface-based metrics package with [promauto] registration — counter, histogram, gauge examples wired into handlers |
-| **Load Testing** | [ghz] gRPC load test config with `make loadtest` — results visible in Grafana dashboard when running with `PROFILES="deps obs"` |
+| **Local Dev Stack** | Docker Compose with 20+ per-service profiles (databases, caches, brokers, AWS/GCP emulators) — `make local-stack` starts your selection, `make local-stack-obs` adds [Prometheus], [Grafana], [Jaeger] |
+| **Application Metrics** | Interface-based metrics package with [promauto] registration — counter and histogram examples wired into handlers |
+| **Load Testing** | [ghz] gRPC load test config with `make loadtest` — results visible in Grafana dashboard when running with `make local-stack-obs` |
 
 ## Quick Start
 

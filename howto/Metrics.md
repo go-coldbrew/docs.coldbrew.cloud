@@ -39,7 +39,6 @@ The interface enables dependency injection and test mocking. Sample metrics incl
 |--------|------|-------------|
 | `<app>_echo_total` | Counter | Echo RPC calls by outcome |
 | `<app>_echo_duration_seconds` | Histogram | Echo RPC duration in seconds |
-| `<app>_active_requests` | Gauge | Currently active requests |
 
 Usage in handlers follows the defer pattern for automatic timing:
 

@@ -67,7 +67,7 @@ EchoServer/
 │   ├── service_test.go      # Tests and benchmarks
 │   ├── healthcheck.go       # Kubernetes liveness/readiness probes
 │   ├── healthcheck_test.go
-│   └── metrics/             # Application metrics (counter, histogram, gauge)
+│   └── metrics/             # Application metrics (counter, histogram)
 │       ├── types.go         # Metrics interface (mockable)
 │       ├── metrics.go       # Prometheus implementation (promauto)
 │       ├── labels.go        # Label constants
@@ -85,7 +85,7 @@ EchoServer/
 ├── .github/workflows/
 │   └── go.yml               # GitHub Actions CI pipeline
 ├── .gitlab-ci.yml           # GitLab CI pipeline
-├── docker-compose.local.yml # Local dev stack (deps: Postgres, Redis, Adminer; obs: Prometheus, Grafana, Jaeger)
+├── docker-compose.local.yml # Local dev stack (per-service profiles: postgres, redis, kafka, obs, etc.)
 ├── Makefile                 # Build, test, lint, run, Docker, local-stack targets
 ├── Dockerfile               # Multi-stage production build
 ├── .golangci.yml            # Linter configuration
@@ -283,29 +283,35 @@ You defined the API once in protobuf and got both gRPC and REST for free.
 
 ## Step 7: Local Dev Stack (Observability + Dependencies)
 
-Start infrastructure with docker-compose, then run your app locally:
+During project generation, you chose which services to include (default: `postgres,redis`). Start them with docker-compose, then run your app locally:
 
 ```bash
-# Start Postgres, Redis, Adminer
-make local-stack PROFILES="deps"
+# Start your selected services (default profiles from generation)
+make local-stack
 
-# Or start full observability stack (+ Prometheus, Grafana, Jaeger)
-make local-stack PROFILES="deps obs"
+# Add observability (Prometheus, Grafana, Jaeger)
+make local-stack-obs
+
+# Override profiles for a specific run
+make local-stack PROFILES="postgres kafka"
 
 # Run the app (fast native build, no Docker)
 make run
 ```
 
+Available profiles: `postgres`, `mysql`, `cockroachdb`, `mongodb`, `redis`, `valkey`, `memcached`, `kafka`, `nats`, `elasticsearch`, `ministack`, `dynamodb`, `spanner`, `pubsub`, `bigtable`, `firestore`, `alloydb`, `adminer`, `obs`
+
 The cookiecutter template generates `local.env` from `local.env.example` automatically (with `OTLP_ENDPOINT=localhost:4317` pre-configured). With the `obs` profile, you get a pre-built Grafana dashboard showing request rate, error rate, latency percentiles, and Go runtime metrics. Traces flow to Jaeger automatically.
 
 ```bash
 make loadtest    # Run a 10s gRPC load test to generate traffic
+make local-exec SVC=postgres CMD="psql -U postgres"  # Exec into any service
 ```
 
 Open [http://localhost:3000](http://localhost:3000) (Grafana, admin/admin) and [http://localhost:16686](http://localhost:16686) (Jaeger) to see metrics and traces in real-time.
 
 {: .note }
-The local stack is infra-only — your app runs natively via `make run` for fast iteration. Use `make local-stack-down PROFILES="deps obs"` to stop everything.
+The local stack is infra-only — your app runs natively via `make run` for fast iteration. Use `make local-stack-down` to stop everything.
 
 ## Step 8: Run in Docker
 
@@ -411,8 +417,8 @@ Everything below was set up automatically by ColdBrew:
 - **Race-detected tests** via `make test`
 - **Vulnerability scanning** via `make lint` (includes govulncheck)
 - **CI/CD pipelines** for GitHub Actions and GitLab CI (build, test, lint, benchmark)
-- **Local dev stack** — docker-compose with Postgres, Redis, Prometheus, Grafana (pre-built dashboard), and Jaeger
-- **Application metrics pattern** — interface-based `service/metrics/` package with counter, histogram, and gauge examples
+- **Local dev stack** — docker-compose with 20+ services (databases, caches, message brokers, AWS/GCP emulators, observability) selectable via per-service profiles
+- **Application metrics pattern** — interface-based `service/metrics/` package with counter and histogram examples
 - **Load testing** — ghz gRPC load test config with `make loadtest`
 
 ## Alternative: Manual Setup (No Cookiecutter)

@@ -107,21 +107,24 @@ packages:
 
 ### Using mocks in tests
 
-Import the generated mocks and use the expecter pattern for type-safe expectations:
+Import the generated mocks and use the expecter pattern for type-safe expectations. The generated project includes a concrete example — `TestEcho` in `service/service_test.go` uses a mocked metrics interface:
 
 ```go
-import "github.com/yourname/yourapp/misc/mocks"
+import (
+    "github.com/stretchr/testify/mock"
+    "github.com/yourname/yourapp/service/metrics"
+    mockmetrics "github.com/yourname/yourapp/misc/mocks/metrics"
+)
 
-func TestWithMock(t *testing.T) {
-    m := mocks.NewMyInterface(t)
+func TestEcho(t *testing.T) {
+    m := mockmetrics.NewMetrics(t)
+    m.EXPECT().IncEchoTotal(metrics.OutcomeSuccess).Once()
+    m.EXPECT().ObserveEchoDuration(metrics.OutcomeSuccess, mock.AnythingOfType("time.Duration")).Once()
 
-    // Set up expectations using the expecter
-    m.EXPECT().DoSomething("input").Return("output", nil)
-
-    // Pass the mock to the code under test
-    result, err := MyFunction(m)
+    s := &svc{monitoring: m, prefix: "test"}
+    resp, err := s.Echo(context.Background(), &proto.EchoRequest{Msg: "hello"})
     assert.NoError(t, err)
-    assert.Equal(t, "output", result)
+    assert.Equal(t, "test: hello", resp.Msg)
 }
 ```
 
