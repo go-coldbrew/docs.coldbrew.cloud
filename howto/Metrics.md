@@ -25,7 +25,7 @@ A collection of metrics are collected by default, including:
 
 Projects generated from the [ColdBrew cookiecutter] include a starter `service/metrics/` package with an interface-based pattern:
 
-```
+```text
 service/metrics/
 ├── types.go       # Metrics interface (mockable via mockery)
 ├── metrics.go     # Implementation using promauto

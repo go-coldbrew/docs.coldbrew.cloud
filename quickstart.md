@@ -85,7 +85,7 @@ EchoServer/
 ├── .github/workflows/
 │   └── go.yml               # GitHub Actions CI pipeline
 ├── .gitlab-ci.yml           # GitLab CI pipeline
-├── docker-compose.local.yml # Local dev stack (Postgres, Redis, Prometheus, Grafana, Jaeger)
+├── docker-compose.local.yml # Local dev stack (deps: Postgres, Redis, Adminer; obs: Prometheus, Grafana, Jaeger)
 ├── Makefile                 # Build, test, lint, run, Docker, local-stack targets
 ├── Dockerfile               # Multi-stage production build
 ├── .golangci.yml            # Linter configuration
@@ -296,7 +296,7 @@ make local-stack PROFILES="deps obs"
 make run
 ```
 
-With the `obs` profile, you get a pre-built Grafana dashboard showing request rate, error rate, latency percentiles, and Go runtime metrics. Traces flow to Jaeger automatically via the `OTLP_ENDPOINT` in `local.env`.
+The cookiecutter template generates `local.env` from `local.env.example` automatically (with `OTLP_ENDPOINT=localhost:4317` pre-configured). With the `obs` profile, you get a pre-built Grafana dashboard showing request rate, error rate, latency percentiles, and Go runtime metrics. Traces flow to Jaeger automatically.
 
 ```bash
 make loadtest    # Run a 10s gRPC load test to generate traffic
