@@ -39,7 +39,7 @@ cfg := config.GetColdBrewConfig()
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `LOG_LEVEL` | string | `info` | Log level: debug, info, warn, error. For per-request debugging, use `log.OverrideLogLevel(ctx, loggers.DebugLevel)` — combined with the trace ID, this lets you enable debug logging for a single request and follow it across services. See [Log How-To](/howto/Log/#overriding-log-level-at-request-time) |
+| `LOG_LEVEL` | string | `info` | Log level: debug, info, warn, error. For per-request debugging, use `log.OverrideLogLevel(ctx, loggers.DebugLevel)` — combined with the trace ID, this lets you enable debug logging for a single request and follow it across services. See [Log How-To](/howto/Log/#production-debugging-with-overrideloglevel--trace-id) |
 | `JSON_LOGS` | bool | `true` | Emit logs in JSON format |
 
 ## gRPC Server

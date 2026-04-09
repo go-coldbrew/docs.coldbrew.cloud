@@ -217,7 +217,7 @@ grpcurl -H "x-debug-log-level: debug" localhost:9090 myservice.MyService/MyMetho
 curl -H "x-debug-log-level: debug" http://localhost:9091/api/v1/echo
 ```
 
-See the [interceptors howto](/howto/interceptors) for configuration options and the [config reference](/config-reference) for `DISABLE_DEBUG_LOG_INTERCEPTOR` and `DEBUG_LOG_HEADER_NAME`.
+See the [config reference](/config-reference) for `DISABLE_DEBUG_LOG_INTERCEPTOR` and `DEBUG_LOG_HEADER_NAME` settings.
 
 ---
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
