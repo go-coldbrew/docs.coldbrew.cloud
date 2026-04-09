@@ -174,15 +174,16 @@ Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` +
 
 ## Graceful shutdown tuning
 
-ColdBrew's shutdown sequence:
+ColdBrew's shutdown sequence (bounded by `SHUTDOWN_DURATION_IN_SECONDS`, default 15s):
 
 1. Receive SIGTERM from Kubernetes
 2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
-3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s) for the load balancer to drain
+3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s, included in shutdown timeout) for the load balancer to drain
 4. Shutdown HTTP server (stop accepting new requests)
 5. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
-6. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
-7. Exit
+6. Force-stop gRPC server if graceful shutdown didn't complete in time
+7. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
+8. Exit
 
 For details on each step and cleanup examples, see [Signal Handling and Graceful Shutdown](/howto/signals).
 

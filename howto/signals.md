@@ -41,8 +41,8 @@ When the application receives a signal, ColdBrew executes a multi-step shutdown 
 
 Configuring the shutdown process is done by setting the [config] values:
 
-- `SHUTDOWN_DURATION_IN_SECONDS` - Total shutdown timeout (default: 15s). After this, the process exits regardless.
-- `GRPC_GRACEFUL_DURATION_IN_SECONDS` - How long to wait after failing `/readycheck` before stopping servers (default: 7s). This gives the load balancer time to drain.
+- `SHUTDOWN_DURATION_IN_SECONDS` - Timeout for the entire `Stop()` sequence (default: 15s), covering steps 2-7 above including the drain wait. After this, the process exits regardless.
+- `GRPC_GRACEFUL_DURATION_IN_SECONDS` - Duration of step 2 — how long to wait after failing `/readycheck` before stopping servers (default: 7s). This is **included within** `SHUTDOWN_DURATION_IN_SECONDS`, not additional to it.
 - `DISABLE_SIGNAL_HANDLER` - If set to `true`, ColdBrew will not register a signal handler (useful when you want to handle signals yourself).
 
 ## Service lifecycle interfaces
