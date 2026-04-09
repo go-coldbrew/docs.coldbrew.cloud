@@ -152,13 +152,16 @@ When a request arrives at a ColdBrew service, it flows through several layers:
   │  ┌──────────────────────────────────────────┐   │
   │  │          Server Interceptor Chain         │   │
   │  │                                           │   │
-  │  │  1. Response Time Logging                 │   │
-  │  │  2. Trace ID Injection                    │   │
-  │  │  3. Proto Validate                        │   │
-  │  │  4. Prometheus Metrics                    │   │
-  │  │  5. Error Notification (Sentry/Rollbar)   │   │
-  │  │  6. New Relic Transaction                 │   │
-  │  │  7. Panic Recovery                        │   │
+  │  │   1. Default Timeout (60s deadline)       │   │
+  │  │   2. Rate Limiting (token bucket)         │   │
+  │  │   3. Response Time Logging                │   │
+  │  │   4. Trace ID Injection                   │   │
+  │  │   5. Debug Log (per-request level)        │   │
+  │  │   6. Proto Validate                       │   │
+  │  │   7. Prometheus Metrics                   │   │
+  │  │   8. Error Notification (Sentry/Rollbar)  │   │
+  │  │   9. New Relic Transaction                │   │
+  │  │  10. Panic Recovery                       │   │
   │  │  (OTEL tracing via gRPC stats handler)    │   │
   │  │                                           │   │
   │  └────────────────────┬─────────────────────┘   │
