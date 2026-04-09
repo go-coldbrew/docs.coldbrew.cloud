@@ -2,7 +2,7 @@
 layout: default
 title: "Local Development"
 parent: "How To"
-nav_order: 16
+nav_order: 17
 description: "Docker Compose local dev stack with per-service profiles for databases, caches, message brokers, AWS/GCP emulators, and observability"
 ---
 ## Table of contents
@@ -13,7 +13,7 @@ description: "Docker Compose local dev stack with per-service profiles for datab
 
 ## Overview
 
-Projects generated from the [ColdBrew cookiecutter] include a `docker-compose.local.yml` with 20 infrastructure services, each behind its own [Docker Compose profile](https://docs.docker.com/compose/how-tos/profiles/). You select which services to start — only those containers run.
+Projects generated from the [ColdBrew cookiecutter] include a `docker-compose.local.yml` with 19 infrastructure services across 18 individual profiles plus one group profile (`obs` for Prometheus + Grafana + Jaeger). You select which profiles to start — only those containers run.
 
 Your app runs natively via `make run` (fast builds, no Docker overhead). The compose stack provides only infrastructure dependencies.
 
@@ -154,7 +154,7 @@ make local-stack PROFILES="postgres mongodb nats"
 
 ### Disabling docker-compose entirely
 
-During project generation, set `include_docker_compose` to `n`. The post-gen hook removes `docker-compose.local.yml` and `deploy/`. Makefile targets remain but are inert (docker-compose errors clearly when the file is missing).
+During project generation, set `include_docker_compose` to `n`. The post-gen hook removes `docker-compose.local.yml` and `deploy/`. Makefile targets remain but will error with "no configuration file provided" if invoked — this is expected and serves as a clear signal to remove or ignore them.
 
 ## Grafana Dashboard
 
