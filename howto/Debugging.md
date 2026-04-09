@@ -22,7 +22,11 @@ ColdBrew exposes `/debug/pprof/` endpoint on the HTTP port that can be used to c
 To collect a profile, you can use the `go tool pprof` command. For example, to collect a CPU profile, you can run the following command:
 
 ```bash
+# Default (no ADMIN_PORT):
 $ go tool pprof http://localhost:9091/debug/pprof/profile
+
+# With ADMIN_PORT configured (e.g., ADMIN_PORT=9092):
+$ go tool pprof http://localhost:9092/debug/pprof/profile
 ```
 
 This will open an interactive shell where you can run commands to analyze the profile. For example, to see the top 10 functions that are consuming the most CPU, you can run the following command:

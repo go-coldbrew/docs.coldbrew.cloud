@@ -461,8 +461,8 @@ env:
 
 When `ADMIN_PORT` is set:
 - **Port 9090** (gRPC): gRPC server — expose as needed
-- **Port 9091** (HTTP): gRPC-gateway only — safe to expose externally
-- **Port 9092** (admin): pprof, metrics, swagger — restrict via NetworkPolicy
+- **Port 9091** (HTTP): gRPC-gateway + health/readiness probes — expose with path allowlisting
+- **Admin port** (e.g., 9092): pprof, metrics, swagger — restrict via NetworkPolicy
 
 ```yaml
 # Kubernetes NetworkPolicy — restrict admin port to monitoring namespace
@@ -478,7 +478,7 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: monitoring
+              kubernetes.io/metadata.name: monitoring
       ports:
         - port: 9092
 ```

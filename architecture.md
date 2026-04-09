@@ -55,7 +55,7 @@ Each output maps to a self-documenting endpoint:
 | Metrics | `:9091/metrics` | Prometheus self-describing exposition format with HELP lines |
 | Profiling | `:9091/debug/pprof/` | Standard Go pprof index page |
 
-> **Tip:** Set `ADMIN_PORT=9092` to serve metrics, profiling, and swagger on a dedicated port — keeping `:9091` for gateway traffic only. See [Security hardening](/howto/production/#security-hardening).
+> **Tip:** Set `ADMIN_PORT` to serve metrics, profiling, and swagger on a dedicated port. Health and readiness endpoints remain on `:9091`. See [Security hardening](/howto/production/#security-hardening).
 
 **Every client gets documentation for free:**
 - **gRPC clients** use server reflection to discover services and methods without proto files
@@ -174,10 +174,12 @@ When a request arrives at a ColdBrew service, it flows through several layers:
   │              │  (service.go)   │                 │
   │              └─────────────────┘                 │
   │                                                  │
-  │  Built-in Endpoints (movable to ADMIN_PORT):      │
-  │    /metrics        - Prometheus                  │
+  │  Built-in Endpoints:                             │
   │    /healthcheck    - Liveness probe              │
   │    /readycheck     - Readiness probe             │
+  │                                                  │
+  │  Admin Endpoints (movable to ADMIN_PORT):        │
+  │    /metrics        - Prometheus                  │
   │    /debug/pprof/   - Go profiling                │
   │    /swagger/       - OpenAPI docs                │
   └─────────────────────────────────────────────────┘
@@ -326,7 +328,7 @@ ColdBrew is designed for Kubernetes deployments:
 - **Readiness probe:** `GET /readycheck` — returns the same version JSON when ready for traffic, or an error if the service hasn't called `SetReady()` yet
 - **gRPC health protocol:** Implements `grpc.health.v1.Health` ([standard gRPC health checking](https://github.com/grpc/grpc/blob/master/doc/health-checking.md)) on the gRPC port — used by gRPC load balancers, Envoy, Istio, and other service meshes for native health checking
 - **Graceful shutdown:** On SIGTERM, the service marks itself as not ready, drains in-flight requests, then exits cleanly
-- **Metrics scraping:** Prometheus scrapes `/metrics` on the HTTP port
+- **Metrics scraping:** Prometheus scrapes `/metrics` on the HTTP port (or `ADMIN_PORT` when configured)
 
 ### Gateway Performance Options
 
