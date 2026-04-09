@@ -252,7 +252,7 @@ For rate limiting across pods or per-tenant, implement `ratelimit.Limiter` with 
 | Library | Backend | Notes |
 |---------|---------|-------|
 | [mennanov/limiters](https://github.com/mennanov/limiters) | Redis, etcd, DynamoDB, memory | Most flexible — has explicit gRPC example, multiple algorithms |
-| [go-redis/redis_rate](https://github.com/go-redis/redis_rate) | Redis | GCRA algorithm, good if you already use go-redis |
+| [go-redis/redis_rate](https://github.com/go-redis/redis_rate) | Redis | GCRA algorithm, good if you already use go-redis (last release 2023 — check for activity) |
 | [sethvargo/go-limiter](https://github.com/sethvargo/go-limiter) | Redis, memory | Clean API, actively maintained |
 
 For large-scale multi-service rate limiting, consider a dedicated rate limiting service like [gubernator](https://github.com/gubernator-io/gubernator) (peer-to-peer, no Redis) or [Envoy ratelimit](https://github.com/envoyproxy/ratelimit) (Redis-backed).
