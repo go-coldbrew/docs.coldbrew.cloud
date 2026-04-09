@@ -201,6 +201,7 @@ import (
 
     "github.com/go-coldbrew/interceptors"
     ratelimit "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/ratelimit"
+    "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
     "golang.org/x/time/rate"
     "google.golang.org/grpc"
 )
@@ -214,9 +215,17 @@ type perMethodLimiter struct {
 }
 
 func (l *perMethodLimiter) Limit(ctx context.Context) error {
-    method, _ := grpc.Method(ctx)
-    limiter, ok := l.limiters[method]
+    // grpc.Method works for native gRPC calls;
+    // runtime.RPCMethod works for HTTP→gRPC via grpc-gateway
+    method, ok := grpc.Method(ctx)
     if !ok {
+        method, ok = runtime.RPCMethod(ctx)
+    }
+    if !ok {
+        method = "unknown"
+    }
+    limiter, found := l.limiters[method]
+    if !found {
         limiter = l.fallback
     }
     if !limiter.Allow() {

@@ -206,7 +206,7 @@ Interceptors are gRPC middleware that run on every request. ColdBrew chains them
 | 2 | Rate Limiting | `interceptors` | Per-pod token bucket rate limiter. Returns `ResourceExhausted` when exceeded. Disabled by default. Config: `RATE_LIMIT_PER_SECOND`, `RATE_LIMIT_BURST` |
 | 3 | Response Time Logging | `interceptors` | Logs method name, duration, and status code |
 | 4 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs, Sentry/Rollbar error reports, and OpenTelemetry spans (as the `coldbrew.trace_id` attribute) |
-| 5 | Debug Log | `interceptors` | Enables per-request log level override via `bool debug` proto field or `x-debug-log-level` metadata header. Config: `DISABLE_DEBUG_LOG_INTERCEPTOR`, `DEBUG_LOG_HEADER_NAME` |
+| 5 | Debug Log | `interceptors` | Enables per-request log level override via `bool debug` or `bool enable_debug` proto field, or `x-debug-log-level` metadata header. Config: `DISABLE_DEBUG_LOG_INTERCEPTOR`, `DEBUG_LOG_HEADER_NAME` |
 | 6 | Proto Validate | `interceptors` | Validates incoming messages using [protovalidate](https://github.com/bufbuild/protovalidate) annotations. Returns `InvalidArgument` on failure. Config: `DISABLE_PROTO_VALIDATE` |
 | 7 | Prometheus | `interceptors` | Records request count, latency histogram, and status codes |
 | 8 | Error Notification | `interceptors` | Sends errors to Sentry/Rollbar/Airbrake asynchronously |

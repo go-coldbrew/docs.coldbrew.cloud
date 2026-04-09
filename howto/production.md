@@ -562,7 +562,7 @@ These are your responsibility to handle at the infrastructure level:
 - [ ] `DISABLE_SWAGGER=true` — disable API documentation
 - [ ] `DISABLE_GRPC_REFLECTION=true` — disable service discovery
 - [ ] `DISABLE_DEBUG_LOG_INTERCEPTOR=true` — disable header-based debug logging
-- [ ] Enable rate limiting — `RATE_LIMIT_PER_SECOND` (per-pod, adjust to capacity)
+- [ ] Enable rate limiting — `RATE_LIMIT_PER_SECOND` + `RATE_LIMIT_BURST` (per-pod, adjust to capacity). See [interceptors howto](/howto/interceptors#rate-limiting)
 - [ ] Consider reducing `GRPC_MAX_SEND_MSG_SIZE` from its ~2GB default if responses are small
 - [ ] Restrict `/metrics` access at the load balancer
 - [ ] `LOG_LEVEL=info` or higher (never `debug`)
