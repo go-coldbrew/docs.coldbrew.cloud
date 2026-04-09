@@ -21,9 +21,50 @@ A collection of metrics are collected by default, including:
 * HTTP request metrics (e.g. request count, request duration, etc.)
 * [Hystrix-go] circuit breaker metrics (e.g. request count, request duration, etc.) powered by [Hystrix Prometheus]
 
+## Application Metrics Package (Cookiecutter)
+
+Projects generated from the [ColdBrew cookiecutter] include a starter `service/metrics/` package with an interface-based pattern:
+
+```text
+service/metrics/
+├── types.go       # Metrics interface (mockable via mockery)
+├── metrics.go     # Implementation using promauto
+├── labels.go      # Label constants (OutcomeSuccess, OutcomeError)
+└── metrics_test.go
+```
+
+The interface enables dependency injection and test mocking. Sample metrics included:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `<app>_echo_total` | Counter | Echo RPC calls by outcome |
+| `<app>_echo_duration_seconds` | Histogram | Echo RPC duration in seconds |
+
+Usage in handlers follows the defer pattern for automatic timing:
+
+```go
+func (s *svc) Echo(ctx context.Context, req *pb.EchoRequest) (resp *pb.EchoResponse, err error) {
+    start := time.Now()
+    outcome := metrics.OutcomeSuccess
+    defer func() {
+        if err != nil {
+            outcome = metrics.OutcomeError
+        }
+        s.monitoring.IncEchoTotal(outcome)
+        s.monitoring.ObserveEchoDuration(outcome, time.Since(start))
+    }()
+    // ... business logic ...
+}
+```
+
+To add a new metric: add the method to the `Metrics` interface in `types.go`, implement it in `metrics.go`, run `make mock` to regenerate the mock.
+
+{: .note }
+Duration metrics use **seconds** (not milliseconds) following [Prometheus naming conventions](https://prometheus.io/docs/practices/naming/#base-units). Grafana handles unit display automatically.
+
 ## How to Add Custom Metrics
 
-You can add custom metrics to your service by using the [Prometheus Go client library] and registering them with the default Prometheus registry. For example:
+You can also add metrics directly using the [Prometheus Go client library] and registering them with the default Prometheus registry:
 
 ```go
 package main
@@ -127,3 +168,4 @@ See [Hystrix Prometheus] for more details.
 [Hystrix Prometheus]: https://pkg.go.dev/github.com/go-coldbrew/hystrixprometheus
 [Hystrix-go]: https://github.com/afex/hystrix-go
 [Prometheus Go client library]: https://github.com/prometheus/client_golang
+[ColdBrew cookiecutter]: /getting-started

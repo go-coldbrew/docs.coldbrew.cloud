@@ -139,25 +139,24 @@ When making changes that span multiple ColdBrew packages:
 
 ## How do I add custom Prometheus metrics?
 
-ColdBrew exposes Prometheus metrics at `/metrics` automatically. To add your own:
+ColdBrew exposes Prometheus metrics at `/metrics` automatically. Projects generated from the [ColdBrew cookiecutter](/getting-started) include a `service/metrics/` package with an interface-based pattern:
 
 ```go
-import "github.com/prometheus/client_golang/prometheus"
-
-var requestsTotal = prometheus.NewCounterVec(
-    prometheus.CounterOpts{
-        Name: "myservice_requests_total",
-        Help: "Total number of requests by method",
-    },
-    []string{"method"},
-)
-
-func init() {
-    prometheus.MustRegister(requestsTotal)
+// Add a method to the Metrics interface in service/metrics/types.go
+type Metrics interface {
+    IncOrderTotal(outcome string)
+    ObserveOrderDuration(outcome string, duration time.Duration)
 }
+
+// Implement it in service/metrics/metrics.go using promauto
+// Then use it in your handler with the defer pattern:
+defer func() {
+    s.monitoring.IncOrderTotal(outcome)
+    s.monitoring.ObserveOrderDuration(outcome, time.Since(start))
+}()
 ```
 
-See the [Metrics How-To](/howto/Metrics/) for more details.
+Run `make mock` after changing the interface to regenerate mocks for testing. See the [Metrics How-To](/howto/Metrics/) for the full pattern including label constants and duration conventions.
 
 ## How do I use grpcurl or Postman with my ColdBrew service?
 

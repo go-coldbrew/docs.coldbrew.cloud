@@ -23,6 +23,7 @@ Before you begin, install:
 - **[Go 1.25+](https://go.dev/dl/)** — `go version` should show 1.25 or later
 - **[cookiecutter](https://cookiecutter.readthedocs.io/)** — `brew install cookiecutter` or `pip install cookiecutter`
 - **[buf](https://buf.build/docs/installation)** — for protobuf code generation
+- **[Docker Compose](https://docs.docker.com/compose/install/)** — for the local dev stack (Step 7). Works with Docker Desktop, Colima, or any OCI runtime
 
 ## Step 1: Generate Your Project
 
@@ -34,16 +35,19 @@ Answer the prompts:
 
 ```
 source_path [github.com/ankurs]: github.com/yourname
-app_name [MyApp]: EchoServer
+name [MyApp]: EchoServer
 grpc_package [com.github.ankurs]: com.github.yourname
 service_name [MySvc]: EchoSvc
-project_short_description [A Golang project.]: My first ColdBrew service
+project_short_description [EchoServer is a Golang project.]:
+goprivate []:
 docker_image [alpine:latest]:
 docker_build_image [golang]:
 Select docker_build_image_version:
 1 - 1.26
 2 - 1.25
 Choose from 1, 2 [1]: 1
+include_docker_compose [y/n] (y):
+local_services (postgres,mysql,...,adminer) [postgres,redis]:
 ```
 
 {: .note }
@@ -66,16 +70,27 @@ EchoServer/
 │   ├── service.go           # Your business logic goes here
 │   ├── service_test.go      # Tests and benchmarks
 │   ├── healthcheck.go       # Kubernetes liveness/readiness probes
-│   └── healthcheck_test.go
+│   ├── healthcheck_test.go
+│   └── metrics/             # Application metrics (counter, histogram)
+│       ├── types.go         # Metrics interface (mockable)
+│       ├── metrics.go       # Prometheus implementation (promauto)
+│       ├── labels.go        # Label constants
+│       └── metrics_test.go
 ├── proto/
 │   └── echoserver.proto     # API definition (source of truth)
 ├── version/
 │   └── version.go           # Build-time version info
+├── deploy/local/            # Local dev infrastructure
+│   ├── prometheus.yml       # Prometheus scrape config
+│   └── grafana/             # Grafana provisioning + dashboard
+├── misc/loadtest/
+│   └── echo.json            # ghz gRPC load test config
 ├── third_party/OpenAPI/     # Swagger UI assets (embedded)
 ├── .github/workflows/
 │   └── go.yml               # GitHub Actions CI pipeline
 ├── .gitlab-ci.yml           # GitLab CI pipeline
-├── Makefile                 # Build, test, lint, run, Docker targets
+├── docker-compose.local.yml # Local dev stack (per-service profiles: postgres, redis, kafka, obs, etc.)
+├── Makefile                 # Build, test, lint, run, Docker, local-stack targets
 ├── Dockerfile               # Multi-stage production build
 ├── .golangci.yml            # Linter configuration
 ├── .mockery.yaml            # Mock generation config
@@ -270,7 +285,39 @@ curl -s localhost:9091/api/v1/greet/World
 
 You defined the API once in protobuf and got both gRPC and REST for free.
 
-## Step 7: Run in Docker
+## Step 7: Local Dev Stack (Observability + Dependencies)
+
+During project generation, you chose which services to include (default: `postgres,redis`). Start them with docker-compose, then run your app locally:
+
+```bash
+# Start your selected services (default profiles from generation)
+make local-stack
+
+# Add observability (Prometheus, Grafana, Jaeger)
+make local-stack-obs
+
+# Override profiles for a specific run
+make local-stack PROFILES="postgres kafka"
+
+# Run the app (fast native build, no Docker)
+make run
+```
+
+Available profiles: `postgres`, `mysql`, `cockroachdb`, `mongodb`, `redis`, `valkey`, `memcached`, `kafka`, `nats`, `elasticsearch`, `ministack`, `dynamodb`, `spanner`, `pubsub`, `bigtable`, `firestore`, `alloydb`, `adminer`, `obs`
+
+The cookiecutter template generates `local.env` from `local.env.example` automatically (with `OTLP_ENDPOINT=localhost:4317` pre-configured). With the `obs` profile, you get a pre-built Grafana dashboard showing request rate, error rate, latency percentiles, and Go runtime metrics. Traces flow to Jaeger automatically.
+
+```bash
+make loadtest    # Run a 10s gRPC load test to generate traffic
+make local-exec SVC=postgres CMD="psql -U postgres"  # Exec into any service
+```
+
+Open [http://localhost:3000](http://localhost:3000) (Grafana, admin/admin) and [http://localhost:16686](http://localhost:16686) (Jaeger) to see metrics and traces in real-time.
+
+{: .note }
+The local stack is infra-only — your app runs natively via `make run` for fast iteration. Use `make local-stack-down` to stop everything. See the [Local Development How-To](/howto/local-dev/) for all available profiles, connection strings, Grafana dashboard customization, and troubleshooting.
+
+## Step 8: Run in Docker
 
 ```bash
 # Build the Docker image
@@ -282,7 +329,7 @@ make run-docker
 
 The Dockerfile uses a multi-stage build: compiles a static Go binary in the builder stage, then copies it to a minimal Alpine image. Ports 9090 (gRPC) and 9091 (HTTP) are exposed.
 
-## Step 8: Run Tests
+## Step 9: Run Tests
 
 ```bash
 make test     # Tests with race detector + coverage
@@ -292,7 +339,7 @@ make mock     # Generate mocks for interfaces (via mockery)
 
 Both `test` and `lint` should pass out of the box. See the [Testing How-To](/howto/testing/) for details on mocks, benchmarks, and coverage reports.
 
-## Step 9: CI/CD — Already Configured
+## Step 10: CI/CD — Already Configured
 
 Your project includes ready-to-use CI pipelines for both GitHub and GitLab. Delete whichever you don't need.
 
@@ -374,6 +421,9 @@ Everything below was set up automatically by ColdBrew:
 - **Race-detected tests** via `make test`
 - **Vulnerability scanning** via `make lint` (includes govulncheck)
 - **CI/CD pipelines** for GitHub Actions and GitLab CI (build, test, lint, benchmark)
+- **Local dev stack** — docker-compose with 20+ services (databases, caches, message brokers, AWS/GCP emulators, observability) selectable via per-service profiles
+- **Application metrics pattern** — interface-based `service/metrics/` package with counter and histogram examples
+- **Load testing** — ghz gRPC load test config with `make loadtest`
 
 ## Alternative: Manual Setup (No Cookiecutter)
 
