@@ -177,12 +177,14 @@ Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` +
 ColdBrew's shutdown sequence:
 
 1. Receive SIGTERM from Kubernetes
-2. Fail `/readycheck` immediately
+2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
 3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s) for the load balancer to drain
-4. Stop accepting new requests
-5. Wait `SHUTDOWN_DURATION_IN_SECONDS` (default: 15s) for in-flight requests to complete
-6. Call `Stop()` if your service implements `CBStopper`
+4. Shutdown HTTP server (stop accepting new requests)
+5. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
+6. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
 7. Exit
+
+For details on each step and cleanup examples, see [Signal Handling and Graceful Shutdown](/howto/signals).
 
 Tune these values based on your service:
 

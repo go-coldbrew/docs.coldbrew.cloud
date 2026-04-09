@@ -184,6 +184,41 @@ Will output the debug log messages even when the global log level is set to info
 {"level":"debug","msg":"Hello World","request-id":"1234","trace":"5678","user-id":"abcd","@timestamp":"2020-05-04T15:04:05.000Z"}
 ```
 
+### Production debugging with OverrideLogLevel + trace ID
+
+ColdBrew's `DebugLogInterceptor` (enabled by default) automatically enables per-request debug logging when it detects:
+
+1. **A proto field** — `bool debug = N` or `bool enable_debug = N` in the request message
+2. **A metadata/HTTP header** — `x-debug-log-level: debug` (configurable via `DEBUG_LOG_HEADER_NAME`)
+
+Combined with ColdBrew's automatic trace ID propagation, this lets you enable debug logging for a single request and follow it end-to-end across services via the trace ID.
+
+**Why this is better than changing the global `LOG_LEVEL`:**
+- **Zero blast radius** — only the targeted request gets debug logs; other requests stay at INFO
+- **Works across services** — the trace ID follows the request through downstream gRPC calls
+- **No restart needed** — the override is per-request, not per-process
+
+**Proto field approach** (implicit — ColdBrew detects it automatically):
+
+```protobuf
+message MyRequest {
+    string msg = 1;
+    bool debug = 2;  // ColdBrew reads this automatically
+}
+```
+
+**Header approach** (works with both gRPC and HTTP):
+
+```bash
+# gRPC
+grpcurl -H "x-debug-log-level: debug" localhost:9090 myservice.MyService/MyMethod
+
+# HTTP (via grpc-gateway)
+curl -H "x-debug-log-level: debug" http://localhost:9091/api/v1/echo
+```
+
+See the [interceptors howto](/howto/interceptors) for configuration options and the [config reference](/config-reference) for `DISABLE_DEBUG_LOG_INTERCEPTOR` and `DEBUG_LOG_HEADER_NAME`.
+
 ---
 [TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
 [go-coldbrew/tracing]: https://pkg.go.dev/github.com/go-coldbrew/tracing
