@@ -48,8 +48,8 @@ cfg := config.GetColdBrewConfig()
 |----------|------|---------|-------------|
 | `DISABLE_GRPC_REFLECTION` | bool | `false` | Disable gRPC server reflection (used by tools like grpcurl) |
 | `DO_NOT_LOG_GRPC_REFLECTION` | bool | `true` | Suppress logging of gRPC reflection API calls |
-| `GRPC_MAX_SEND_MSG_SIZE` | int | `2147483647` | Maximum send message size in bytes (default: ~2GB, unlimited) |
-| `GRPC_MAX_RECV_MSG_SIZE` | int | `4194304` | Maximum receive message size in bytes (default: 4MB) |
+| `GRPC_MAX_SEND_MSG_SIZE` | int | `2147483647` | Maximum **response** size in bytes — limits how large a response your service can send back to clients (default: ~2GB). Consider reducing for public-facing services; use streaming RPCs for large payloads |
+| `GRPC_MAX_RECV_MSG_SIZE` | int | `4194304` | Maximum **request** size in bytes — limits how large a request your service accepts from clients (default: 4MB) |
 | `DISABLE_VT_PROTOBUF` | bool | `false` | Disable [vtprotobuf](https://github.com/planetscale/vtprotobuf) marshaller for gRPC. See [vtprotobuf guide](/howto/vtproto) |
 | `DISABLE_PROTO_VALIDATE` | bool | `false` | Disable [protovalidate](https://github.com/bufbuild/protovalidate) interceptor. When disabled, proto validation annotations are ignored |
 | `DISABLE_DEBUG_LOG_INTERCEPTOR` | bool | `false` | Disable the DebugLogInterceptor. When disabled, proto `debug`/`enable_debug` fields and `x-debug-log-level` headers will not trigger per-request debug logging |
