@@ -31,6 +31,7 @@ cfg := config.GetColdBrewConfig()
 | `LISTEN_HOST` | string | `0.0.0.0` | Host address to listen on |
 | `GRPC_PORT` | int | `9090` | gRPC server port |
 | `HTTP_PORT` | int | `9091` | HTTP gateway port |
+| `ADMIN_PORT` | int | `0` (disabled) | Dedicated port for admin endpoints (pprof, metrics, swagger). When set to a non-zero value, these endpoints are served on this port instead of `HTTP_PORT`, enabling network-level isolation via Kubernetes NetworkPolicy. See [Security hardening](/howto/production/#security-hardening) |
 | `APP_NAME` | string | `""` | Application name (used in logs, metrics, New Relic) |
 | `ENVIRONMENT` | string | `""` | Environment name (e.g., production, staging, development) |
 | `RELEASE_NAME` | string | `""` | Release/version name |

@@ -72,6 +72,8 @@ Your service starts with all of these endpoints ready:
 | `localhost:9091/swagger/` | Swagger UI |
 | `localhost:9091/debug/pprof/` | Go pprof profiling |
 
+> **Tip:** Set `ADMIN_PORT` to serve metrics, profiling, and swagger on a dedicated port for [security isolation](/howto/production/#security-hardening).
+
 ## Define Once, Get Everything
 
 Your API is defined once in protobuf — ColdBrew generates everything else:

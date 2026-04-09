@@ -23,7 +23,7 @@ ColdBrew follows [12-factor app](https://12factor.net/) methodology and is desig
 | 12-Factor Principle | How ColdBrew Implements It |
 |--------------------|-----------------------------|
 | **Config** | All configuration via environment variables ([envconfig](https://github.com/kelseyhightower/envconfig)) — no config files, no YAML. See [Configuration Reference](/config-reference) |
-| **Port binding** | Self-contained HTTP (`:9091`) and gRPC (`:9090`) servers, no external app server needed |
+| **Port binding** | Self-contained HTTP (`:9091`) and gRPC (`:9090`) servers, optional dedicated admin port (`ADMIN_PORT`) for endpoint isolation |
 | **Logs** | Structured JSON to stdout by default — ready for any log aggregator (Fluentd, Loki, CloudWatch) |
 | **Disposability** | Graceful SIGTERM handling with configurable drain periods. See [Signals](/howto/signals) |
 | **Dev/prod parity** | Same binary, same config mechanism, same observability in every environment |
@@ -54,6 +54,8 @@ Each output maps to a self-documenting endpoint:
 | Health/version | `:9091/healthcheck` | Returns git commit, version, build date, Go version as JSON |
 | Metrics | `:9091/metrics` | Prometheus self-describing exposition format with HELP lines |
 | Profiling | `:9091/debug/pprof/` | Standard Go pprof index page |
+
+> **Tip:** Set `ADMIN_PORT=9092` to serve metrics, profiling, and swagger on a dedicated port — keeping `:9091` for gateway traffic only. See [Security hardening](/howto/production/#security-hardening).
 
 **Every client gets documentation for free:**
 - **gRPC clients** use server reflection to discover services and methods without proto files
@@ -172,7 +174,7 @@ When a request arrives at a ColdBrew service, it flows through several layers:
   │              │  (service.go)   │                 │
   │              └─────────────────┘                 │
   │                                                  │
-  │  Built-in Endpoints:                             │
+  │  Built-in Endpoints (movable to ADMIN_PORT):      │
   │    /metrics        - Prometheus                  │
   │    /healthcheck    - Liveness probe              │
   │    /readycheck     - Readiness probe             │
