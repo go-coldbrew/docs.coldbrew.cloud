@@ -192,7 +192,7 @@ When a request exceeds the rate limit, the interceptor returns a `ResourceExhaus
 
 ### Custom per-API rate limiter
 
-For different rate limits per API method, implement the `ratelimit.Limiter` interface and register it during initialization:
+For different rate limits per API method, implement the [`ratelimit.Limiter`](https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/ratelimit#Limiter) interface and register it during initialization:
 
 ```go
 import (
@@ -200,9 +200,13 @@ import (
     "fmt"
 
     "github.com/go-coldbrew/interceptors"
+    ratelimit "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/ratelimit"
     "golang.org/x/time/rate"
     "google.golang.org/grpc"
 )
+
+// Compile-time check that perMethodLimiter implements the interface.
+var _ ratelimit.Limiter = (*perMethodLimiter)(nil)
 
 type perMethodLimiter struct {
     limiters map[string]*rate.Limiter
@@ -232,7 +236,17 @@ func init() {
 }
 ```
 
-For distributed rate limiting (e.g., across pods or per-tenant), implement the same interface with a Redis-backed limiter.
+### Distributed rate limiting
+
+For rate limiting across pods or per-tenant, implement `ratelimit.Limiter` with a distributed backend. Libraries that work well with ColdBrew's limiter interface:
+
+| Library | Backend | Notes |
+|---------|---------|-------|
+| [mennanov/limiters](https://github.com/mennanov/limiters) | Redis, etcd, DynamoDB, memory | Most flexible — has explicit gRPC example, multiple algorithms |
+| [go-redis/redis_rate](https://github.com/go-redis/redis_rate) | Redis | GCRA algorithm, good if you already use go-redis |
+| [sethvargo/go-limiter](https://github.com/sethvargo/go-limiter) | Redis, memory | Clean API, actively maintained |
+
+For large-scale multi-service rate limiting, consider a dedicated rate limiting service like [gubernator](https://github.com/gubernator-io/gubernator) (peer-to-peer, no Redis) or [Envoy ratelimit](https://github.com/envoyproxy/ratelimit) (Redis-backed).
 
 ### Disabling
 
