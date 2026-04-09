@@ -185,8 +185,6 @@ ColdBrew's shutdown sequence (bounded by `SHUTDOWN_DURATION_IN_SECONDS`, default
 7. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
 8. Exit
 
-For details on each step and cleanup examples, see [Signal Handling and Graceful Shutdown](/howto/signals).
-
 Tune these values based on your service:
 
 ```yaml
@@ -455,7 +453,7 @@ ColdBrew's defaults are tuned for **internal services** — debug endpoints, API
 Services exposed to external traffic (API gateways, user-facing endpoints) should whitelist only the API paths that need to be public and disable discovery and debug features:
 
 {: .important }
-The most effective security measure is to **whitelist public API paths** at your load balancer or reverse proxy and block everything else. ColdBrew serves gRPC, HTTP gateway, debug, metrics, and swagger all on the same HTTP port. Only your application's API routes (e.g., `/api/v1/*`) should be exposed externally — block `/debug/*`, `/metrics`, `/swagger/*`, and any other internal paths at the infrastructure level.
+The most effective security measure is to **whitelist public API paths** at your load balancer or reverse proxy and block everything else. ColdBrew serves the HTTP gateway, debug, metrics, and swagger on the HTTP port (default 9091) and gRPC on a separate port (default 9090). Only your application's API routes (e.g., `/api/v1/*`) should be exposed externally — block `/debug/*`, `/metrics`, `/swagger/*`, and any other internal paths at the infrastructure level.
 
 ```yaml
 env:
