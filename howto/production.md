@@ -185,8 +185,6 @@ ColdBrew's shutdown sequence (bounded by `SHUTDOWN_DURATION_IN_SECONDS`, default
 7. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
 8. Exit
 
-For details on each step and cleanup examples, see [Signal Handling and Graceful Shutdown](/howto/signals).
-
 Tune these values based on your service:
 
 ```yaml
@@ -443,7 +441,102 @@ env:
     value: "3600"
 ```
 
+## Security hardening
+
+{: .warning }
+This section provides general security guidance for ColdBrew configuration. Always follow your organization's security policies and compliance requirements. ColdBrew is a framework — securing your deployment is your responsibility.
+
+ColdBrew's defaults are tuned for **internal services** — debug endpoints, API docs, and gRPC reflection are enabled by default. Public-facing services need different settings.
+
+### Public-facing services
+
+Services exposed to external traffic (API gateways, user-facing endpoints) should whitelist only the API paths that need to be public and disable discovery and debug features:
+
+{: .important }
+The most effective security measure is to **whitelist public API paths** at your load balancer or reverse proxy and block everything else. ColdBrew serves the HTTP gateway, debug, metrics, and swagger on the HTTP port (default 9091) and gRPC on a separate port (default 9090). Only your application's API routes (e.g., `/api/v1/*`) should be exposed externally — block `/debug/*`, `/metrics`, `/swagger/*`, and any other internal paths at the infrastructure level.
+
+```yaml
+env:
+  # Disable pprof — exposes CPU/memory profiling data
+  - name: DISABLE_DEBUG
+    value: "true"
+  # Disable Swagger UI — exposes API schema and endpoint discovery
+  - name: DISABLE_SWAGGER
+    value: "true"
+  # Disable gRPC reflection — prevents service discovery via grpcurl
+  - name: DISABLE_GRPC_REFLECTION
+    value: "true"
+  # Disable debug log interceptor — prevents external clients from
+  # triggering debug logging via x-debug-log-level header
+  - name: DISABLE_DEBUG_LOG_INTERCEPTOR
+    value: "true"
+  # Never use debug level on public services — may log request payloads
+  - name: LOG_LEVEL
+    value: "info"
+  # GRPC_MAX_SEND_MSG_SIZE limits response size FROM your service (default ~2GB).
+  # GRPC_MAX_RECV_MSG_SIZE limits request size TO your service (default 4MB).
+  # Consider reducing send size for public APIs; use streaming for large payloads.
+  # - name: GRPC_MAX_SEND_MSG_SIZE
+  #   value: "16777216"  # 16MB
+```
+
+{: .important }
+The `/metrics` endpoint exposes request counts, latency distributions, and Go runtime stats. For public-facing services, restrict access to `/metrics` at the load balancer level (IP whitelist or path-based routing) rather than disabling Prometheus entirely.
+
+### Internal services
+
+Services behind a load balancer or service mesh can keep the defaults:
+
+- **Debug endpoints** (`/debug/pprof/`) — useful for profiling production issues
+- **Swagger UI** (`/swagger/`) — API documentation for developers
+- **gRPC reflection** — enables `grpcurl` and `grpcui` for ad-hoc testing
+- **Debug log interceptor** — `OverrideLogLevel` + trace ID for targeted production debugging (see [Log How-To](/howto/Log/#production-debugging-with-overrideloglevel--trace-id))
+- **Default message sizes** — ~2GB send (response) / 4MB recv (request) defaults are fine behind a load balancer
+
+{: .note }
+Internal services should still follow the production checklist below for observability, health probes, and graceful shutdown.
+
+### Built-in protections
+
+ColdBrew includes several security features that are **on by default**. Don't disable them unless you have a specific reason:
+
+| Protection | What it does | Config to disable (not recommended) |
+|-----------|-------------|--------------------------------------|
+| **Trace ID validation** | Sanitizes client-supplied trace IDs — max 128 chars, printable ASCII only. Prevents log injection attacks | `SetTraceIDValidator(nil)` in code |
+| **Protovalidate** | Validates incoming messages against proto annotation rules. Returns `InvalidArgument` on failure | `DISABLE_PROTO_VALIDATE=true` |
+| **Default timeout** | 60s deadline on unary RPCs without one. Prevents slowloris and resource exhaustion | `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS=0` |
+| **Panic recovery** | Catches handler panics, returns generic error to client. Stack traces go to logs and error trackers only — never in gRPC responses | Cannot be disabled |
+
+### Data sent to third-party services
+
+{: .important }
+When error tracking (Sentry, Rollbar) or distributed tracing (New Relic, OTLP) is configured, ColdBrew sends data to external services. Review what your service logs before enabling these on public-facing services.
+
+**What gets sent to error trackers (Sentry, Rollbar, Airbrake):**
+- Stack traces with internal file paths and function names
+- Server hostname and git commit hash
+- Log context fields — any data added via `log.AddToLogContext()` is included
+- Trace IDs and OTEL span context
+
+**What gets sent to tracing backends (New Relic, OTLP):**
+- Service name, version, environment
+- Go runtime version and VCS metadata
+- Span attributes including `coldbrew.trace_id`
+
+Avoid adding PII (passwords, tokens, user data) to log context or error notification tags.
+
+### Not built into ColdBrew
+
+These are your responsibility to handle at the infrastructure level:
+
+- **CORS** — ColdBrew does not handle CORS headers. Use a reverse proxy (Nginx, Envoy, Istio) or add CORS middleware to the HTTP gateway.
+- **Authentication/authorization** — Admin endpoints (`/debug/pprof`, `/metrics`, `/swagger`) have no built-in auth. Disable them for public services or restrict access at the load balancer.
+- **Rate limiting** — No built-in rate limiting on any endpoint. Use your load balancer, service mesh, or a rate-limiting proxy.
+- **HTTP header forwarding** — `HTTP_HEADER_PREFIXES` forwards matching HTTP headers to gRPC metadata. Never add `authorization`, `cookie`, or `x-api-key` prefixes unless you are intentionally doing header-based gRPC auth.
+
 ## Production checklist
+
+### All services
 
 - [ ] Set `APP_NAME` and `ENVIRONMENT` for log/metric identification
 - [ ] Configure `livenessProbe` on `/healthcheck` and `readinessProbe` on `/readycheck`
@@ -454,9 +547,19 @@ env:
 - [ ] Use headless Service or L7 proxy for gRPC load balancing
 - [ ] Set resource requests and limits
 - [ ] Store secrets in Kubernetes Secrets, not environment variable literals
-- [ ] Disable debug endpoints in production if not needed (`DISABLE_DEBUG=true`)
 - [ ] Run `make lint` (includes `govulncheck`) before deploying
-- [ ] For high-QPS services: set `RESPONSE_TIME_LOG_ERROR_ONLY=true` to skip per-request logging on successful RPCs (the single largest source of per-request CPU overhead — see [tuning impact](/config-reference#measured-tuning-impact))
+- [ ] For high-QPS services: set `RESPONSE_TIME_LOG_ERROR_ONLY=true` to skip per-request logging on successful RPCs (see [tuning impact](/config-reference#measured-tuning-impact))
+
+### Public-facing services (additional)
+
+- [ ] **Whitelist public API paths** at the load balancer — block `/debug/*`, `/metrics`, `/swagger/*`
+- [ ] `DISABLE_DEBUG=true` — disable pprof endpoints
+- [ ] `DISABLE_SWAGGER=true` — disable API documentation
+- [ ] `DISABLE_GRPC_REFLECTION=true` — disable service discovery
+- [ ] `DISABLE_DEBUG_LOG_INTERCEPTOR=true` — disable header-based debug logging
+- [ ] Consider reducing `GRPC_MAX_SEND_MSG_SIZE` from its ~2GB default if responses are small
+- [ ] Restrict `/metrics` access at the load balancer
+- [ ] `LOG_LEVEL=info` or higher (never `debug`)
 
 ---
 [ColdBrew cookiecutter]: /getting-started
