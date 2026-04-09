@@ -152,13 +152,16 @@ When a request arrives at a ColdBrew service, it flows through several layers:
   │  ┌──────────────────────────────────────────┐   │
   │  │          Server Interceptor Chain         │   │
   │  │                                           │   │
-  │  │  1. Response Time Logging                 │   │
-  │  │  2. Trace ID Injection                    │   │
-  │  │  3. Proto Validate                        │   │
-  │  │  4. Prometheus Metrics                    │   │
-  │  │  5. Error Notification (Sentry/Rollbar)   │   │
-  │  │  6. New Relic Transaction                 │   │
-  │  │  7. Panic Recovery                        │   │
+  │  │   1. Default Timeout (60s deadline)       │   │
+  │  │   2. Rate Limiting (token bucket)         │   │
+  │  │   3. Response Time Logging                │   │
+  │  │   4. Trace ID Injection                   │   │
+  │  │   5. Debug Log (per-request level)        │   │
+  │  │   6. Proto Validate                       │   │
+  │  │   7. Prometheus Metrics                   │   │
+  │  │   8. Error Notification (Sentry/Rollbar)  │   │
+  │  │   9. New Relic Transaction                │   │
+  │  │  10. Panic Recovery                       │   │
   │  │  (OTEL tracing via gRPC stats handler)    │   │
   │  │                                           │   │
   │  └────────────────────┬─────────────────────┘   │
@@ -199,13 +202,16 @@ Interceptors are gRPC middleware that run on every request. ColdBrew chains them
 
 | Order | Interceptor | Package | What It Does |
 |-------|------------|---------|--------------|
-| 1 | Response Time Logging | `interceptors` | Logs method name, duration, and status code |
-| 2 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs, Sentry/Rollbar error reports, and OpenTelemetry spans (as the `coldbrew.trace_id` attribute) |
-| 3 | Proto Validate | `interceptors` | Validates incoming messages using [protovalidate](https://github.com/bufbuild/protovalidate) annotations. Returns `InvalidArgument` on failure. Disable with `DISABLE_PROTO_VALIDATE` |
-| 4 | Prometheus | `interceptors` | Records request count, latency histogram, and status codes |
-| 5 | Error Notification | `interceptors` | Sends errors to Sentry/Rollbar/Airbrake asynchronously |
-| 6 | New Relic | `interceptors` | Creates a New Relic transaction for APM |
-| 7 | Panic Recovery | `interceptors` | Catches panics and converts them to gRPC errors |
+| 1 | Default Timeout | `interceptors` | Applies a 60s deadline to unary RPCs without one. Prevents resource exhaustion from clients that don't set deadlines. Config: `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` |
+| 2 | Rate Limiting | `interceptors` | Per-pod token bucket rate limiter. Returns `ResourceExhausted` when exceeded. Disabled by default. Config: `RATE_LIMIT_PER_SECOND`, `RATE_LIMIT_BURST` |
+| 3 | Response Time Logging | `interceptors` | Logs method name, duration, and status code |
+| 4 | Trace ID | `interceptors` | Generates a trace ID (or reads it from the `x-trace-id` HTTP header or a `trace_id` proto field) and propagates it to structured logs, Sentry/Rollbar error reports, and OpenTelemetry spans (as the `coldbrew.trace_id` attribute) |
+| 5 | Debug Log | `interceptors` | Enables per-request log level override via `bool debug` or `bool enable_debug` proto field, or `x-debug-log-level` metadata header. Config: `DISABLE_DEBUG_LOG_INTERCEPTOR`, `DEBUG_LOG_HEADER_NAME` |
+| 6 | Proto Validate | `interceptors` | Validates incoming messages using [protovalidate](https://github.com/bufbuild/protovalidate) annotations. Returns `InvalidArgument` on failure. Config: `DISABLE_PROTO_VALIDATE` |
+| 7 | Prometheus | `interceptors` | Records request count, latency histogram, and status codes |
+| 8 | Error Notification | `interceptors` | Sends errors to Sentry/Rollbar/Airbrake asynchronously |
+| 9 | New Relic | `interceptors` | Creates a New Relic transaction for APM |
+| 10 | Panic Recovery | `interceptors` | Catches panics and converts them to gRPC errors |
 
 {: .note }
 OpenTelemetry tracing spans are created by the `otelgrpc` stats handler configured at the gRPC server/client level, not as an interceptor in the chain.

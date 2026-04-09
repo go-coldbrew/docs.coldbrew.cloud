@@ -55,6 +55,9 @@ cfg := config.GetColdBrewConfig()
 | `DISABLE_DEBUG_LOG_INTERCEPTOR` | bool | `false` | Disable the DebugLogInterceptor. When disabled, proto `debug`/`enable_debug` fields and `x-debug-log-level` headers will not trigger per-request debug logging |
 | `DEBUG_LOG_HEADER_NAME` | string | `x-debug-log-level` | gRPC metadata / HTTP header name for per-request debug logging. The header value should be a valid log level (`debug`, `info`, `warn`, `error`). See [Log How-To](/howto/Log/#production-debugging-with-overrideloglevel--trace-id) |
 | `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` | int | `60` | Default timeout for incoming unary gRPC requests without a deadline. Set to `0` to disable. Does not apply to stream RPCs |
+| `RATE_LIMIT_PER_SECOND` | float64 | `0` | Maximum incoming requests per second for this pod (per-pod in-memory token bucket). Set to `0` to disable (default). With N pods, effective cluster-wide limit is N × this value. For distributed rate limiting, use `interceptors.SetRateLimiter()` with a custom implementation |
+| `RATE_LIMIT_BURST` | int | `1` | Maximum burst size for the token bucket rate limiter. Only takes effect when `RATE_LIMIT_PER_SECOND > 0` |
+| `DISABLE_RATE_LIMIT` | bool | `false` | Disable the rate limiting interceptor entirely |
 
 ## gRPC TLS
 
