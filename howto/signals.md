@@ -27,26 +27,50 @@ When you start your application, ColdBrew will register a signal handler for `SI
 
 ## Graceful shutdown
 
-When the application receives a signal, it will start a graceful shutdown process. This process will do the following:
+When the application receives a signal, ColdBrew executes a multi-step shutdown sequence:
 
-  1. Fail the readiness check
-  2. Wait for all requests to finish
-  3. Shutdown the application when all requests are finished or after a timeout
+1. **`FailCheck(true)`** on services implementing [CBGracefulStopper] — `/readycheck` starts returning failure
+2. **Wait** `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s) for the load balancer to stop sending traffic
+3. **Shutdown HTTP server** — stop accepting new HTTP requests
+4. **`GracefulStop()` gRPC server** — finish in-flight RPCs, reject new ones
+5. **Force-stop gRPC server** if graceful shutdown didn't complete in time
+6. **`Stop()`** on services implementing [CBStopper] — resource cleanup
+7. **Exit**
 
 ## Customizing the shutdown process
 
 Configuring the shutdown process is done by setting the [config] values:
 
-- `SHUTDOWN_DURATION_IN_SECONDS` - The duration in seconds to wait for all requests to finish before shutting down the application.
-- `GRPC_GRACEFUL_DURATION_IN_SECONDS` - The duration in seconds for which ColdBrew will wait for propagation of readiness check failure to the load balancer.
-- `DISABLE_SIGNAL_HANDLER` - If set to `true`, ColdBrew will not register a signal handler (this is useful when you want to handle signals yourself).
+- `SHUTDOWN_DURATION_IN_SECONDS` - Timeout for the entire `Stop()` sequence (default: 15s), covering steps 2-7 above including the drain wait. After this, the process exits regardless.
+- `GRPC_GRACEFUL_DURATION_IN_SECONDS` - Duration of step 2 — how long to wait after failing `/readycheck` before stopping servers (default: 7s). This is **included within** `SHUTDOWN_DURATION_IN_SECONDS`, not additional to it.
+- `DISABLE_SIGNAL_HANDLER` - If set to `true`, ColdBrew will not register a signal handler (useful when you want to handle signals yourself).
+
+## Service lifecycle interfaces
+
+ColdBrew provides two optional interfaces for shutdown behavior:
+
+| Interface | Method | When called | Use for |
+|-----------|--------|-------------|---------|
+| [CBGracefulStopper] | `FailCheck(bool)` | **First** — before drain wait | Mark service as not ready |
+| [CBStopper] | `Stop()` | **Last** — after all servers stopped | Close DB pools, flush metrics, drain producers |
+
+{: .important}
+All resource cleanup belongs in `Stop()`. ColdBrew calls it after all servers have stopped and in-flight requests have completed (or timed out).
 
 ## Cleanup before shutdown
 
-If your service implements [CBStopper] interface, ColdBrew will call the `Stop` method when the application is shutting down. This is useful if you want to perform some cleanup before the application shuts down.
+Implement the [CBStopper] interface to clean up resources during shutdown:
 
-{: .important}
-ColdBrew will call the `Stop` method after all requests have finished or after the `SHUTDOWN_DURATION_IN_SECONDS` timeout has expired.
+```go
+func (s *svc) Stop() {
+    s.dbPool.Close()           // close database connections
+    s.redisClient.Close()      // close Redis
+    s.metricsReporter.Flush()  // flush pending metrics
+    s.kafkaProducer.Close()    // drain and close Kafka producer
+}
+```
+
+The [ColdBrew cookiecutter] generates this pattern — your service struct implements `CBStopper` and delegates to the service implementation's `Stop()` method.
 
 ## Kubernetes liveness and readiness probes
 
@@ -65,5 +89,6 @@ Make sure you configure your load balancer to stop sending new requests to your 
 [go-coldbrew/core]: https://pkg.go.dev/github.com/go-coldbrew/core
 [config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [CBStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBStopper
+[CBGracefulStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBGracefulStopper
 [Kubernetes]: https://kubernetes.io/
 [POSIX signals]: https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals

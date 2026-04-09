@@ -39,7 +39,7 @@ cfg := config.GetColdBrewConfig()
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `LOG_LEVEL` | string | `info` | Log level: debug, info, warn, error |
+| `LOG_LEVEL` | string | `info` | Log level: debug, info, warn, error. For per-request debugging, use `log.OverrideLogLevel(ctx, loggers.DebugLevel)` — combined with the trace ID, this lets you enable debug logging for a single request and follow it across services. See [Log How-To](/howto/Log/#production-debugging-with-overrideloglevel--trace-id) |
 | `JSON_LOGS` | bool | `true` | Emit logs in JSON format |
 
 ## gRPC Server
@@ -52,6 +52,8 @@ cfg := config.GetColdBrewConfig()
 | `GRPC_MAX_RECV_MSG_SIZE` | int | `4194304` | Maximum receive message size in bytes (default: 4MB) |
 | `DISABLE_VT_PROTOBUF` | bool | `false` | Disable [vtprotobuf](https://github.com/planetscale/vtprotobuf) marshaller for gRPC. See [vtprotobuf guide](/howto/vtproto) |
 | `DISABLE_PROTO_VALIDATE` | bool | `false` | Disable [protovalidate](https://github.com/bufbuild/protovalidate) interceptor. When disabled, proto validation annotations are ignored |
+| `DISABLE_DEBUG_LOG_INTERCEPTOR` | bool | `false` | Disable the DebugLogInterceptor. When disabled, proto `debug`/`enable_debug` fields and `x-debug-log-level` headers will not trigger per-request debug logging |
+| `DEBUG_LOG_HEADER_NAME` | string | `x-debug-log-level` | gRPC metadata / HTTP header name for per-request debug logging. The header value should be a valid log level (`debug`, `info`, `warn`, `error`). See [Log How-To](/howto/Log/#production-debugging-with-overrideloglevel--trace-id) |
 | `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` | int | `60` | Default timeout for incoming unary gRPC requests without a deadline. Set to `0` to disable. Does not apply to stream RPCs |
 
 ## gRPC TLS
