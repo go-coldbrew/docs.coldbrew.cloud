@@ -171,6 +171,73 @@ func init() {
 
 Set `DISABLE_PROTO_VALIDATE=true` to skip validation entirely.
 
+## Rate limiting
+
+ColdBrew includes a built-in per-pod token bucket rate limiter. It is **disabled by default** and must be explicitly enabled.
+
+### Enabling via environment variables
+
+```yaml
+env:
+  - name: RATE_LIMIT_PER_SECOND
+    value: "100"   # 100 requests per second per pod
+  - name: RATE_LIMIT_BURST
+    value: "50"    # allow bursts up to 50
+```
+
+{: .important }
+This is a **per-pod in-memory limit**. With N pods, the effective cluster-wide limit is N × `RATE_LIMIT_PER_SECOND`. For cluster-wide rate limiting, use a custom limiter (see below) or your load balancer.
+
+When a request exceeds the rate limit, the interceptor returns a `ResourceExhausted` gRPC status code.
+
+### Custom per-API rate limiter
+
+For different rate limits per API method, implement the `ratelimit.Limiter` interface and register it during initialization:
+
+```go
+import (
+    "context"
+    "fmt"
+
+    "github.com/go-coldbrew/interceptors"
+    "golang.org/x/time/rate"
+    "google.golang.org/grpc"
+)
+
+type perMethodLimiter struct {
+    limiters map[string]*rate.Limiter
+    fallback *rate.Limiter
+}
+
+func (l *perMethodLimiter) Limit(ctx context.Context) error {
+    method, _ := grpc.Method(ctx)
+    limiter, ok := l.limiters[method]
+    if !ok {
+        limiter = l.fallback
+    }
+    if !limiter.Allow() {
+        return fmt.Errorf("rate limit exceeded for %s", method)
+    }
+    return nil
+}
+
+func init() {
+    interceptors.SetRateLimiter(&perMethodLimiter{
+        limiters: map[string]*rate.Limiter{
+            "/myservice.v1.UserService/CreateUser": rate.NewLimiter(10, 5),   // 10 rps
+            "/myservice.v1.UserService/ListUsers":  rate.NewLimiter(100, 50), // 100 rps
+        },
+        fallback: rate.NewLimiter(50, 25), // 50 rps default
+    })
+}
+```
+
+For distributed rate limiting (e.g., across pods or per-tenant), implement the same interface with a Redis-backed limiter.
+
+### Disabling
+
+Set `DISABLE_RATE_LIMIT=true` to remove the rate limiting interceptor from the chain entirely.
+
 ## Adding custom interceptors to Default interceptors
 
 You can add your own interceptors to the [Default Interceptors] by appending to the list of interceptors.

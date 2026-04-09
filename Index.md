@@ -30,7 +30,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **Distributed Tracing** | [OpenTelemetry] and [New Relic] support with automatic span creation in interceptors — traces can be sent to any OTLP-compatible backend including [Jaeger] |
 | **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
 | **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
-| **Resilience** | Client-side circuit breaking and retries via interceptors |
+| **Rate Limiting** | Per-pod token bucket rate limiter — disabled by default, pluggable via custom `Limiter` interface for distributed or per-tenant rate limiting. Config: `RATE_LIMIT_PER_SECOND` |
 | **Fast Serialization** | [vtprotobuf] codec enabled by default — faster gRPC marshalling with automatic fallback to standard protobuf |
 | **Kubernetes-native** | Health/ready probes, graceful SIGTERM shutdown, structured JSON logs, Prometheus metrics — all wired automatically |
 | **Swagger / OpenAPI** | Interactive API docs auto-served at `/swagger/` from your protobuf definitions |

@@ -473,6 +473,11 @@ env:
   # Never use debug level on public services — may log request payloads
   - name: LOG_LEVEL
     value: "info"
+  # Rate limit incoming requests (per-pod). Adjust to your service's capacity.
+  - name: RATE_LIMIT_PER_SECOND
+    value: "1000"
+  - name: RATE_LIMIT_BURST
+    value: "50"
   # GRPC_MAX_SEND_MSG_SIZE limits response size FROM your service (default ~2GB).
   # GRPC_MAX_RECV_MSG_SIZE limits request size TO your service (default 4MB).
   # Consider reducing send size for public APIs; use streaming for large payloads.
@@ -531,7 +536,7 @@ These are your responsibility to handle at the infrastructure level:
 
 - **CORS** — ColdBrew does not handle CORS headers. Use a reverse proxy (Nginx, Envoy, Istio) or add CORS middleware to the HTTP gateway.
 - **Authentication/authorization** — Admin endpoints (`/debug/pprof`, `/metrics`, `/swagger`) have no built-in auth. Disable them for public services or restrict access at the load balancer.
-- **Rate limiting** — No built-in rate limiting on any endpoint. Use your load balancer, service mesh, or a rate-limiting proxy.
+- **Cluster-wide rate limiting** — Built-in rate limiting (`RATE_LIMIT_PER_SECOND`) is per-pod only. For cluster-wide or per-tenant rate limiting, use `interceptors.SetRateLimiter()` with a custom implementation or your load balancer. See [Interceptors How-To](/howto/interceptors#rate-limiting).
 - **HTTP header forwarding** — `HTTP_HEADER_PREFIXES` forwards matching HTTP headers to gRPC metadata. Never add `authorization`, `cookie`, or `x-api-key` prefixes unless you are intentionally doing header-based gRPC auth.
 
 ## Production checklist
@@ -557,6 +562,7 @@ These are your responsibility to handle at the infrastructure level:
 - [ ] `DISABLE_SWAGGER=true` — disable API documentation
 - [ ] `DISABLE_GRPC_REFLECTION=true` — disable service discovery
 - [ ] `DISABLE_DEBUG_LOG_INTERCEPTOR=true` — disable header-based debug logging
+- [ ] Enable rate limiting — `RATE_LIMIT_PER_SECOND` (per-pod, adjust to capacity)
 - [ ] Consider reducing `GRPC_MAX_SEND_MSG_SIZE` from its ~2GB default if responses are small
 - [ ] Restrict `/metrics` access at the load balancer
 - [ ] `LOG_LEVEL=info` or higher (never `debug`)
