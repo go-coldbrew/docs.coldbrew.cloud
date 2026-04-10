@@ -23,7 +23,7 @@ ColdBrew follows [12-factor app](https://12factor.net/) methodology and is desig
 | 12-Factor Principle | How ColdBrew Implements It |
 |--------------------|-----------------------------|
 | **Config** | All configuration via environment variables ([envconfig](https://github.com/kelseyhightower/envconfig)) — no config files, no YAML. See [Configuration Reference](/config-reference) |
-| **Port binding** | Self-contained HTTP (`:9091`) and gRPC (`:9090`) servers, no external app server needed |
+| **Port binding** | Self-contained HTTP (`:9091`) and gRPC (`:9090`) servers, optional dedicated admin port (`ADMIN_PORT`) for endpoint isolation |
 | **Logs** | Structured JSON to stdout by default — ready for any log aggregator (Fluentd, Loki, CloudWatch) |
 | **Disposability** | Graceful SIGTERM handling with configurable drain periods. See [Signals](/howto/signals) |
 | **Dev/prod parity** | Same binary, same config mechanism, same observability in every environment |
@@ -54,6 +54,8 @@ Each output maps to a self-documenting endpoint:
 | Health/version | `:9091/healthcheck` | Returns git commit, version, build date, Go version as JSON |
 | Metrics | `:9091/metrics` | Prometheus self-describing exposition format with HELP lines |
 | Profiling | `:9091/debug/pprof/` | Standard Go pprof index page |
+
+> **Tip:** Set `ADMIN_PORT` to serve metrics, profiling, and swagger on a dedicated port. Health and readiness endpoints remain on `:9091`. See [Security hardening](/howto/production/#security-hardening).
 
 **Every client gets documentation for free:**
 - **gRPC clients** use server reflection to discover services and methods without proto files
@@ -173,9 +175,11 @@ When a request arrives at a ColdBrew service, it flows through several layers:
   │              └─────────────────┘                 │
   │                                                  │
   │  Built-in Endpoints:                             │
-  │    /metrics        - Prometheus                  │
   │    /healthcheck    - Liveness probe              │
   │    /readycheck     - Readiness probe             │
+  │                                                  │
+  │  Admin Endpoints (movable to ADMIN_PORT):        │
+  │    /metrics        - Prometheus                  │
   │    /debug/pprof/   - Go profiling                │
   │    /swagger/       - OpenAPI docs                │
   └─────────────────────────────────────────────────┘
@@ -324,7 +328,7 @@ ColdBrew is designed for Kubernetes deployments:
 - **Readiness probe:** `GET /readycheck` — returns the same version JSON when ready for traffic, or an error if the service hasn't called `SetReady()` yet
 - **gRPC health protocol:** Implements `grpc.health.v1.Health` ([standard gRPC health checking](https://github.com/grpc/grpc/blob/master/doc/health-checking.md)) on the gRPC port — used by gRPC load balancers, Envoy, Istio, and other service meshes for native health checking
 - **Graceful shutdown:** On SIGTERM, the service marks itself as not ready, drains in-flight requests, then exits cleanly
-- **Metrics scraping:** Prometheus scrapes `/metrics` on the HTTP port
+- **Metrics scraping:** Prometheus scrapes `/metrics` on the HTTP port (or `ADMIN_PORT` when configured)
 
 ### Gateway Performance Options
 

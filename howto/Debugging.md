@@ -15,14 +15,18 @@ description: "Debugging ColdBrew services with pprof and log overrides"
 
 Golang provides a built-in profiler called [pprof](https://golang.org/pkg/net/http/pprof/). It is a tool that can be used to collect CPU and memory profiles. It can be used to collect profiles from a running application and then analyze them to find the root cause of performance issues.
 
-ColdBrew exposes `/debug/pprof/` endpoint on the HTTP port that can be used to collect profiles. The endpoint is only available when the [configuration option] `DisableDebug` is set to `false` (which is the default behaviour).
+ColdBrew exposes `/debug/pprof/` endpoint on the HTTP port that can be used to collect profiles. When `ADMIN_PORT` is configured, pprof is served on the admin port instead. The endpoint is only available when the [configuration option] `DisableDebug` is set to `false` (which is the default behaviour).
 
 ### Collecting profiles
 
 To collect a profile, you can use the `go tool pprof` command. For example, to collect a CPU profile, you can run the following command:
 
 ```bash
+# Default (no ADMIN_PORT):
 $ go tool pprof http://localhost:9091/debug/pprof/profile
+
+# With ADMIN_PORT configured (e.g., ADMIN_PORT=9092):
+$ go tool pprof http://localhost:9092/debug/pprof/profile
 ```
 
 This will open an interactive shell where you can run commands to analyze the profile. For example, to see the top 10 functions that are consuming the most CPU, you can run the following command:

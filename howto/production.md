@@ -448,15 +448,68 @@ This section provides general security guidance for ColdBrew configuration. Alwa
 
 ColdBrew's defaults are tuned for **internal services** — debug endpoints, API docs, and gRPC reflection are enabled by default. Public-facing services need different settings.
 
-### Public-facing services
+### Dedicated admin port (recommended)
 
-Services exposed to external traffic (API gateways, user-facing endpoints) should whitelist only the API paths that need to be public and disable discovery and debug features:
-
-{: .important }
-The most effective security measure is to **whitelist public API paths** at your load balancer or reverse proxy and block everything else. ColdBrew serves the HTTP gateway, debug, metrics, and swagger on the HTTP port (default 9091) and gRPC on a separate port (default 9090). Only your application's API routes (e.g., `/api/v1/*`) should be exposed externally — block `/debug/*`, `/metrics`, `/swagger/*`, and any other internal paths at the infrastructure level.
+The **preferred approach** is to serve admin endpoints (pprof, metrics, swagger) on a **separate port** using `ADMIN_PORT`. This keeps profiling and metrics available for operations while isolating them from external traffic via Kubernetes NetworkPolicy:
 
 ```yaml
 env:
+  # Serve admin endpoints on a dedicated internal port
+  - name: ADMIN_PORT
+    value: "9092"
+```
+
+When `ADMIN_PORT` is set:
+- **Port 9090** (gRPC): gRPC server — expose as needed
+- **Port 9091** (HTTP): gRPC-gateway + health/readiness probes — expose with path allowlisting
+- **Admin port** (e.g., 9092): pprof, metrics, swagger — restrict via NetworkPolicy
+
+```yaml
+# Kubernetes NetworkPolicy — restricts admin port (9092) to monitoring namespace
+# while leaving app ports (9090/9091) open. Add further restrictions to
+# 9090/9091 if you need to limit app traffic sources too.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-admin-port
+spec:
+  podSelector:
+    matchLabels:
+      app: my-service
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow app traffic (gRPC + HTTP gateway) from anywhere
+    - ports:
+        - port: 9090
+        - port: 9091
+    # Restrict admin port to monitoring namespace only
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 9092
+```
+
+This approach is better than disabling endpoints entirely because:
+- Prometheus can still scrape `/metrics` on the admin port
+- Operations can still access pprof for production debugging
+- No application-level auth needed — network isolation handles it
+
+### Public-facing services
+
+For services exposed to external traffic where a separate admin port is not sufficient, disable discovery and debug features entirely:
+
+{: .important }
+The most effective security measure is to **use `ADMIN_PORT`** to separate admin endpoints, or **whitelist public API paths** at your load balancer and block everything else. ColdBrew serves the HTTP gateway on the HTTP port (default 9091) and gRPC on a separate port (default 9090). When `ADMIN_PORT` is not set, admin endpoints (debug, metrics, swagger) share the HTTP port. Only your application's API routes (e.g., `/api/v1/*`) should be exposed externally.
+
+```yaml
+env:
+  # Option 1 (preferred): Separate admin port
+  - name: ADMIN_PORT
+    value: "9092"
+  # Option 2: Disable admin endpoints entirely
   # Disable pprof — exposes CPU/memory profiling data
   - name: DISABLE_DEBUG
     value: "true"
@@ -486,7 +539,7 @@ env:
 ```
 
 {: .important }
-The `/metrics` endpoint exposes request counts, latency distributions, and Go runtime stats. For public-facing services, restrict access to `/metrics` at the load balancer level (IP whitelist or path-based routing) rather than disabling Prometheus entirely.
+The `/metrics` endpoint exposes request counts, latency distributions, and Go runtime stats. When using `ADMIN_PORT`, metrics are automatically served on the admin port only. Without `ADMIN_PORT`, restrict access to `/metrics` at the load balancer level (IP whitelist or path-based routing) rather than disabling Prometheus entirely.
 
 ### Internal services
 
