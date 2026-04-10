@@ -263,7 +263,7 @@ Set `DISABLE_RATE_LIMIT=true` to remove the rate limiting interceptor from the c
 
 ## Authentication
 
-The [cookiecutter template][ColdBrew cookiecutter] includes ready-to-use JWT and API key authentication interceptors built on [go-grpc-middleware/v2 auth](https://github.com/grpc-ecosystem/go-grpc-middleware/tree/main/interceptors/auth). Uncomment the relevant lines in `main.go` and `config/config.go` to enable them.
+The [cookiecutter template][ColdBrew cookiecutter] includes ready-to-use JWT and API key authentication interceptors built on [go-grpc-middleware/v2 auth](https://github.com/grpc-ecosystem/go-grpc-middleware/tree/main/interceptors/auth). These interceptors are wired by default — set `JWT_SECRET` or `API_KEYS` environment variables to enable them.
 
 For full documentation, see the [Authentication How-To](/howto/auth/).
 

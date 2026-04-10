@@ -59,11 +59,13 @@ func (s *svc) MyMethod(ctx context.Context, req *pb.MyRequest) (*pb.MyResponse, 
 
 ### Using RSA or ECDSA keys
 
-The default example uses HMAC-SHA256 (symmetric key). To use asymmetric keys (RSA, ECDSA), modify `JWTAuthFunc` in `service/auth/auth.go` — change the `keyFunc` to return your public key and update the `WithValidMethods` list. See the [golang-jwt/jwt documentation](https://github.com/golang-jwt/jwt) for:
+The default uses HMAC-SHA256 (symmetric) — faster and simpler, ideal for **internal service-to-service** auth where both sides share the secret. Use asymmetric keys (RSA, ECDSA) when tokens are issued by an **external identity provider** (Auth0, Keycloak, Google) where you only have the public key.
 
-- [RSA signing example](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#example-Parse-Hmac)
+To switch, modify `JWTAuthFunc` in `service/auth/auth.go` — change the `keyFunc` to return your public key and update the `WithValidMethods` list. See the [golang-jwt/jwt documentation](https://github.com/golang-jwt/jwt) for:
+
+- [RSA parsing example](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#example-Parse-Rsa)
 - [Custom claims structs](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#example-ParseWithClaims-CustomClaimsType)
-- [JWKS key sets](https://github.com/MicahParks/keyfunc) for validating tokens from identity providers (Auth0, Keycloak, etc.)
+- [JWKS key sets](https://github.com/MicahParks/keyfunc) for validating tokens from external identity providers (Auth0, Keycloak, etc.)
 
 ## API key authentication
 
@@ -106,7 +108,10 @@ For HTTP requests via grpc-gateway, ensure `x-api-key` is included in `HTTP_HEAD
 By default, the auth interceptor applies to **all** RPCs including health and readiness checks. To skip authentication for specific methods, your service can implement the `ServiceAuthFuncOverride` interface from go-grpc-middleware:
 
 ```go
-import grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+import (
+    grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+    "your-module/service/auth"
+)
 
 // AuthFuncOverride bypasses the global auth interceptor for specific methods.
 func (s *svc) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
@@ -139,5 +144,4 @@ For most services, a simple per-method check in your handler (using claims from 
 - [golang-jwt/jwt](https://github.com/golang-jwt/jwt) — the JWT library used in the example
 - [Security hardening guide](/howto/production/#security-hardening) — TLS, admin port isolation, and other production security measures
 
-[ColdBrew cookiecutter]: /cookiecutter-reference
-[AddUnaryServerInterceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#AddUnaryServerInterceptor
+[ColdBrew cookiecutter]: /getting-started
