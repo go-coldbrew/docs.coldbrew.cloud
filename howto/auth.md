@@ -18,7 +18,7 @@ ColdBrew does not enforce a specific authentication mechanism, but the [cookiecu
 Auth is config-controlled — the interceptors are always wired in your generated project via `service/auth/auth.go`. To enable authentication, just set the corresponding environment variable. No code changes needed.
 
 {: .note .note-info }
-User-added interceptors run **first** in the ColdBrew interceptor chain — before timeout, rate limiting, logging, and metrics. This means authentication is enforced before any other processing.
+The auth interceptors run **first** in the ColdBrew interceptor chain — before timeout, rate limiting, logging, and metrics. Unauthenticated requests are rejected immediately without consuming rate limit tokens or generating response time logs.
 
 ## JWT authentication
 
@@ -69,7 +69,7 @@ resp, err := client.Echo(ctx, &pb.EchoRequest{Msg: "hello"})
 **grpcurl:**
 ```bash
 TOKEN=$(jwt encode --secret "a-string-secret-at-least-256-bits-long" --sub "test-user" --exp "+1h")
-grpcurl -plaintext -H "authorization: bearer $TOKEN" \
+grpcurl -plaintext -H "Authorization: Bearer $TOKEN" \
   -d '{"msg":"hello"}' localhost:9090 com.github.ankurs.MySvc/Echo
 ```
 
@@ -139,24 +139,24 @@ For HTTP requests via grpc-gateway, ensure `x-api-key` is included in `HTTP_HEAD
 
 ## Skipping auth for health checks
 
-By default, the auth interceptor applies to **all** RPCs including health and readiness checks. To skip authentication for specific methods, your service can implement the `ServiceAuthFuncOverride` interface from go-grpc-middleware:
+{: .note .note-info }
+The cookiecutter template already skips auth for health checks, readiness checks, and gRPC reflection by default (via `defaultSkipMethods` in `service/auth/auth.go`). The override below is only needed if you want custom per-method skip logic.
+
+To skip authentication for additional methods, your service can implement the `ServiceAuthFuncOverride` interface from go-grpc-middleware:
 
 ```go
-import (
-    grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-    "your-module/service/auth"
-)
+import grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 
 // AuthFuncOverride bypasses the global auth interceptor for specific methods.
 func (s *svc) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
-    // Skip auth for health and readiness checks
+    // Skip auth for specific methods
     switch fullMethodName {
-    case "/grpc.health.v1.Health/Check",
-         "/grpc.health.v1.Health/Watch":
+    case "/mypackage.MySvc/PublicEndpoint":
         return ctx, nil
     }
-    // Fall through to the global auth function for all other methods
-    return auth.JWTAuthFunc(s.jwtSecret)(ctx)
+    // Fall through to the global auth for all other methods.
+    // Return Unauthenticated to reject, or delegate to your auth function:
+    return nil, status.Error(codes.Unauthenticated, "authentication required")
 }
 
 // Compile-time check

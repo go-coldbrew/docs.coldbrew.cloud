@@ -201,3 +201,4 @@ ColdBrew composes proven Go libraries — not replacements:
 [Grafana]: https://grafana.com/
 [promauto]: https://pkg.go.dev/github.com/prometheus/client_golang/prometheus/promauto
 [ghz]: https://ghz.sh/
+[ColdBrew cookiecutter]: /getting-started

@@ -90,7 +90,10 @@ The [cookiecutter template][ColdBrew cookiecutter] uses [swaggest/swgui](https:/
 **[Scalar](https://github.com/scalar/scalar)** — Modern API reference UI with dark/light themes and interactive "Try It" console. Load via CDN script tag:
 
 ```go
-import "net/http"
+import (
+    "net/http"
+    openapi "your-module/third_party/OpenAPI" // provides SpecFS (embed.FS with *.json)
+)
 
 func scalarHandler() http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +104,7 @@ func scalarHandler() http.Handler {
         w.Header().Set("Content-Type", "text/html")
         w.Write([]byte(`<!DOCTYPE html>
 <html><head><title>API Reference</title>
-<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.29"></script>
 </head><body>
 <div id="app"></div>
 <script>Scalar.createApiReference(document.getElementById('app'),
@@ -116,7 +119,7 @@ func scalarHandler() http.Handler {
 ```go
 w.Write([]byte(`<!DOCTYPE html>
 <html><head>
-<script src="https://cdn.jsdelivr.net/npm/rapidoc/dist/rapidoc-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/rapidoc@9.3/dist/rapidoc-min.js"></script>
 </head><body>
 <rapi-doc spec-url="/swagger/spec.json" theme="dark"></rapi-doc>
 </body></html>`))
@@ -127,12 +130,15 @@ w.Write([]byte(`<!DOCTYPE html>
 ```go
 w.Write([]byte(`<!DOCTYPE html>
 <html><head>
-<script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+<script src="https://cdn.redoc.ly/redoc/v2.4/bundles/redoc.standalone.js"></script>
 </head><body>
 <div id="redoc"></div>
 <script>Redoc.init('/swagger/spec.json', {}, document.getElementById('redoc'))</script>
 </body></html>`))
 ```
+
+{: .important }
+Pin CDN script versions in production to avoid unexpected breaking changes. For self-hosting, download the scripts and serve from your own assets.
 
 ---
 [grpc-gateway's Swagger / Open API specification]: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/adding_annotations/
