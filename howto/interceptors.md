@@ -261,6 +261,12 @@ For large-scale multi-service rate limiting, consider a dedicated rate limiting 
 
 Set `DISABLE_RATE_LIMIT=true` to remove the rate limiting interceptor from the chain entirely.
 
+## Authentication
+
+The [cookiecutter template][ColdBrew cookiecutter] includes ready-to-use JWT and API key authentication interceptors built on [go-grpc-middleware/v2 auth](https://github.com/grpc-ecosystem/go-grpc-middleware/tree/main/interceptors/auth). Uncomment the relevant lines in `main.go` and `config/config.go` to enable them.
+
+For full documentation, see the [Authentication How-To](/howto/auth/).
+
 ## Adding custom interceptors to Default interceptors
 
 You can add your own interceptors to the [Default Interceptors] by appending to the list of interceptors.

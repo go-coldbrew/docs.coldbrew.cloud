@@ -588,7 +588,7 @@ Avoid adding PII (passwords, tokens, user data) to log context or error notifica
 These are your responsibility to handle at the infrastructure level:
 
 - **CORS** — ColdBrew does not handle CORS headers. Use a reverse proxy (Nginx, Envoy, Istio) or add CORS middleware to the HTTP gateway.
-- **Authentication/authorization** — Admin endpoints (`/debug/pprof`, `/metrics`, `/swagger`) have no built-in auth. Disable them for public services or restrict access at the load balancer.
+- **Authentication/authorization** — Admin endpoints (`/debug/pprof`, `/metrics`, `/swagger`) have no built-in auth. Disable them for public services or restrict access at the load balancer. For application-level auth (JWT, API keys), the [cookiecutter template][ColdBrew cookiecutter] includes ready-to-use examples — see [Authentication How-To](/howto/auth/).
 - **Cluster-wide rate limiting** — Built-in rate limiting (`RATE_LIMIT_PER_SECOND`) is per-pod only. For cluster-wide or per-tenant rate limiting, use `interceptors.SetRateLimiter()` with a custom implementation or your load balancer. See [Interceptors How-To](/howto/interceptors#rate-limiting).
 - **HTTP header forwarding** — `HTTP_HEADER_PREFIXES` forwards matching HTTP headers to gRPC metadata. Never add `authorization`, `cookie`, or `x-api-key` prefixes unless you are intentionally doing header-based gRPC auth.
 
