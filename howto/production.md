@@ -465,9 +465,9 @@ When `ADMIN_PORT` is set:
 - **Admin port** (e.g., 9092): pprof, metrics, swagger — restrict via NetworkPolicy
 
 ```yaml
-# Kubernetes NetworkPolicy — restrict admin port to monitoring namespace.
-# NOTE: This policy only controls the admin port. You need separate ingress
-# rules (or a separate NetworkPolicy) to allow app traffic on ports 9090/9091.
+# Kubernetes NetworkPolicy — restricts admin port (9092) to monitoring namespace
+# while leaving app ports (9090/9091) open. Add further restrictions to
+# 9090/9091 if you need to limit app traffic sources too.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
