@@ -147,15 +147,20 @@ To skip authentication for additional methods, your service can implement the `S
 ```go
 import grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 
-// AuthFuncOverride bypasses the global auth interceptor for specific methods.
+// AuthFuncOverride replaces the global auth interceptor for this service.
+// When implemented, the global AuthFunc is NOT called — this method is
+// responsible for all auth decisions for this service's RPCs.
 func (s *svc) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
     // Skip auth for specific methods
     switch fullMethodName {
     case "/mypackage.MySvc/PublicEndpoint":
         return ctx, nil
     }
-    // Fall through to the global auth for all other methods.
-    // Return Unauthenticated to reject, or delegate to your auth function:
+    // For all other methods, delegate to the same auth function used globally.
+    // Example with JWT:
+    //   return auth.JWTAuthFunc(os.Getenv("JWT_SECRET"))(ctx)
+    // Example with API key:
+    //   return auth.APIKeyAuthFunc(strings.Split(os.Getenv("API_KEYS"), ","))(ctx)
     return nil, status.Error(codes.Unauthenticated, "authentication required")
 }
 
