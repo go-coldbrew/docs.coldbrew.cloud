@@ -44,7 +44,10 @@ That's it — the auth interceptors are registered automatically when the env va
 The auth package includes a `GenerateTestToken` helper for local development:
 
 ```go
-import "your-module/service/auth"
+import (
+    "time"
+    "your-module/service/auth"
+)
 
 token, err := auth.GenerateTestToken("a-string-secret-at-least-256-bits-long", "test-user", 1*time.Hour)
 ```
@@ -125,7 +128,7 @@ That's it — the auth interceptors are registered automatically when the env va
 **gRPC (Go):**
 ```go
 md := metadata.Pairs("x-api-key", "my-api-key")
-ctx := metadata.NewOutgoingContext(ctx, md)
+ctx := metadata.NewOutgoingContext(context.Background(), md)
 resp, err := client.MyMethod(ctx, req)
 ```
 
