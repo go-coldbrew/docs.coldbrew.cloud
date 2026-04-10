@@ -61,8 +61,8 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:9091/api/v1/example/echo
 **gRPC (Go):**
 ```go
 token, _ := auth.GenerateTestToken(os.Getenv("JWT_SECRET"), "test-user", 1*time.Hour)
-md := metadata.Pairs("authorization", "bearer "+token)
-ctx := metadata.NewOutgoingContext(ctx, md)
+md := metadata.Pairs("authorization", "Bearer "+token)
+ctx := metadata.NewOutgoingContext(context.Background(), md)
 resp, err := client.Echo(ctx, &pb.EchoRequest{Msg: "hello"})
 ```
 
@@ -161,7 +161,7 @@ func (s *svc) AuthFuncOverride(ctx context.Context, fullMethodName string) (cont
     //   return auth.JWTAuthFunc(os.Getenv("JWT_SECRET"))(ctx)
     // Example with API key:
     //   return auth.APIKeyAuthFunc(strings.Split(os.Getenv("API_KEYS"), ","))(ctx)
-    return nil, status.Error(codes.Unauthenticated, "authentication required")
+    return ctx, status.Error(codes.Unauthenticated, "authentication required")
 }
 
 // Compile-time check
