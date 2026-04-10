@@ -39,6 +39,40 @@ env:
 
 That's it — the auth interceptors are registered automatically when the env var is set.
 
+### Testing JWT auth
+
+The auth package includes a `GenerateTestToken` helper for local development:
+
+```go
+import "your-module/service/auth"
+
+token, err := auth.GenerateTestToken("a-string-secret-at-least-256-bits-long", "test-user", 1*time.Hour)
+```
+
+**HTTP (via grpc-gateway):**
+```bash
+# Generate a token (requires jwt-cli: brew install mike-engel/jwt-cli/jwt-cli)
+TOKEN=$(jwt encode --secret "a-string-secret-at-least-256-bits-long" --sub "test-user" --exp "+1h")
+
+# Call the service
+curl -H "Authorization: Bearer $TOKEN" http://localhost:9091/api/v1/example/echo -d '{"msg":"hello"}'
+```
+
+**gRPC (Go):**
+```go
+token, _ := auth.GenerateTestToken(os.Getenv("JWT_SECRET"), "test-user", 1*time.Hour)
+md := metadata.Pairs("authorization", "bearer "+token)
+ctx := metadata.NewOutgoingContext(ctx, md)
+resp, err := client.Echo(ctx, &pb.EchoRequest{Msg: "hello"})
+```
+
+**grpcurl:**
+```bash
+TOKEN=$(jwt encode --secret "a-string-secret-at-least-256-bits-long" --sub "test-user" --exp "+1h")
+grpcurl -plaintext -H "authorization: bearer $TOKEN" \
+  -d '{"msg":"hello"}' localhost:9090 com.github.ankurs.MySvc/Echo
+```
+
 ### Accessing claims in handlers
 
 The JWT interceptor puts parsed claims into the request context. Access them with `auth.ClaimsFromContext`:
