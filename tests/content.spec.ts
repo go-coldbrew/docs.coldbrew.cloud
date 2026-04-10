@@ -23,9 +23,9 @@ test.describe("Code Blocks", () => {
     await page.goto("/howto/auth/");
     const codeBlocks = page.locator("pre code");
     expect(await codeBlocks.count()).toBeGreaterThanOrEqual(5);
-    const pageText = await page.locator("main, .main-content").first().textContent();
-    expect(pageText).toContain("JWT");
-    expect(pageText).toContain("API key");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("JWT");
+    await expect(mainContent).toContainText("API key");
   });
 });
 
