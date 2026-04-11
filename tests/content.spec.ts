@@ -18,6 +18,15 @@ test.describe("Code Blocks", () => {
     const codeBlocks = page.locator("pre code");
     expect(await codeBlocks.count()).toBeGreaterThanOrEqual(2);
   });
+
+  test("auth howto renders code blocks", async ({ page }) => {
+    await page.goto("/howto/auth/");
+    const codeBlocks = page.locator("pre code");
+    expect(await codeBlocks.count()).toBeGreaterThanOrEqual(5);
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("JWT");
+    await expect(mainContent).toContainText("API key");
+  });
 });
 
 test.describe("Tables", () => {

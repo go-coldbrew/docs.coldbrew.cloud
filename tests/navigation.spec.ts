@@ -28,6 +28,7 @@ const howtoPages = [
   "/howto/testing/",
   "/howto/workers/",
   "/howto/private-modules/",
+  "/howto/auth/",
 ];
 
 test.describe("Page Loading", () => {

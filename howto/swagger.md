@@ -80,6 +80,66 @@ func main() {
 }
 ```
 
+### Alternative UI implementations
+
+`SetOpenAPIHandler` accepts any `http.Handler`, so you can swap Swagger UI for any OpenAPI-compatible UI. ColdBrew mounts it at `SWAGGER_URL` (default `/swagger/`) with `http.StripPrefix`, so your handler receives requests with the prefix stripped.
+
+{: .note .note-info }
+The [cookiecutter template][ColdBrew cookiecutter] uses [swaggest/swgui](https://github.com/swaggest/swgui) (Swagger UI v5 embedded as a Go package). Update the UI version with `go get -u github.com/swaggest/swgui`.
+
+**[Scalar](https://github.com/scalar/scalar)** — Modern API reference UI with dark/light themes and interactive "Try It" console. Load via CDN script tag:
+
+```go
+import (
+    "net/http"
+    openapi "your-module/third_party/OpenAPI" // provides SpecFS (embed.FS with *.json)
+)
+
+func scalarHandler() http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.URL.Path == "/spec.json" {
+            http.FileServerFS(openapi.SpecFS).ServeHTTP(w, r)
+            return
+        }
+        w.Header().Set("Content-Type", "text/html")
+        w.Write([]byte(`<!DOCTYPE html>
+<html><head><title>API Reference</title>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.29"></script>
+</head><body>
+<div id="app"></div>
+<script>Scalar.createApiReference(document.getElementById('app'),
+  { url: '/swagger/spec.json', theme: 'default' })</script>
+</body></html>`))
+    })
+}
+```
+
+**[RapiDoc](https://github.com/rapi-doc/RapiDoc)** — Web component that renders OpenAPI specs. Single `<rapi-doc>` tag:
+
+```go
+w.Write([]byte(`<!DOCTYPE html>
+<html><head>
+<script src="https://cdn.jsdelivr.net/npm/rapidoc@9.3/dist/rapidoc-min.js"></script>
+</head><body>
+<rapi-doc spec-url="/swagger/spec.json" theme="dark"></rapi-doc>
+</body></html>`))
+```
+
+**[Redocly](https://github.com/Redocly/redoc)** — Three-panel reference docs (read-only, no "Try It"):
+
+```go
+w.Write([]byte(`<!DOCTYPE html>
+<html><head>
+<script src="https://cdn.redoc.ly/redoc/v2.4/bundles/redoc.standalone.js"></script>
+</head><body>
+<div id="redoc"></div>
+<script>Redoc.init('/swagger/spec.json', {}, document.getElementById('redoc'))</script>
+</body></html>`))
+```
+
+{: .important }
+Pin CDN script versions in production to avoid unexpected breaking changes. For self-hosting, download the scripts and serve from your own assets.
+
 ---
 [grpc-gateway's Swagger / Open API specification]: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/adding_annotations/
 [Config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
