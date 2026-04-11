@@ -59,7 +59,6 @@ func somefunction() error {
 The ColdBrew [errors package] provides a `Wrap` function that can be used to wrap an error with a message. This is useful when you want to add more context to an error.
 
 ```go
-
 import (
     "github.com/go-coldbrew/errors"
 )
@@ -74,6 +73,63 @@ func function2() error {
     err := function1()
     return errors.Wrap(err, "some context")
 }
+```
+
+### Checking errors
+
+All standard library error functions are re-exported, so you don't need a separate `import "errors"`. Use `errors.Is` to check if an error matches a sentinel value, and `errors.As` to extract a specific error type from the chain:
+
+```go
+import (
+    "github.com/go-coldbrew/errors"
+)
+
+// Check if an error matches a sentinel value
+if errors.Is(err, sql.ErrNoRows) {
+    // handle not found
+}
+
+// Extract a specific error type from the chain
+var ext errors.ErrorExt
+if errors.As(err, &ext) {
+    fmt.Println("gRPC code:", ext.GRPCStatus().Code())
+}
+```
+
+### Finding root cause
+
+Use `errors.Cause` to walk the `Unwrap` chain and find the root cause error. This works on any error, not just ColdBrew errors:
+
+```go
+root := errors.Cause(err)
+fmt.Println("root cause:", root)
+```
+
+For ColdBrew errors, you can also use the `Cause()` method on the `ErrorExt` interface, which returns the same result.
+
+### Combining errors
+
+Use `errors.Join` to combine multiple errors into a single error:
+
+```go
+err1 := errors.New("first problem")
+err2 := errors.New("second problem")
+combined := errors.Join(err1, err2)
+
+// Both errors are preserved in the chain
+errors.Is(combined, err1) // true
+errors.Is(combined, err2) // true
+```
+
+### Unwrapping errors
+
+Use `errors.Unwrap` to get the immediate parent error in the chain:
+
+```go
+base := errors.New("base")
+wrapped := errors.Wrap(base, "context")
+
+inner := errors.Unwrap(wrapped) // returns base
 ```
 
 ## ColdBrew notifier package
