@@ -48,7 +48,47 @@ func init() {
 }
 ```
 
-To compose with a custom `slog.Handler`:
+### Handler composability
+
+ColdBrew's `Handler` is a standard `slog.Handler` — it can wrap any inner handler, and can itself be wrapped by handler middleware. All composition is done through the `log` package using `log.NewHandlerWithInner`.
+
+**Custom inner handler** (e.g., write to a file instead of stdout):
+
+```go
+import (
+    "log/slog"
+    "os"
+    "github.com/go-coldbrew/log"
+)
+
+func init() {
+    f, _ := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+    inner := slog.NewJSONHandler(f, nil)
+    log.SetDefault(log.NewHandlerWithInner(inner))
+}
+```
+
+**Fan-out to multiple destinations** (e.g., stdout + file, using [slog-multi](https://github.com/samber/slog-multi)):
+
+```go
+import (
+    "log/slog"
+    "os"
+    "github.com/go-coldbrew/log"
+    slogmulti "github.com/samber/slog-multi"
+)
+
+func init() {
+    stdout := slog.NewJSONHandler(os.Stdout, nil)
+    file := slog.NewJSONHandler(logFile, nil)
+
+    // ColdBrew wraps the fan-out handler — context fields appear in both outputs
+    multi := slogmulti.Fanout(stdout, file)
+    log.SetDefault(log.NewHandlerWithInner(multi))
+}
+```
+
+**Wrapping ColdBrew's handler** (e.g., adding sampling on top):
 
 ```go
 import (
@@ -57,12 +97,15 @@ import (
 )
 
 func init() {
-    inner := slog.NewJSONHandler(os.Stdout, nil)
-    log.SetDefault(log.NewHandlerWithInner(inner))
+    cbHandler := log.NewHandler()  // ColdBrew handler with default JSON output
+
+    // Your custom middleware wraps ColdBrew's handler
+    sampled := NewSamplingHandler(cbHandler, 0.1)  // sample 10% of logs
+    slog.SetDefault(slog.New(sampled))
 }
 ```
 
-ColdBrew's `Handler` is composable — it can wrap any `slog.Handler`, and can itself be wrapped by handler middleware (e.g., slog-multi for fan-out, sampling handlers).
+In all cases, `slog.LogAttrs` calls and ColdBrew context fields work automatically — the Handler injects context fields regardless of where it sits in the chain.
 
 ## Context-aware logs
 
