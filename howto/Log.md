@@ -16,7 +16,10 @@ description: "Context-aware logging and trace ID propagation in ColdBrew"
 ColdBrew uses a custom `slog.Handler` that automatically injects per-request context fields (trace ID, gRPC method, HTTP path) into every log record. After `core.New()` initializes the framework, native `slog` calls work out of the box:
 
 ```go
-import "log/slog"
+import (
+    "context"
+    "log/slog"
+)
 
 func (s *svc) HandleOrder(ctx context.Context, req *proto.OrderRequest) (*proto.OrderResponse, error) {
     slog.LogAttrs(ctx, slog.LevelInfo, "order received",
@@ -117,20 +120,23 @@ Use `log.AddAttrsToContext` for typed fields (zero boxing) or `log.AddToContext`
 
 ```go
 import (
+    "context"
     "log/slog"
+    "net/http"
+
     "github.com/go-coldbrew/log"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
 
-    // Typed attrs — zero interface boxing (recommended)
+    // Typed attrs — the Handler recovers the slog.Attr at log time
     ctx = log.AddAttrsToContext(ctx,
         slog.String("request_id", "1234"),
         slog.String("user_id", "abcd"),
     )
 
-    // Or untyped key-value pairs (simpler, slightly more allocations)
+    // Or untyped key-value pairs (simpler)
     ctx = log.AddToContext(ctx, "trace", "5678")
 
     helloWorld(ctx)
@@ -208,7 +214,10 @@ It is useful to be able to override the log level at request time. This is usefu
 
 ```go
 import (
+    "context"
     "log/slog"
+    "net/http"
+
     "github.com/go-coldbrew/log"
     "github.com/go-coldbrew/log/loggers"
 )
