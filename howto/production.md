@@ -170,7 +170,7 @@ ColdBrew provides two health endpoints:
 Both return JSON with build/version info on success. During graceful shutdown, `/readycheck` fails first, which causes Kubernetes to stop routing traffic before the process exits.
 
 {: .important }
-Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` + `GRPC_GRACEFUL_DURATION_IN_SECONDS` to avoid SIGKILL during shutdown. With defaults (15 + 7 = 22), a value of 30 provides a safe buffer.
+Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` to avoid SIGKILL during shutdown. The drain wait (`GRPC_GRACEFUL_DURATION_IN_SECONDS`) is included within the shutdown timeout, not additional to it. With the default of 15s, a value of 20 provides a safe buffer.
 
 ## Graceful shutdown tuning
 
