@@ -105,14 +105,16 @@ func init() {
 ```go
 import (
     "log/slog"
+
     "github.com/go-coldbrew/log"
 )
 
 func init() {
     cbHandler := log.NewHandler()  // ColdBrew handler with default JSON output
 
-    // Your custom middleware wraps ColdBrew's handler
-    sampled := NewSamplingHandler(cbHandler, 0.1)  // sample 10% of logs
+    // Wrap with any slog.Handler middleware — e.g., slog-sampling, slog-dedup, etc.
+    // NewSamplingHandler is a placeholder for your chosen middleware.
+    sampled := NewSamplingHandler(cbHandler, 0.1)
     slog.SetDefault(slog.New(sampled))
 }
 ```
