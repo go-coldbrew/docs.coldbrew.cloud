@@ -61,11 +61,15 @@ ColdBrew's `Handler` is a standard `slog.Handler` — it can wrap any inner hand
 import (
     "log/slog"
     "os"
+
     "github.com/go-coldbrew/log"
 )
 
 func init() {
-    f, _ := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+    f, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+    if err != nil {
+        panic(err)
+    }
     inner := slog.NewJSONHandler(f, nil)
     log.SetDefault(log.NewHandlerWithInner(inner))
 }
@@ -77,13 +81,18 @@ func init() {
 import (
     "log/slog"
     "os"
+
     "github.com/go-coldbrew/log"
     slogmulti "github.com/samber/slog-multi"
 )
 
 func init() {
+    f, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+    if err != nil {
+        panic(err)
+    }
     stdout := slog.NewJSONHandler(os.Stdout, nil)
-    file := slog.NewJSONHandler(logFile, nil)
+    file := slog.NewJSONHandler(f, nil)
 
     // ColdBrew wraps the fan-out handler — context fields appear in both outputs
     multi := slogmulti.Fanout(stdout, file)
