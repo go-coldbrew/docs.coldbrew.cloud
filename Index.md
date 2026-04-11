@@ -27,7 +27,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 |---------|-------------|
 | **gRPC + REST Gateway** | Define your API once in protobuf — get gRPC, REST, and [Swagger docs](/architecture#self-documenting-apis) automatically via [grpc-gateway]. HTTP gateway supports JSON, `application/proto`, and `application/protobuf` [content types](/howto/APIs/#http-content-type) out of the box |
 | **Structured Logging** | Native [slog] with custom Handler — per-request context fields, trace ID propagation, and typed attrs for zero-boxing performance |
-| **Distributed Tracing** | [OpenTelemetry] and [New Relic] support with automatic span creation in interceptors — traces can be sent to any OTLP-compatible backend including [Jaeger] |
+| **Distributed Tracing** | [OpenTelemetry] and [New Relic] support with automatic span creation via gRPC stats handlers — traces can be sent to any OTLP-compatible backend including [Jaeger] |
 | **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
 | **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
 | **Rate Limiting** | Per-pod token bucket rate limiter — disabled by default, pluggable via custom [`ratelimit.Limiter`](https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/ratelimit#Limiter) interface for distributed or per-tenant rate limiting. Config: `RATE_LIMIT_PER_SECOND`. See [interceptors howto](/howto/interceptors#rate-limiting) |
