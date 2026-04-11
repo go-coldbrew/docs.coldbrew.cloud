@@ -25,7 +25,7 @@ ColdBrew config package contains the configuration for the core package. It uses
 Documentation can be found at [config-docs]
 
 ## [Log]
-log provides a minimal interface for structured logging in services. It provides a simple interface to log errors, warnings, info and debug messages. It also provides a mechanism to add contextual information to logs. The default backend is [slog](https://pkg.go.dev/log/slog) (Go's standard structured logging). We also provide implementations for zap, gokit (deprecated), and logrus (deprecated). A slog bridge allows third-party code that uses `slog` directly to route its logs through ColdBrew's logging pipeline.
+log provides slog-native structured logging for ColdBrew services. It uses a custom `slog.Handler` that automatically injects per-request context fields (trace ID, gRPC method, HTTP path) into every log record. Native `slog.LogAttrs` calls work out of the box after `core.New()` initializes the framework. Use `log.AddAttrsToContext` to add typed context fields without interface boxing, or `log.AddToContext` for untyped key-value pairs. The Handler is composable — it can wrap any `slog.Handler` for custom output formats or fan-out.
 
 Documentation can be found at [log-docs]
 

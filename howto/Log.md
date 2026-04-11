@@ -11,83 +11,101 @@ description: "Context-aware logging and trace ID propagation in ColdBrew"
 1. TOC
 {:toc}
 
-## Logging backends
+## Logging with slog
 
-ColdBrew's log package supports pluggable backends. The default is **slog** (Go's standard structured logging).
+ColdBrew uses a custom `slog.Handler` that automatically injects per-request context fields (trace ID, gRPC method, HTTP path) into every log record. After `core.New()` initializes the framework, native `slog` calls work out of the box:
 
-| Backend | Package | Status |
-|---------|---------|--------|
-| **slog** | `loggers/slog` | Default, recommended |
-| **zap** | `loggers/zap` | Supported |
-| **gokit** | `loggers/gokit` | Deprecated |
-| **logrus** | `loggers/logrus` | Deprecated |
-| **stdlog** | `loggers/stdlog` | Minimal, for simple use cases |
+```go
+import "log/slog"
 
-To explicitly configure a backend:
+func (s *svc) HandleOrder(ctx context.Context, req *proto.OrderRequest) (*proto.OrderResponse, error) {
+    slog.LogAttrs(ctx, slog.LevelInfo, "order received",
+        slog.String("order_id", req.GetOrderId()),
+        slog.Int("items", len(req.GetItems())),
+    )
+    // ...
+}
+```
+
+{: .note }
+Use `slog.LogAttrs` with typed attribute constructors (`slog.String`, `slog.Int`, `slog.Duration`, etc.) for the best performance — they avoid `interface{}` boxing. `slog.InfoContext` and `slog.ErrorContext` also work but box all values through `any`.
+
+### Custom handler configuration
+
+To customize the handler (e.g., change output format or wrap with middleware like slog-multi):
 
 ```go
 import (
     "github.com/go-coldbrew/log"
     "github.com/go-coldbrew/log/loggers"
-    cbslog "github.com/go-coldbrew/log/loggers/slog"
 )
 
 func init() {
-    log.SetLogger(log.NewLogger(cbslog.NewLogger(
+    log.SetDefault(log.NewHandler(
         loggers.WithJSONLogs(true),
         loggers.WithCallerInfo(true),
-    )))
+    ))
 }
 ```
 
-### slog bridge
-
-If your application or third-party libraries use `slog` directly, you can route those calls through ColdBrew's logging pipeline (context fields, level overrides, interceptors):
+To compose with a custom `slog.Handler`:
 
 ```go
 import (
     "log/slog"
     "github.com/go-coldbrew/log"
-    "github.com/go-coldbrew/log/wrap"
 )
 
 func init() {
-    slog.SetDefault(wrap.ToSlogLogger(log.GetLogger()))
+    inner := slog.NewJSONHandler(os.Stdout, nil)
+    log.SetDefault(log.NewHandlerWithInner(inner))
 }
 ```
 
-{: .note }
-The gokit and logrus backends are deprecated. Both upstream libraries are in maintenance mode and no longer actively developed. Migrate to the slog backend for better performance and long-term support. No new logging code is required; if you explicitly configured one of these backends, remove that backend selection and ColdBrew will use slog by default.
+ColdBrew's `Handler` is composable — it can wrap any `slog.Handler`, and can itself be wrapped by handler middleware (e.g., slog-multi for fan-out, sampling handlers).
 
 ## Context-aware logs
 
-In any service there is a set of common items that you want to log with every log message. These items are usually things like the request-id, trace, user-id, etc. It is useful to have these items in the log message so that you can filter on them in your log aggregation system. This is especially useful when you have multiple points of logs and you want to be able to trace a request through the system.
+ColdBrew provides a way to add per-request fields to the log context. Any fields added via `log.AddToContext` or `log.AddAttrsToContext` are automatically included in all log calls that use that context — both ColdBrew's `log.Info` and native `slog.LogAttrs`.
 
-ColdBrew provides a way to add these items to the log message using the `log.AddToContext` function. This function takes a `context.Context` and `key, value`. AddToContext adds log fields to context. Any info added here will be added to all logs using this context.
+### Adding context fields
+
+Use `log.AddAttrsToContext` for typed fields (zero boxing) or `log.AddToContext` for untyped key-value pairs:
 
 ```go
 import (
+    "log/slog"
     "github.com/go-coldbrew/log"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
-    ctx = log.AddToContext(ctx, "request-id", "1234")
+
+    // Typed attrs — zero interface boxing (recommended)
+    ctx = log.AddAttrsToContext(ctx,
+        slog.String("request_id", "1234"),
+        slog.String("user_id", "abcd"),
+    )
+
+    // Or untyped key-value pairs (simpler, slightly more allocations)
     ctx = log.AddToContext(ctx, "trace", "5678")
-    ctx = log.AddToContext(ctx, "user-id", "abcd")
+
     helloWorld(ctx)
 }
 
 func helloWorld(ctx context.Context) {
-    log.Info(ctx, "Hello World")
+    slog.LogAttrs(ctx, slog.LevelInfo, "Hello World")
 }
 ```
 
-Will output
+Output:
 
 ```json
-{"level":"info","msg":"Hello World","request-id":"1234","trace":"5678","user-id":"abcd","@timestamp":"2020-05-04T15:04:05.000Z"}
+{"level":"info","msg":"Hello World","request_id":"1234","user_id":"abcd","trace":"5678","@timestamp":"2020-05-04T15:04:05.000Z"}
 ```
+
+{: .note }
+ColdBrew interceptors automatically add `grpcMethod`, trace ID, and HTTP path to the context — you don't need to add these yourself.
 
 ## Trace ID propagation in logs
 
@@ -147,41 +165,40 @@ It is useful to be able to override the log level at request time. This is usefu
 
 ```go
 import (
+    "log/slog"
     "github.com/go-coldbrew/log"
     "github.com/go-coldbrew/log/loggers"
 )
 
 func init() {
     // set global log level to info
-    // this is typically set by the ColdBrew cookiecutter using the LOG_LEVEL environment variable
+    // this is typically set by the ColdBrew framework using the LOG_LEVEL environment variable
     log.SetLevel(loggers.InfoLevel)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
-    ctx = log.AddToContext(ctx, "request-id", "1234")
-    ctx = log.AddToContext(ctx, "trace", "5678")
-    ctx = log.AddToContext(ctx, "user-id", "abcd")
-
-    // read request and do something
+    ctx = log.AddAttrsToContext(ctx,
+        slog.String("request_id", "1234"),
+        slog.String("user_id", "abcd"),
+    )
 
     // override log level for this request to debug
     ctx = log.OverrideLogLevel(ctx, loggers.DebugLevel)
     helloWorld(ctx)
-
-    // do something else
 }
 
 func helloWorld(ctx context.Context) {
-    log.Debug(ctx, "Hello World")
+    // This debug message appears even though the global level is info,
+    // because OverrideLogLevel was set on this request's context.
+    slog.LogAttrs(ctx, slog.LevelDebug, "Hello World")
 }
-
 ```
 
-Will output the debug log messages even when the global log level is set to info
+Output (debug log appears even when global level is info):
 
 ```json
-{"level":"debug","msg":"Hello World","request-id":"1234","trace":"5678","user-id":"abcd","@timestamp":"2020-05-04T15:04:05.000Z"}
+{"level":"debug","msg":"Hello World","request_id":"1234","user_id":"abcd","@timestamp":"2020-05-04T15:04:05.000Z"}
 ```
 
 ### Production debugging with OverrideLogLevel + trace ID

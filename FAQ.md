@@ -34,7 +34,7 @@ The dependency chain (`options → errors → log → ...`) only means that `log
 
 ## Why are configuration functions not thread-safe?
 
-Functions like `interceptors.AddUnaryServerInterceptor()`, `interceptors.SetFilterFunc()`, and `log.SetLogger()` follow the **init-only pattern**: they must be called during application startup (in `init()` or early in `main()`), before any concurrent access begins.
+Functions like `interceptors.AddUnaryServerInterceptor()`, `interceptors.SetFilterFunc()`, and `log.SetDefault()` follow the **init-only pattern**: they must be called during application startup (in `init()` or early in `main()`), before any concurrent access begins.
 
 This is intentional and consistent across the entire codebase. The interceptor chain is assembled once at startup and then read concurrently — adding mutexes would add overhead to every single request for a code path that only runs once.
 

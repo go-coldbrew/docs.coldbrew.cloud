@@ -574,7 +574,7 @@ When error tracking (Sentry, Rollbar) or distributed tracing (New Relic, OTLP) i
 **What gets sent to error trackers (Sentry, Rollbar, Airbrake):**
 - Stack traces with internal file paths and function names
 - Server hostname and git commit hash
-- Log context fields — any data added via `log.AddToLogContext()` is included
+- Log context fields — any data added via `log.AddToContext()` or `log.AddAttrsToContext()` is included
 - Trace IDs and OTEL span context
 
 **What gets sent to tracing backends (New Relic, OTLP):**
