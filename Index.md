@@ -119,6 +119,8 @@ Run `buf generate` — it creates typed Go interfaces from your proto definition
                     └─────────────────────────────────────────┘
 ```
 
+See the [full interceptor chain](/architecture#server-interceptor-chain) for all 10 interceptors including timeout, rate limiting, debug logging, and New Relic.
+
 ## Packages
 
 ColdBrew is modular — use the full framework or pick individual packages:

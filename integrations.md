@@ -99,7 +99,7 @@ See the [Metrics How-To](/howto/Metrics/) for details on which metrics are expor
 To configure Sentry, set the following environment variables as defined in [Config]
 - `SENTRY_DSN`: Sentry DSN
 - `ENVIRONMENT`: Environment (e.g. `production`)
-- `RELEASE`: App release (e.g. `v1.0.0`)
+- `RELEASE_NAME`: App release (e.g. `v1.0.0`)
 
 ### Initialising
 

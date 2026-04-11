@@ -170,7 +170,7 @@ ColdBrew provides two health endpoints:
 Both return JSON with build/version info on success. During graceful shutdown, `/readycheck` fails first, which causes Kubernetes to stop routing traffic before the process exits.
 
 {: .important }
-Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` + `GRPC_GRACEFUL_DURATION_IN_SECONDS` to avoid SIGKILL during shutdown. With defaults (15 + 7 = 22), a value of 30 provides a safe buffer.
+Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` to avoid SIGKILL during shutdown. The drain wait (`GRPC_GRACEFUL_DURATION_IN_SECONDS`) is included within the shutdown timeout, not additional to it. With the default of 15s, a value of 20 provides a safe buffer.
 
 ## Graceful shutdown tuning
 
@@ -179,11 +179,12 @@ ColdBrew's shutdown sequence (bounded by `SHUTDOWN_DURATION_IN_SECONDS`, default
 1. Receive SIGTERM from Kubernetes
 2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
 3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s, included in shutdown timeout) for the load balancer to drain
-4. Shutdown HTTP server (stop accepting new requests)
-5. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
-6. Force-stop gRPC server if graceful shutdown didn't complete in time
-7. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
-8. Exit
+4. Shutdown admin server if configured (`ADMIN_PORT`)
+5. Shutdown HTTP server (stop accepting new requests)
+6. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
+7. Force-stop gRPC server if graceful shutdown didn't complete in time
+8. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
+9. Exit
 
 Tune these values based on your service:
 
