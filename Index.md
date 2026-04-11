@@ -26,8 +26,8 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | Feature | Description |
 |---------|-------------|
 | **gRPC + REST Gateway** | Define your API once in protobuf — get gRPC, REST, and [Swagger docs](/architecture#self-documenting-apis) automatically via [grpc-gateway]. HTTP gateway supports JSON, `application/proto`, and `application/protobuf` [content types](/howto/APIs/#http-content-type) out of the box |
-| **Structured Logging** | Pluggable backends — [slog] (default), zap, go-kit, logrus — with per-request context fields and trace ID propagation |
-| **Distributed Tracing** | [OpenTelemetry] and [New Relic] support with automatic span creation in interceptors — traces can be sent to any OTLP-compatible backend including [Jaeger] |
+| **Structured Logging** | Native [slog] with custom Handler — per-request context fields, trace ID propagation, and typed attrs for zero-boxing performance |
+| **Distributed Tracing** | [OpenTelemetry] and [New Relic] support with automatic span creation via gRPC stats handlers — traces can be sent to any OTLP-compatible backend including [Jaeger] |
 | **Prometheus Metrics** | Built-in request latency, error rate, and circuit breaker metrics at `/metrics` |
 | **Error Tracking** | Stack traces, gRPC status codes, and async notification to [Sentry], Rollbar, or Airbrake |
 | **Rate Limiting** | Per-pod token bucket rate limiter — disabled by default, pluggable via custom [`ratelimit.Limiter`](https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/ratelimit#Limiter) interface for distributed or per-tenant rate limiting. Config: `RATE_LIMIT_PER_SECOND`. See [interceptors howto](/howto/interceptors#rate-limiting) |
@@ -130,7 +130,7 @@ ColdBrew is modular — use the full framework or pick individual packages:
 | [**core**](https://github.com/go-coldbrew/core) | gRPC server + HTTP gateway, health checks, graceful shutdown |
 | [**interceptors**](https://github.com/go-coldbrew/interceptors) | Server/client interceptors for logging, tracing, metrics, retries |
 | [**errors**](https://github.com/go-coldbrew/errors) | Enhanced errors with stack traces and gRPC status codes |
-| [**log**](https://github.com/go-coldbrew/log) | Structured logging with pluggable backends |
+| [**log**](https://github.com/go-coldbrew/log) | slog-native structured logging with context field injection |
 | [**tracing**](https://github.com/go-coldbrew/tracing) | Distributed tracing (OpenTelemetry, Jaeger, New Relic) |
 | [**options**](https://github.com/go-coldbrew/options) | Request-scoped key-value store via context |
 | [**grpcpool**](https://github.com/go-coldbrew/grpcpool) | Round-robin gRPC connection pool |
