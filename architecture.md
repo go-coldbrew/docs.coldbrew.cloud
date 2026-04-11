@@ -380,7 +380,8 @@ func (s *svc) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.EchoResp
 5. HTTP server created, service registers handlers (`InitHTTP`)
 6. gRPC and HTTP servers start listening concurrently
 7. Admin server starts (if `ADMIN_PORT` is set)
-8. Server blocks until shutdown signal
+8. Service marks itself as ready (`SetReady()`) — `/readycheck` starts succeeding
+9. Server blocks until shutdown signal
 
 ### Shutdown Sequence
 
