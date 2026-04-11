@@ -35,7 +35,7 @@ Interceptors provides a common set of reusable interceptors for grpc services
 Documentation can be found at [interceptor-docs]
 
 ## [Errors]
-A drop-in replacement for the standard `errors` package that adds stack trace capture, gRPC status codes, and error notification support. All standard library functions (`Is`, `As`, `Unwrap`, `Join`) are re-exported.
+A drop-in replacement for the standard `errors` package that adds stack trace capture and gRPC status codes. Standard library helpers (`Is`, `As`, `Unwrap`, `Join`) are re-exported. Error notification is provided by the [Notifier] sub-package below.
 
 Documentation can be found at [errors-docs]
 

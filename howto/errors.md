@@ -81,6 +81,9 @@ All standard library error functions are re-exported, so you don't need a separa
 
 ```go
 import (
+    "database/sql"
+    "fmt"
+
     "github.com/go-coldbrew/errors"
 )
 
