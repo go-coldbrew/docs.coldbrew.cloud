@@ -275,8 +275,8 @@ ColdBrew uses `context.Context` to propagate metadata through every layer:
   context.Context
        │
        ├── options (key-value metadata)
-       │     Set: options.Set(ctx, key, value)
-       │     Get: options.Get(ctx, key)
+       │     Set: options.AddToOptions(ctx, key, value)
+       │     Get: options.FromContext(ctx).Get(key)
        │
        ├── log fields (per-request structured logging)
        │     Add: log.AddToContext(ctx, key, value)
@@ -299,7 +299,7 @@ Every interceptor reads from and writes to the context. By the time the request 
 
 ## Deployment Topology
 
-A typical ColdBrew service exposes two ports:
+A typical ColdBrew service exposes two ports (optionally three with `ADMIN_PORT`):
 
 ```
   ┌─────────────────────────────────────────┐
@@ -314,10 +314,18 @@ A typical ColdBrew service exposes two ports:
   │   ├── /api/...     (REST gateway)       │
   │   ├── /healthcheck (liveness probe)     │
   │   ├── /readycheck  (readiness probe)    │
+  │   ├── /metrics     (Prometheus)*        │
+  │   ├── /swagger/    (OpenAPI UI)*        │
+  │   └── /debug/pprof/ (profiling)*        │
+  │                                         │
+  │   ADMIN_PORT (optional, e.g. 9092)      │
   │   ├── /metrics     (Prometheus)         │
   │   ├── /swagger/    (OpenAPI UI)         │
   │   └── /debug/pprof/ (profiling)         │
   └─────────────────────────────────────────┘
+
+  * When ADMIN_PORT is set, these endpoints move
+    to the admin port and are removed from 9091.
 ```
 
 ### Kubernetes Integration
@@ -365,19 +373,25 @@ func (s *svc) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.EchoResp
 
 ### Startup Sequence
 
-1. Configuration loaded from environment variables
-2. Interceptor chain assembled (init-only, not thread-safe)
-3. gRPC server starts on port 9090
-4. HTTP gateway starts on port 9091
-5. Service registers handlers (`InitGRPC`, `InitHTTP`)
-6. Service marks itself as ready (`SetReady()`)
-7. Server blocks until shutdown signal
+1. Configuration loaded from environment variables (`core.New(cfg)`)
+2. Interceptor chain assembled during `init()` (not thread-safe)
+3. gRPC server created, service registers handlers (`InitGRPC`)
+4. Unix socket created for gateway (if `DISABLE_UNIX_GATEWAY=false`)
+5. HTTP server created, service registers handlers (`InitHTTP`)
+6. gRPC and HTTP servers start listening concurrently
+7. Admin server starts (if `ADMIN_PORT` is set)
+8. Server blocks until shutdown signal
 
 ### Shutdown Sequence
 
 1. SIGTERM/SIGINT received
-2. Service marked as not ready (`/readycheck` returns unhealthy)
-3. Kubernetes stops routing new traffic
-4. In-flight requests allowed to complete
-5. `Stop()` called on the service (your cleanup logic)
-6. Server exits
+2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
+3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default 7s) for load balancer to drain
+4. Shutdown admin server (if configured)
+5. Shutdown HTTP server (stop accepting new requests)
+6. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
+7. Force-stop gRPC server if graceful shutdown didn't complete in time
+8. `Stop()` called on `CBStopper` services (your cleanup logic)
+9. Exit
+
+See [Signal Handling and Graceful Shutdown](/howto/signals) for configuration and tuning details.

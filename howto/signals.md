@@ -31,17 +31,18 @@ When the application receives a signal, ColdBrew executes a multi-step shutdown 
 
 1. **`FailCheck(true)`** on services implementing [CBGracefulStopper] — `/readycheck` starts returning failure
 2. **Wait** `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s) for the load balancer to stop sending traffic
-3. **Shutdown HTTP server** — stop accepting new HTTP requests
-4. **`GracefulStop()` gRPC server** — finish in-flight RPCs, reject new ones
-5. **Force-stop gRPC server** if graceful shutdown didn't complete in time
-6. **`Stop()`** on services implementing [CBStopper] — resource cleanup
-7. **Exit**
+3. **Shutdown admin server** if configured (`ADMIN_PORT`)
+4. **Shutdown HTTP server** — stop accepting new HTTP requests
+5. **`GracefulStop()` gRPC server** — finish in-flight RPCs, reject new ones
+6. **Force-stop gRPC server** if graceful shutdown didn't complete in time
+7. **`Stop()`** on services implementing [CBStopper] — resource cleanup
+8. **Exit**
 
 ## Customizing the shutdown process
 
 Configuring the shutdown process is done by setting the [config] values:
 
-- `SHUTDOWN_DURATION_IN_SECONDS` - Timeout for the entire `Stop()` sequence (default: 15s), covering steps 2-7 above including the drain wait. After this, the process exits regardless.
+- `SHUTDOWN_DURATION_IN_SECONDS` - Timeout for the entire `Stop()` sequence (default: 15s), covering steps 2-8 above including the drain wait. After this, the process exits regardless.
 - `GRPC_GRACEFUL_DURATION_IN_SECONDS` - Duration of step 2 — how long to wait after failing `/readycheck` before stopping servers (default: 7s). This is **included within** `SHUTDOWN_DURATION_IN_SECONDS`, not additional to it.
 - `DISABLE_SIGNAL_HANDLER` - If set to `true`, ColdBrew will not register a signal handler (useful when you want to handle signals yourself).
 

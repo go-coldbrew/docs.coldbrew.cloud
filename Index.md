@@ -117,6 +117,8 @@ Run `buf generate` — it creates typed Go interfaces from your proto definition
                     │                                         │
                     │  /metrics  /healthcheck  /debug/pprof   │
                     └─────────────────────────────────────────┘
+
+See the [full interceptor chain](/architecture#server-interceptor-chain) for all 10 interceptors including timeout, rate limiting, debug logging, and New Relic.
 ```
 
 ## Packages

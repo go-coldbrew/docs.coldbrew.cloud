@@ -55,6 +55,11 @@ hystrixprometheus provides a Prometheus metrics collector for Hystrix (https://g
 
 Documentation can be found at [hystrixprometheus-docs]
 
+## [Options]
+options is a request-scoped key-value store that propagates metadata through `context.Context` using RWMutex+map. Used by interceptors to pass metadata between layers. Only string keys are supported.
+
+Documentation can be found at [options-docs]
+
 ## [grpcpool]
 grpcpool is a pool of grpc.ClientConns that can be used to make requests to a grpc server. It implements grpc.ClientConnInterface to enable it to be used directly with generated proto stubs.
 
@@ -93,4 +98,6 @@ Documentation can be found at [data-builder-docs]
 [workers-docs]: https://pkg.go.dev/github.com/go-coldbrew/workers
 [Data Builder]: https://github.com/go-coldbrew/data-builder/tree/main#readme
 [data-builder-docs]: https://pkg.go.dev/github.com/go-coldbrew/data-builder
+[Options]: https://github.com/go-coldbrew/options/tree/main#readme
+[options-docs]: https://pkg.go.dev/github.com/go-coldbrew/options
 [envconfig]: https://github.com/kelseyhightower/envconfig
