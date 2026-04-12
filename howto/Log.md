@@ -26,7 +26,8 @@ func (s *svc) HandleOrder(ctx context.Context, req *proto.OrderRequest) (*proto.
         slog.String("order_id", req.GetOrderId()),
         slog.Int("items", len(req.GetItems())),
     )
-    // ...
+    // ... business logic ...
+    return &proto.OrderResponse{}, nil
 }
 ```
 
@@ -115,6 +116,10 @@ func init() {
     // Wrap with any slog.Handler middleware — e.g., slog-sampling, slog-dedup, etc.
     // NewSamplingHandler is a placeholder for your chosen middleware.
     sampled := NewSamplingHandler(cbHandler, 0.1)
+
+    // Use log.SetDefault for ColdBrew's handler so log.GetHandler()/log.SetLevel() work,
+    // then override slog.SetDefault with the wrapped version for native slog calls.
+    log.SetDefault(cbHandler)
     slog.SetDefault(slog.New(sampled))
 }
 ```
