@@ -410,6 +410,8 @@ volumes:
       secretName: myservice-tls
 ```
 
+ColdBrew automatically watches the certificate and key files for changes and reloads them without requiring a restart. This works with cert-manager, Vault Agent, and any other tool that rotates certificates via file or symlink updates.
+
 {: .note }
 If you're using a service mesh that handles mTLS (Istio, Linkerd), you typically don't need ColdBrew's built-in TLS — the mesh sidecar terminates TLS at the pod level.
 

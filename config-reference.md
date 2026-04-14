@@ -68,6 +68,8 @@ cfg := config.GetColdBrewConfig()
 | `GRPC_TLS_CERT_FILE` | string | `""` | Path to TLS certificate file. Both key and cert must be set to enable TLS |
 | `GRPC_TLS_INSECURE_SKIP_VERIFY` | bool | `false` | Skip TLS certificate verification (development only) |
 
+When TLS is enabled, ColdBrew automatically watches the cert and key files for changes using [certinel](https://github.com/cloudflare/certinel). Updated certificates are picked up without restarting the service — ideal for Kubernetes environments where cert-manager or Vault rotate certificates via symlink swaps.
+
 ## gRPC Keepalive
 
 | Variable | Type | Default | Description |

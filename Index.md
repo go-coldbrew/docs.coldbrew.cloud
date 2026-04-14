@@ -33,6 +33,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **Rate Limiting** | Per-pod token bucket rate limiter — disabled by default, pluggable via custom [`ratelimit.Limiter`](https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/ratelimit#Limiter) interface for distributed or per-tenant rate limiting. Config: `RATE_LIMIT_PER_SECOND`. See [interceptors howto](/howto/interceptors#rate-limiting) |
 | **Auth Examples** | JWT and API key authentication interceptor examples in the [cookiecutter template][ColdBrew cookiecutter], built on [go-grpc-middleware auth](https://github.com/grpc-ecosystem/go-grpc-middleware/tree/main/interceptors/auth). See [auth howto](/howto/auth/) |
 | **Fast Serialization** | [vtprotobuf] codec enabled by default — faster gRPC marshalling with automatic fallback to standard protobuf |
+| **TLS with Auto-Reload** | Automatic certificate hot-reloading via [certinel](https://github.com/cloudflare/certinel) — updated certs are picked up without a restart; works with cert-manager and Vault symlink rotation |
 | **Kubernetes-native** | Health/ready probes, graceful SIGTERM shutdown, structured JSON logs, Prometheus metrics — all wired automatically |
 | **Swagger / OpenAPI** | Interactive API docs auto-served at `/swagger/` from your protobuf definitions |
 | **Profiling** | Go [pprof] endpoints at `/debug/pprof/` for CPU, memory, goroutine, and trace profiling |
