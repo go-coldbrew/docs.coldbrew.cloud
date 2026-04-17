@@ -231,27 +231,142 @@ func main() {
 }
 ```
 
-## Hystrix-Go
+## Circuit Breaker / Resilience
 
-{: .warning }
-Hystrix-Go (`afex/hystrix-go`) is unmaintained (last updated 2018). Consider migrating to [failsafe-go] for circuit breaker functionality.
+ColdBrew provides a pluggable executor hook for client-side resilience (circuit breaking, retries, bulkheading, etc.). You bring your own resilience library — [failsafe-go] is recommended.
 
-[Hystrix-Go] is a Go implementation of the circuit breaker pattern. ColdBrew provides Prometheus metrics integration for Hystrix.
+### How it works
 
-### Initialising
-
-If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
-
-If you are using ColdBrew packages in your app, you need to initialise Hystrix Prometheus manually:
+Call `interceptors.SetDefaultExecutor` during init to register your resilience logic. The executor receives the gRPC method name, so you can choose which methods get circuit breaking:
 
 ```go
-import "github.com/go-coldbrew/core"
+import (
+    "github.com/failsafe-go/failsafe-go"
+    "github.com/failsafe-go/failsafe-go/circuitbreaker"
+    "github.com/go-coldbrew/interceptors"
+)
 
-func main() {
-    // SetupHystrixPrometheus registers Hystrix metrics with Prometheus
-    core.SetupHystrixPrometheus()
+func init() {
+    cb := circuitbreaker.NewBuilder[any]().
+        WithFailureThreshold(5).
+        WithDelay(5 * time.Second).
+        WithSuccessThreshold(2).
+        Build()
+
+    // Only apply circuit breaking to specific methods
+    protected := map[string]bool{
+        "/payment.Service/Charge": true,
+        "/payment.Service/Refund": true,
+    }
+
+    interceptors.SetDefaultExecutor(func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
+        if !protected[method] {
+            return fn(ctx) // passthrough for non-protected methods
+        }
+        return failsafe.With[any](cb).WithContext(ctx).Run(func() error {
+            return fn(ctx)
+        })
+    })
 }
 ```
+
+### Per-method circuit breakers
+
+Each method can have its own circuit breaker with different limits — sensitive methods trip fast, tolerant methods allow more failures:
+
+```go
+func init() {
+    type cbConfig struct {
+        failureThreshold uint
+        delay            time.Duration
+    }
+
+    configs := map[string]cbConfig{
+        "/payment.Service/Charge": {failureThreshold: 3, delay: 10 * time.Second},
+        "/payment.Service/Refund": {failureThreshold: 3, delay: 10 * time.Second},
+        "/user.Service/GetUser":   {failureThreshold: 10, delay: 5 * time.Second},
+        "/feed.Service/GetFeed":   {failureThreshold: 10, delay: 5 * time.Second},
+    }
+
+    var (
+        mu       sync.Mutex
+        breakers = make(map[string]circuitbreaker.CircuitBreaker[any])
+    )
+
+    interceptors.SetDefaultExecutor(func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
+        cfg, ok := configs[method]
+        if !ok {
+            return fn(ctx) // no circuit breaker for unconfigured methods
+        }
+
+        mu.Lock()
+        cb, exists := breakers[method]
+        if !exists {
+            cb = circuitbreaker.NewBuilder[any]().
+                WithFailureThreshold(cfg.failureThreshold).
+                WithDelay(cfg.delay).
+                Build()
+            breakers[method] = cb
+        }
+        mu.Unlock()
+
+        return failsafe.With[any](cb).WithContext(ctx).Run(func() error {
+            return fn(ctx)
+        })
+    })
+}
+```
+
+### Disabling for specific connections
+
+Use `WithoutExecutor()` to skip resilience for internal or loopback connections:
+
+```go
+interceptors.DefaultClientInterceptor(
+    interceptors.WithoutExecutor(),
+)
+```
+
+### Per-call executor
+
+`WithExecutor` can be passed directly to any gRPC call to use a specific executor for that call. This works even without calling `SetDefaultExecutor` — you don't need a global executor to use per-call executors. This is useful for per-service circuit breaker tuning.
+
+{: .note .note-info }
+Per-call `WithExecutor` requires `ExecutorClientInterceptor` in the interceptor chain. This is included automatically when using `DefaultClientInterceptors`. If you build your own interceptor chain, make sure to include it.
+
+```go
+// Create a sensitive circuit breaker for the payment service
+paymentCB := circuitbreaker.NewBuilder[any]().
+    WithFailureThreshold(3).
+    WithDelay(10 * time.Second).
+    Build()
+
+paymentExec := func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
+    return failsafe.With[any](paymentCB).WithContext(ctx).Run(func() error {
+        return fn(ctx)
+    })
+}
+
+// Pass it directly to the gRPC call
+resp, err := paymentClient.Charge(ctx, req,
+    interceptors.WithExecutor(paymentExec),
+)
+```
+
+### Excluded errors
+
+Use `WithExcludedErrors` or `WithExcludedCodes` to prevent expected errors from tripping the circuit breaker. These can also be passed directly to gRPC calls:
+
+```go
+resp, err := client.GetUser(ctx, req,
+    interceptors.WithExcludedCodes(codes.NotFound, codes.InvalidArgument),
+)
+```
+
+See the [interceptors examples](https://github.com/go-coldbrew/interceptors/tree/main/examples) for more patterns including circuit breaker + bulkhead composition.
+
+{: .warning }
+**Legacy:** The previous `HystrixClientInterceptor` (wrapping `afex/hystrix-go`) is deprecated and will be removed in v1. Migrate to `SetDefaultExecutor` with [failsafe-go].
 
 ## Environment Configuration
 
@@ -320,7 +435,6 @@ To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 [Sentry]: https://sentry.io/welcome/
 [Opentelemetry]: https://opentelemetry.io/
 [Jaeger]: https://www.jaegertracing.io/
-[Hystrix-Go]: https://pkg.go.dev/github.com/afex/hystrix-go/hystrix
 [Go-grpc-middleware]: https://github.com/grpc-ecosystem/go-grpc-middleware/v2
 [Core]: https://github.com/go-coldbrew/core/tree/main#readme
 [ColdBrew packages]: /packages
@@ -337,7 +451,6 @@ To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 [OTLPConfig]: https://pkg.go.dev/github.com/go-coldbrew/core#OTLPConfig
 [SetupOpenTelemetry]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupOpenTelemetry
 [SetupLogger]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupLogger
-[SetupHystrixPrometheus]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupHystrixPrometheus
 [failsafe-go]: https://github.com/failsafe-go/failsafe-go
 [SetupEnvironment]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupEnvironment
 [SetupReleaseName]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupReleaseName

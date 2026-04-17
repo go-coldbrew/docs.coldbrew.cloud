@@ -50,8 +50,8 @@ Tracing is a library that provides distributed tracing to Go applications. It of
 
 Documentation can be found at [tracing-docs]
 
-## [Hystrix Prometheus] (Deprecated)
-hystrixprometheus provides a Prometheus metrics collector for Hystrix (https://github.com/afex/hystrix-go). This package is deprecated as hystrix-go is unmaintained. Consider migrating to [failsafe-go](https://github.com/failsafe-go/failsafe-go).
+## [Hystrix Prometheus] (Deprecated — will be archived in v1)
+hystrixprometheus provides a Prometheus metrics collector for Hystrix. This package is deprecated as hystrix-go is unmaintained. Use `interceptors.SetDefaultExecutor` with [failsafe-go](https://github.com/failsafe-go/failsafe-go) instead. See [integrations](/integrations/#circuit-breaker--resilience).
 
 Documentation can be found at [hystrixprometheus-docs]
 

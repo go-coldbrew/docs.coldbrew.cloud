@@ -91,10 +91,10 @@ test.describe("Callouts", () => {
     expect(await callout.count()).toBeGreaterThan(0);
   });
 
-  test("metrics page has warning about hystrix", async ({ page }) => {
+  test("metrics page has legacy warning about hystrix", async ({ page }) => {
     await page.goto("/howto/Metrics/");
     const pageText = await page.locator("main, .main-content").first().textContent();
-    expect(pageText).toContain("unmaintained");
+    expect(pageText).toContain("SetupHystrixPrometheus");
   });
 });
 
