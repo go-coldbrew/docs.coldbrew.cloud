@@ -121,9 +121,9 @@ See [Custom HTTP Routes](/howto/APIs/#custom-http-routes) for full examples incl
 
 ## Is hystrixprometheus still maintained?
 
-**No.** The `hystrixprometheus` package depends on `afex/hystrix-go`, which is unmaintained. Do not invest in this package for new projects.
+**No.** The `hystrixprometheus` package depends on `afex/hystrix-go`, which is unmaintained and will be removed in v1.
 
-For circuit breaking, consider [failsafe-go](https://github.com/failsafe-go/failsafe-go) as an alternative. The client-side interceptors in the `interceptors` package provide retry and circuit breaking functionality that covers most use cases.
+ColdBrew now provides a pluggable executor hook (`interceptors.SetDefaultExecutor`) for circuit breaking. Use [failsafe-go](https://github.com/failsafe-go/failsafe-go) as the recommended resilience library. See the [integrations page](/integrations/#circuit-breaker--resilience) for setup examples.
 
 ## How do I do cross-package development?
 

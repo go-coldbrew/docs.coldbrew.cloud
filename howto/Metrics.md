@@ -3,7 +3,7 @@ layout: default
 title: "Metrics"
 parent: "How To"
 nav_order: 6
-description: "Prometheus and OpenTelemetry metrics in ColdBrew: default runtime metrics, OTLP export, custom counters and histograms, and Hystrix circuit breaker monitoring"
+description: "Prometheus and OpenTelemetry metrics in ColdBrew: default runtime metrics, OTLP export, custom counters and histograms, and circuit breaker monitoring"
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -136,32 +136,24 @@ Health check, readiness, and server reflection RPCs are bucketed under a generic
 
 Both export pipelines use independent metric names and registries, so there is no conflict or double-counting.
 
-## How to use Hystrix Metrics in Prometheus
+## Circuit Breaker Metrics
 
-{: .warning }
-Hystrix-Go is unmaintained (last updated 2018). Consider migrating to [failsafe-go](https://github.com/failsafe-go/failsafe-go) for circuit breaker functionality.
-
-[Hystrix Prometheus] is a library that provides a Prometheus metrics collector for [Hystrix-go]. To use it, you can register the collector with the default Prometheus registry:
+Circuit breaker metrics are the responsibility of the resilience library you plug into ColdBrew's executor hook. For example, with [failsafe-go](https://github.com/failsafe-go/failsafe-go) you can attach event listeners to track circuit state:
 
 ```go
-
-import (
-    metricCollector "github.com/afex/hystrix-go/hystrix/metric_collector"
-    "github.com/go-coldbrew/hystrixprometheus"
-    "github.com/prometheus/client_golang/prometheus"
-)
-
-// setupHystrix sets up the hystrix metrics
-// This is a workaround for hystrix-go not supporting the prometheus registry
-func setupHystrix() {
-	promC := hystrixprometheus.NewPrometheusCollector("hystrix", nil, prometheus.DefBuckets)
-	metricCollector.Registry.Register(promC.Collector)
-}
+cb := circuitbreaker.NewBuilder[any]().
+    WithFailureThreshold(5).
+    WithDelay(5 * time.Second).
+    OnStateChanged(func(e circuitbreaker.StateChangedEvent) {
+        circuitStateGauge.WithLabelValues(commandName).Set(float64(e.NewState))
+    }).
+    Build()
 ```
 
-{: .note .note-info }
-If you are using the `go-coldbrew/core` package, you can skip the above step as it will automatically register the collector for you.
-See [Hystrix Prometheus] for more details.
+ColdBrew's built-in `grpc_client_*` Prometheus metrics (request count, duration, status codes) cover request-level observability automatically. See the [integrations page](/integrations/#circuit-breaker--resilience) for full executor setup examples.
+
+{: .warning }
+**Legacy:** The previous `hystrixprometheus` package and `core.SetupHystrixPrometheus()` are deprecated. Circuit breaker metrics are now managed by your chosen resilience library, not ColdBrew.
 
 ---
 [HTTP port]: https://pkg.go.dev/github.com/go-coldbrew/core/config#readme-type-config

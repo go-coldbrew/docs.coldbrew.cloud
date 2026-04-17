@@ -231,27 +231,88 @@ func main() {
 }
 ```
 
-## Hystrix-Go
+## Circuit Breaker / Resilience
 
-{: .warning }
-Hystrix-Go (`afex/hystrix-go`) is unmaintained (last updated 2018). Consider migrating to [failsafe-go] for circuit breaker functionality.
+ColdBrew provides a pluggable executor hook for client-side resilience (circuit breaking, retries, bulkheading, etc.). You bring your own resilience library — [failsafe-go] is recommended.
 
-[Hystrix-Go] is a Go implementation of the circuit breaker pattern. ColdBrew provides Prometheus metrics integration for Hystrix.
+### How it works
 
-### Initialising
-
-If your app is using [ColdBrew cookiecutter] template, initialisation is done automatically.
-
-If you are using ColdBrew packages in your app, you need to initialise Hystrix Prometheus manually:
+Call `interceptors.SetDefaultExecutor` during init to wrap all outbound gRPC calls with your resilience logic. The executor receives the gRPC method name, enabling per-method circuit breakers.
 
 ```go
-import "github.com/go-coldbrew/core"
+import (
+    "github.com/failsafe-go/failsafe-go"
+    "github.com/failsafe-go/failsafe-go/circuitbreaker"
+    "github.com/go-coldbrew/interceptors"
+)
 
-func main() {
-    // SetupHystrixPrometheus registers Hystrix metrics with Prometheus
-    core.SetupHystrixPrometheus()
+func init() {
+    cb := circuitbreaker.NewBuilder[any]().
+        WithFailureThreshold(5).
+        WithDelay(5 * time.Second).
+        WithSuccessThreshold(2).
+        Build()
+
+    interceptors.SetDefaultExecutor(func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
+        return failsafe.With[any](cb).WithContext(ctx).Run(func() error {
+            return fn(ctx)
+        })
+    })
 }
 ```
+
+### Per-method circuit breakers
+
+For independent circuit breakers per gRPC method (so failures in one method don't trip another):
+
+```go
+func init() {
+    var (
+        mu       sync.Mutex
+        breakers = make(map[string]circuitbreaker.CircuitBreaker[any])
+    )
+
+    interceptors.SetDefaultExecutor(func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
+        mu.Lock()
+        cb, ok := breakers[method]
+        if !ok {
+            cb = circuitbreaker.NewBuilder[any]().
+                WithFailureThreshold(5).
+                WithDelay(5 * time.Second).
+                Build()
+            breakers[method] = cb
+        }
+        mu.Unlock()
+
+        return failsafe.With[any](cb).WithContext(ctx).Run(func() error {
+            return fn(ctx)
+        })
+    })
+}
+```
+
+### Disabling for specific connections
+
+Use `WithoutExecutor()` to skip resilience for internal or loopback connections:
+
+```go
+interceptors.DefaultClientInterceptor(
+    interceptors.WithoutExecutor(),
+)
+```
+
+### Excluded errors
+
+Use `WithExcludedErrors` or `WithExcludedCodes` to prevent expected errors from tripping the circuit breaker:
+
+```go
+interceptors.WithExcludedCodes(codes.NotFound, codes.InvalidArgument)
+```
+
+See the [interceptors examples](https://github.com/go-coldbrew/interceptors/tree/main/examples) for more patterns including circuit breaker + bulkhead composition.
+
+{: .warning }
+**Legacy:** The previous `HystrixClientInterceptor` (wrapping `afex/hystrix-go`) is deprecated and will be removed in v1. Migrate to `SetDefaultExecutor` with [failsafe-go].
 
 ## Environment Configuration
 
