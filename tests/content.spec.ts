@@ -94,7 +94,7 @@ test.describe("Callouts", () => {
   test("metrics page has legacy warning about hystrix", async ({ page }) => {
     await page.goto("/howto/Metrics/");
     const pageText = await page.locator("main, .main-content").first().textContent();
-    expect(pageText).toContain("deprecated");
+    expect(pageText).toContain("SetupHystrixPrometheus");
   });
 });
 
