@@ -237,7 +237,7 @@ ColdBrew provides a pluggable executor hook for client-side resilience (circuit 
 
 ### How it works
 
-Call `interceptors.SetDefaultExecutor` during init to wrap all outbound gRPC calls with your resilience logic. The executor receives the gRPC method name, enabling per-method circuit breakers.
+Call `interceptors.SetDefaultExecutor` during init to register your resilience logic. The executor receives the gRPC method name, so you can choose which methods get circuit breaking:
 
 ```go
 import (
@@ -253,7 +253,16 @@ func init() {
         WithSuccessThreshold(2).
         Build()
 
+    // Only apply circuit breaking to specific methods
+    protected := map[string]bool{
+        "/payment.Service/Charge": true,
+        "/payment.Service/Refund": true,
+    }
+
     interceptors.SetDefaultExecutor(func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
+        if !protected[method] {
+            return fn(ctx) // passthrough for non-protected methods
+        }
         return failsafe.With[any](cb).WithContext(ctx).Run(func() error {
             return fn(ctx)
         })
@@ -301,12 +310,40 @@ interceptors.DefaultClientInterceptor(
 )
 ```
 
-### Excluded errors
+### Per-call executor
 
-Use `WithExcludedErrors` or `WithExcludedCodes` to prevent expected errors from tripping the circuit breaker:
+`WithExecutor` can be passed directly to any gRPC call to use a specific executor for that call. This works even without calling `SetDefaultExecutor` — you don't need a global executor to use per-call executors. This is useful for per-service circuit breaker tuning.
+
+{: .note .note-info }
+Per-call `WithExecutor` requires `ExecutorClientInterceptor` in the interceptor chain. This is included automatically when using `DefaultClientInterceptors`. If you build your own interceptor chain, make sure to include it.
 
 ```go
-interceptors.WithExcludedCodes(codes.NotFound, codes.InvalidArgument)
+// Create a sensitive circuit breaker for the payment service
+paymentCB := circuitbreaker.NewBuilder[any]().
+    WithFailureThreshold(3).
+    WithDelay(10 * time.Second).
+    Build()
+
+paymentExec := func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
+    return failsafe.With[any](paymentCB).WithContext(ctx).Run(func() error {
+        return fn(ctx)
+    })
+}
+
+// Pass it directly to the gRPC call
+resp, err := paymentClient.Charge(ctx, req,
+    interceptors.WithExecutor(paymentExec),
+)
+```
+
+### Excluded errors
+
+Use `WithExcludedErrors` or `WithExcludedCodes` to prevent expected errors from tripping the circuit breaker. These can also be passed directly to gRPC calls:
+
+```go
+resp, err := client.GetUser(ctx, req,
+    interceptors.WithExcludedCodes(codes.NotFound, codes.InvalidArgument),
+)
 ```
 
 See the [interceptors examples](https://github.com/go-coldbrew/interceptors/tree/main/examples) for more patterns including circuit breaker + bulkhead composition.
