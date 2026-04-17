@@ -435,7 +435,6 @@ To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 [Sentry]: https://sentry.io/welcome/
 [Opentelemetry]: https://opentelemetry.io/
 [Jaeger]: https://www.jaegertracing.io/
-[Hystrix-Go]: https://pkg.go.dev/github.com/afex/hystrix-go/hystrix
 [Go-grpc-middleware]: https://github.com/grpc-ecosystem/go-grpc-middleware/v2
 [Core]: https://github.com/go-coldbrew/core/tree/main#readme
 [ColdBrew packages]: /packages
@@ -452,7 +451,6 @@ To see all the ColdBrew packages, check out the [ColdBrew packages] page.
 [OTLPConfig]: https://pkg.go.dev/github.com/go-coldbrew/core#OTLPConfig
 [SetupOpenTelemetry]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupOpenTelemetry
 [SetupLogger]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupLogger
-[SetupHystrixPrometheus]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupHystrixPrometheus
 [failsafe-go]: https://github.com/failsafe-go/failsafe-go
 [SetupEnvironment]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupEnvironment
 [SetupReleaseName]: https://pkg.go.dev/github.com/go-coldbrew/core#SetupReleaseName

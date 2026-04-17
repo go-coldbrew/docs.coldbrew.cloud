@@ -19,7 +19,6 @@ A collection of metrics are collected by default, including:
 * Golang runtime metrics (e.g. memory usage, goroutine count, etc.)
 * gRPC Client/Server metrics (e.g. request count, request duration, etc.)
 * HTTP request metrics (e.g. request count, request duration, etc.)
-* [Hystrix-go] circuit breaker metrics (e.g. request count, request duration, etc.) powered by [Hystrix Prometheus]
 
 ## Application Metrics Package (Cookiecutter)
 
@@ -157,7 +156,5 @@ ColdBrew's built-in `grpc_client_*` Prometheus metrics (request count, duration,
 
 ---
 [HTTP port]: https://pkg.go.dev/github.com/go-coldbrew/core/config#readme-type-config
-[Hystrix Prometheus]: https://pkg.go.dev/github.com/go-coldbrew/hystrixprometheus
-[Hystrix-go]: https://github.com/afex/hystrix-go
 [Prometheus Go client library]: https://github.com/prometheus/client_golang
 [ColdBrew cookiecutter]: /getting-started

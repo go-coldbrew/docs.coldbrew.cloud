@@ -121,7 +121,7 @@ See [Custom HTTP Routes](/howto/APIs/#custom-http-routes) for full examples incl
 
 ## Is hystrixprometheus still maintained?
 
-**No.** The `hystrixprometheus` package depends on `afex/hystrix-go`, which is unmaintained and will be removed in v1.
+**No.** The `hystrixprometheus` package depends on `afex/hystrix-go`, which is unmaintained and will be archived in v1.
 
 ColdBrew now provides a pluggable executor hook (`interceptors.SetDefaultExecutor`) for circuit breaking. Use [failsafe-go](https://github.com/failsafe-go/failsafe-go) as the recommended resilience library. See the [integrations page](/integrations/#circuit-breaker--resilience) for setup examples.
 
