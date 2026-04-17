@@ -272,22 +272,39 @@ func init() {
 
 ### Per-method circuit breakers
 
-For independent circuit breakers per gRPC method (so failures in one method don't trip another):
+Each method can have its own circuit breaker with different limits — sensitive methods trip fast, tolerant methods allow more failures:
 
 ```go
 func init() {
+    type cbConfig struct {
+        failureThreshold uint
+        delay            time.Duration
+    }
+
+    configs := map[string]cbConfig{
+        "/payment.Service/Charge": {failureThreshold: 3, delay: 10 * time.Second},
+        "/payment.Service/Refund": {failureThreshold: 3, delay: 10 * time.Second},
+        "/user.Service/GetUser":   {failureThreshold: 10, delay: 5 * time.Second},
+        "/feed.Service/GetFeed":   {failureThreshold: 10, delay: 5 * time.Second},
+    }
+
     var (
         mu       sync.Mutex
         breakers = make(map[string]circuitbreaker.CircuitBreaker[any])
     )
 
     interceptors.SetDefaultExecutor(func(ctx context.Context, method string, fn func(ctx context.Context) error) error {
-        mu.Lock()
-        cb, ok := breakers[method]
+        cfg, ok := configs[method]
         if !ok {
+            return fn(ctx) // no circuit breaker for unconfigured methods
+        }
+
+        mu.Lock()
+        cb, exists := breakers[method]
+        if !exists {
             cb = circuitbreaker.NewBuilder[any]().
-                WithFailureThreshold(5).
-                WithDelay(5 * time.Second).
+                WithFailureThreshold(cfg.failureThreshold).
+                WithDelay(cfg.delay).
                 Build()
             breakers[method] = cb
         }
