@@ -356,12 +356,15 @@ workers.Run(ctx, myWorkers,
 Every handler receives a `*WorkerInfo` that carries worker metadata and child management:
 
 ```go
-func (info *WorkerInfo) Name() string        // worker name
-func (info *WorkerInfo) Attempt() int        // restart attempt (0 on first run)
-func (info *WorkerInfo) Add(w *Worker)       // add/replace child worker by name
-func (info *WorkerInfo) Remove(name string)  // stop child worker by name
-func (info *WorkerInfo) Children() []string   // names of running child workers
+func (info *WorkerInfo) Name() string              // worker name
+func (info *WorkerInfo) Attempt() int              // restart attempt (0 on first run)
+func (info *WorkerInfo) Add(w *Worker)             // add/replace child worker by name
+func (info *WorkerInfo) Remove(name string)        // stop child worker by name
+func (info *WorkerInfo) Children() []string         // names of running child workers
+func (info *WorkerInfo) Child(name string) (Worker, bool) // look up a child by name
 ```
+
+`Child` returns a value copy — safe for inspection, mutations have no effect on the running worker. Use `Worker.GetHandler()` and `Worker.GetName()` to inspect the child.
 
 `context.Context` handles cancellation/deadlines/values. `*WorkerInfo` handles everything worker-specific.
 
