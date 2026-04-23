@@ -201,11 +201,12 @@ The first middleware in the list is the outermost wrapper (runs first on entry, 
 
 ### Run-level middleware
 
-`WithInterceptors` applies default middleware to all workers. Run-level middleware wraps **outside** worker-level middleware, so shared concerns like tracing are always outermost:
+`WithInterceptors` replaces and `AddInterceptors` appends to the run-level middleware list. These are **run options** that apply to all workers in the `Run` call — distinct from the worker-level `(*Worker).Interceptors` and `(*Worker).AddInterceptors` which only affect a single worker. Run-level middleware wraps **outside** worker-level middleware, so shared concerns like tracing are always outermost:
 
 ```go
 workers.Run(ctx, myWorkers,
     workers.WithInterceptors(middleware.DefaultInterceptors()...),
+    workers.AddInterceptors(middleware.Duration(observe)),
 )
 ```
 
