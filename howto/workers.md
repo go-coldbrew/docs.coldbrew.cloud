@@ -90,7 +90,7 @@ The handler receives a `context.Context` for cancellation and a `*WorkerInfo` fo
 |--------|-------------|---------|
 | `HandlerFunc(fn)` | Set handler from a plain function | — |
 | `Handler(h)` | Set handler from a `CycleHandler` struct | — |
-| `WithRestart(true)` | Restart on failure with backoff | `false` (exit on error) |
+| `WithRestart(false)` | Disable restart (one-shot worker) | `true` (restart with backoff) |
 | `Every(duration)` | Run periodically on a fixed interval | — |
 | `WithJitter(percent)` | Randomize tick interval by ±percent (requires `Every`) | inherit run-level |
 | `WithInitialDelay(d)` | Delay first tick (requires `Every`) | — |
@@ -380,15 +380,13 @@ workers.NewWorker("metrics-reporter").HandlerFunc(workers.EveryInterval(
     func(ctx context.Context, info *workers.WorkerInfo) error {
         return reportMetrics(ctx)
     },
-)).WithRestart(true)
-```
+))```
 
 Or use the builder shorthand:
 
 ```go
 workers.NewWorker("metrics-reporter").HandlerFunc(reportMetrics).
-    Every(30 * time.Second).WithRestart(true)
-```
+    Every(30 * time.Second)```
 
 ### ChannelWorker
 
@@ -417,10 +415,20 @@ workers.NewWorker("event-batcher").HandlerFunc(workers.BatchChannelWorker(eventC
     func(ctx context.Context, info *workers.WorkerInfo, batch []Event) error {
         return store.BulkInsert(ctx, batch)
     },
-)).WithRestart(true)
-```
+))```
 
-Partial batches are flushed on context cancellation (graceful shutdown).
+Partial batches are flushed on context cancellation (graceful shutdown). Both `ChannelWorker` and `BatchChannelWorker` return `ErrDoNotRestart` when the channel is closed, preventing restart loops on exhausted channels.
+
+### ErrDoNotRestart
+
+Return `workers.ErrDoNotRestart` from a handler to signal permanent completion — the supervisor will not restart the worker even though restart is enabled by default. Use `errors.Is` to check:
+
+```go
+err := workers.Run(ctx, myWorkers)
+if err != nil && !errors.Is(err, workers.ErrDoNotRestart) {
+    log.Fatal(err)
+}
+```
 
 ## Dynamic Workers
 
@@ -450,8 +458,7 @@ workers.NewWorker("pool-manager").HandlerFunc(func(ctx context.Context, info *wo
             }
         }
     }
-}).WithRestart(true)
-```
+})```
 
 **Replace semantics:** calling `Add` with a name that already exists stops the old worker and starts the new one. This handles config updates naturally.
 
@@ -490,8 +497,7 @@ workers.NewWorker("tenant-manager").HandlerFunc(func(ctx context.Context, info *
             }
         }
     }
-}).WithRestart(true)
-```
+})```
 
 ### Example: Nested hierarchy
 
