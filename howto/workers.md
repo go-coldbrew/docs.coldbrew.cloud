@@ -380,13 +380,15 @@ workers.NewWorker("metrics-reporter").HandlerFunc(workers.EveryInterval(
     func(ctx context.Context, info *workers.WorkerInfo) error {
         return reportMetrics(ctx)
     },
-))```
+))
+```
 
 Or use the builder shorthand:
 
 ```go
 workers.NewWorker("metrics-reporter").HandlerFunc(reportMetrics).
-    Every(30 * time.Second)```
+    Every(30 * time.Second)
+```
 
 ### ChannelWorker
 
@@ -415,7 +417,8 @@ workers.NewWorker("event-batcher").HandlerFunc(workers.BatchChannelWorker(eventC
     func(ctx context.Context, info *workers.WorkerInfo, batch []Event) error {
         return store.BulkInsert(ctx, batch)
     },
-))```
+))
+```
 
 Partial batches are flushed on context cancellation (graceful shutdown). Both `ChannelWorker` and `BatchChannelWorker` return `ErrDoNotRestart` when the channel is closed, preventing restart loops on exhausted channels.
 
@@ -432,7 +435,7 @@ if err != nil && !errors.Is(err, workers.ErrDoNotRestart) {
 
 ## Dynamic Workers
 
-Workers can dynamically spawn and remove child workers using `WorkerInfo.Add`, `Remove`, and `Children`. This is the pattern for config-driven worker pools (like database-driven solver workers):
+Workers can dynamically spawn and remove child workers using `WorkerInfo.Add`, `Remove`, and `GetChildren`. This is the pattern for config-driven worker pools (like database-driven solver workers):
 
 ```go
 workers.NewWorker("pool-manager").HandlerFunc(func(ctx context.Context, info *workers.WorkerInfo) error {
@@ -458,7 +461,8 @@ workers.NewWorker("pool-manager").HandlerFunc(func(ctx context.Context, info *wo
             }
         }
     }
-})```
+})
+```
 
 **Replace semantics:** calling `Add` with a name that already exists stops the old worker and starts the new one. This handles config updates naturally.
 
@@ -497,7 +501,8 @@ workers.NewWorker("tenant-manager").HandlerFunc(func(ctx context.Context, info *
             }
         }
     }
-})```
+})
+```
 
 ### Example: Nested hierarchy
 
