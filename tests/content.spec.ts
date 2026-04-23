@@ -27,6 +27,20 @@ test.describe("Code Blocks", () => {
     await expect(mainContent).toContainText("JWT");
     await expect(mainContent).toContainText("API key");
   });
+
+  test("workers howto renders middleware and jitter code blocks", async ({
+    page,
+  }) => {
+    await page.goto("/howto/workers/");
+    const codeBlocks = page.locator("pre code");
+    expect(await codeBlocks.count()).toBeGreaterThanOrEqual(10);
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("WithJitter");
+    await expect(mainContent).toContainText("Middleware");
+    await expect(mainContent).toContainText("CycleHandler");
+    await expect(mainContent).toContainText("CycleFunc");
+    await expect(mainContent).toContainText("DistributedLock");
+  });
 });
 
 test.describe("Tables", () => {

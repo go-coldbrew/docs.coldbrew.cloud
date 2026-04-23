@@ -3,7 +3,7 @@ layout: default
 title: "Workers"
 parent: "How To"
 nav_order: 15
-description: "How to use go-coldbrew/workers to manage background goroutines with panic recovery, restart, and structured shutdown."
+description: "How to use go-coldbrew/workers to manage background goroutines with middleware, jitter, panic recovery, restart, and structured shutdown."
 ---
 ## Table of contents
 {: .no_toc .text-delta }
@@ -79,11 +79,14 @@ w := workers.NewWorker("my-worker", func(ctx workers.WorkerContext) error {
 | Method | Description | Default |
 |--------|-------------|---------|
 | `WithRestart(true)` | Restart on failure with backoff | `false` (exit on error) |
-| `Every(duration)` | Wrap in a periodic ticker loop | — |
+| `Every(duration)` | Run periodically on a fixed interval | — |
+| `WithJitter(percent)` | Randomize tick interval by ±percent (requires `Every`) | — |
+| `WithInitialDelay(d)` | Delay first tick (requires `Every`) | — |
+| `Use(mw...)` | Attach middleware to the worker | — |
 | `WithFailureBackoff(d)` | Duration between restarts | 15s (suture default) |
 | `WithFailureThreshold(n)` | Max failures before giving up | 5 (suture default) |
 | `WithFailureDecay(r)` | Rate failures decay per second | 1.0 (suture default) |
-| `WithBackoffJitter(j)` | Random jitter on backoff | — |
+| `WithBackoffJitter(j)` | Random jitter on restart backoff | — |
 | `WithTimeout(d)` | Max time to wait for graceful stop | 10s (suture default) |
 
 Example with full configuration:
@@ -91,9 +94,242 @@ Example with full configuration:
 ```go
 workers.NewWorker("resilient-consumer", consume).
     WithRestart(true).
+    Every(15 * time.Second).
+    WithJitter(10).
+    WithInitialDelay(5 * time.Second).
+    Use(middleware.Recover(onPanic), middleware.Tracing()).
     WithFailureBackoff(5 * time.Second).
     WithFailureThreshold(10).
     WithTimeout(30 * time.Second)
+```
+
+## Jitter
+
+When many workers share the same base interval (e.g. 15s), they synchronize and spike downstream services — the [thundering herd](https://en.wikipedia.org/wiki/Thundering_herd_problem) problem. Jitter desynchronizes ticks by randomizing each interval within a configurable range.
+
+### Per-worker jitter
+
+```go
+workers.NewWorker("poller", poll).
+    Every(15 * time.Second).
+    WithJitter(10) // each tick is within [13.5s, 16.5s)
+```
+
+### Run-level default
+
+Apply jitter to all periodic workers with `WithDefaultJitter`:
+
+```go
+workers.Run(ctx, myWorkers, workers.WithDefaultJitter(10))
+```
+
+Worker-level `WithJitter` takes precedence over the run-level default. Setting `WithJitter(0)` explicitly disables jitter for a specific worker even when a run-level default is set.
+
+### Formula
+
+On each tick:
+```
+spread   = base × percent ÷ 100
+jittered = base − spread + rand(2 × spread)
+```
+
+The effective interval is clamped to a minimum of 1ms (never zero or negative). Each tick recomputes independently — successive intervals differ.
+
+### Initial delay
+
+`WithInitialDelay` delays the first tick, preventing N workers from all firing at t=0 on process start:
+
+```go
+workers.NewWorker("poller", poll).
+    Every(15 * time.Second).
+    WithJitter(10).
+    WithInitialDelay(5 * time.Second)
+```
+
+### Direct helper
+
+For manual use without the builder pattern:
+
+```go
+fn := workers.EveryIntervalWithJitter(15*time.Second, 10, pollFn)
+w := workers.NewWorker("poller", fn)
+```
+
+## Middleware
+
+Middleware wraps each worker execution cycle with cross-cutting concerns like panic recovery, tracing, distributed locking, and timing. For periodic workers (`Every`), middleware runs on every tick, not once for the worker lifetime.
+
+### Types
+
+```go
+// CycleHandler handles worker execution cycles.
+// Implement as a struct for middleware with lifecycle needs.
+type CycleHandler interface {
+    RunCycle(ctx context.Context, info *WorkerInfo) error
+    Close() error  // called once when the worker stops
+}
+
+// CycleFunc adapts a plain function into a CycleHandler.
+// Close is a no-op — use this for simple, stateless middleware.
+type CycleFunc func(ctx context.Context, info *WorkerInfo) error
+
+// Middleware wraps a CycleHandler, returning a new CycleHandler.
+type Middleware func(next CycleHandler) CycleHandler
+```
+
+`*WorkerInfo` is passed as an explicit parameter — middleware always has access to the worker name and attempt without needing `FromContext`. The `Close()` method is called once when the worker stops, allowing middleware to flush buffers or release resources.
+
+### Worker-level middleware
+
+```go
+w := workers.NewWorker("solver", solve).
+    Every(15 * time.Second).
+    Use(
+        middleware.Recover(onPanic),
+        middleware.Tracing(),
+        middleware.Duration(observeDuration),
+    )
+```
+
+The first middleware in the list is the outermost wrapper (runs first on entry, last on exit), matching the gRPC interceptor convention.
+
+### Run-level middleware
+
+`WithMiddleware` applies default middleware to all workers. Run-level middleware wraps **outside** worker-level middleware, so shared concerns like tracing are always outermost:
+
+```go
+workers.Run(ctx, myWorkers,
+    workers.WithMiddleware(middleware.Tracing(), middleware.Slog()),
+)
+```
+
+Effective chain: `run-level middleware → worker-level middleware → CycleHandler`
+
+### Writing custom middleware
+
+Middleware wraps a `CycleHandler` and returns a new `CycleHandler`. The `*WorkerInfo` parameter gives you the worker name and attempt number explicitly — no hidden context lookups:
+
+```go
+func LogCycle(next workers.CycleHandler) workers.CycleHandler {
+    return workers.CycleFunc(func(ctx context.Context, info *workers.WorkerInfo) error {
+        log.Info(ctx, "msg", "cycle start", "worker", info.Name)
+        err := next.RunCycle(ctx, info)
+        log.Info(ctx, "msg", "cycle end", "worker", info.Name, "error", err)
+        return err
+    })
+}
+```
+
+For middleware that needs cleanup, implement `CycleHandler` as a struct:
+
+```go
+type bufferedLogger struct {
+    next   workers.CycleHandler
+    buffer []string
+}
+
+func (b *bufferedLogger) RunCycle(ctx context.Context, info *workers.WorkerInfo) error {
+    b.buffer = append(b.buffer, info.Name)
+    return b.next.RunCycle(ctx, info)
+}
+
+func (b *bufferedLogger) Close() error {
+    // Flush buffer on worker stop
+    return flush(b.buffer)
+}
+```
+
+## Built-in Middleware
+
+The `middleware` sub-package ships optional middleware. None are applied by default.
+
+```go
+import "github.com/go-coldbrew/workers/middleware"
+```
+
+| Middleware | Description |
+|-----------|-------------|
+| `Recover(onPanic)` | Catches panics, calls callback, returns error |
+| `Tracing()` | Creates an OTEL span per cycle via go-coldbrew/tracing |
+| `Duration(observe)` | Measures wall-clock time of each cycle |
+| `DistributedLock(locker, opts...)` | Acquires a distributed lock before each cycle |
+| `Timeout(d)` | Enforces a per-cycle deadline |
+| `Slog()` | Structured log line per cycle via go-coldbrew/log |
+
+### Recover
+
+Catches panics in the worker cycle and converts them to errors. The panic does not propagate:
+
+```go
+middleware.Recover(func(name string, v any) {
+    alerting.Send(fmt.Sprintf("worker %s panicked: %v", name, v))
+})
+```
+
+### Tracing
+
+Creates an OTEL span named `worker:<name>:cycle` for each tick. Sets `worker.name` tag and records errors:
+
+```go
+middleware.Tracing()
+```
+
+This is distinct from the per-worker-lifetime span created by the framework — each tick gets its own trace span, making cycle-level latency visible.
+
+### Duration
+
+Measures wall-clock time and calls a callback. Building block for custom metrics:
+
+```go
+middleware.Duration(func(name string, d time.Duration) {
+    metrics.RecordCycleDuration(name, d)
+})
+```
+
+### DistributedLock
+
+Acquires a distributed lock before each cycle. If the lock is held by another instance, the cycle is skipped:
+
+```go
+middleware.DistributedLock(redisLocker,
+    middleware.WithKeyFunc(func(name string) string {
+        return "myapp:lock:" + name
+    }),
+    middleware.WithTTLFunc(func(_ string) time.Duration {
+        return time.Minute
+    }),
+    middleware.WithOnNotAcquired(func(ctx context.Context, name string) error {
+        log.Info(ctx, "msg", "lock held, skipping", "worker", name)
+        return nil
+    }),
+)
+```
+
+The `Locker` interface:
+
+```go
+type Locker interface {
+    Acquire(ctx context.Context, key string, ttl time.Duration) (bool, error)
+    Release(ctx context.Context, key string) error
+}
+```
+
+Release uses `context.WithoutCancel` so that context cancellation does not prevent lock cleanup.
+
+### Timeout
+
+Enforces a per-cycle deadline. Distinct from `WithTimeout` (which controls graceful shutdown):
+
+```go
+middleware.Timeout(30 * time.Second)
+```
+
+### Slog
+
+Structured log line per cycle via go-coldbrew/log. Logs at Info on success, Error on failure:
+
+```go
+middleware.Slog()
 ```
 
 ## WorkerContext
