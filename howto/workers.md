@@ -72,7 +72,7 @@ Use `NewWorker` with a name, then set a handler via `HandlerFunc` (for plain fun
 ```go
 // Simple function handler (common case)
 w := workers.NewWorker("my-worker").HandlerFunc(func(ctx context.Context, info *workers.WorkerInfo) error {
-    log.Info(ctx, "msg", "started", "worker", info.Name(), "attempt", info.Attempt())
+    log.Info(ctx, "msg", "started", "worker", info.GetName(), "attempt", info.GetAttempt())
     <-ctx.Done()
     return ctx.Err()
 })
@@ -217,9 +217,9 @@ Middleware is a flat function that calls `next` to continue the chain. The `*Wor
 
 ```go
 func myLogging(ctx context.Context, info *workers.WorkerInfo, next workers.CycleFunc) error {
-    log.Info(ctx, "msg", "cycle start", "worker", info.Name())
+    log.Info(ctx, "msg", "cycle start", "worker", info.GetName())
     err := next(ctx, info)
-    log.Info(ctx, "msg", "cycle end", "worker", info.Name(), "error", err)
+    log.Info(ctx, "msg", "cycle end", "worker", info.GetName(), "error", err)
     return err
 }
 
@@ -357,14 +357,14 @@ Every handler receives a `*WorkerInfo` that carries worker metadata and child ma
 
 | Method | Description |
 |--------|-------------|
-| `Name() string` | Worker name |
-| `Attempt() int` | Restart attempt (0 on first run) |
+| `GetName() string` | Worker name |
+| `GetAttempt() int` | Restart attempt (0 on first run) |
 | `Add(w *Worker)` | Add/replace child worker by name |
 | `Remove(name string)` | Stop child worker by name |
-| `Children() []string` | Names of running child workers |
-| `Child(name string) (Worker, bool)` | Look up a child by name (returns a value copy) |
+| `GetChildren() []string` | Names of running child workers |
+| `GetChild(name string) (Worker, bool)` | Look up a child by name (returns a value copy) |
 
-Use `Worker.Name()` and `Worker.GetHandler()` to inspect a child.
+Use `Worker.GetName()` and `Worker.GetHandler()` to inspect a child.
 
 `context.Context` handles cancellation/deadlines/values. `*WorkerInfo` handles everything worker-specific.
 
@@ -446,7 +446,7 @@ workers.NewWorker("pool-manager").HandlerFunc(func(ctx context.Context, info *wo
             desired := loadConfigsFromDB(ctx)
 
             // Remove workers no longer in config
-            for _, name := range info.Children() {
+            for _, name := range info.GetChildren() {
                 if _, ok := desired[name]; !ok {
                     info.Remove(name)
                 }
