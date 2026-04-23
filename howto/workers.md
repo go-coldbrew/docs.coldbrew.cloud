@@ -272,7 +272,7 @@ middleware.Tracing()
 
 ### Duration
 
-Measures wall-clock time and calls a callback. Building block for custom metrics:
+Measures wall-clock time of each cycle and calls a callback. This is **per-cycle** timing — distinct from the per-attempt lifetime captured by `Metrics.ObserveRunDuration` (the `worker_run_duration_seconds` Prometheus histogram).
 
 ```go
 middleware.Duration(func(name string, d time.Duration) {
@@ -572,7 +572,7 @@ This registers the following metrics (auto-registered via `promauto`):
 | `myapp_worker_panicked_total{worker}` | Counter | Total worker panics |
 | `myapp_worker_failed_total{worker}` | Counter | Total worker failures |
 | `myapp_worker_restarted_total{worker}` | Counter | Total worker restarts |
-| `myapp_worker_run_duration_seconds{worker}` | Histogram | Duration of worker run cycles |
+| `myapp_worker_run_duration_seconds{worker}` | Histogram | Worker attempt lifetime (start to stop/failure) |
 | `myapp_worker_active_count` | Gauge | Currently active workers |
 
 `NewPrometheusMetrics` is safe to call multiple times with the same namespace — it returns the cached instance.
