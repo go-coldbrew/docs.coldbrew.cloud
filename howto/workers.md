@@ -40,7 +40,7 @@ Root Supervisor
 ```go
 import (
     "context"
-    "log"
+    "log/slog"
     "os"
     "os/signal"
     "time"
@@ -55,11 +55,11 @@ defer cancel()
 if err := workers.Run(ctx, []*workers.Worker{
     workers.NewWorker("kafka").HandlerFunc(consume),
     workers.NewWorker("cleanup").HandlerFunc(cleanup).
-        Every(5 * time.Minute).WithJitter(10).WithRestart(true),
+        Every(5 * time.Minute).WithJitter(10),
 },
     workers.WithInterceptors(middleware.DefaultInterceptors()...),
 ); err != nil {
-    log.Fatal(err)
+    slog.Error("workers failed", "error", err)
 }
 ```
 
@@ -355,16 +355,16 @@ workers.Run(ctx, myWorkers,
 
 Every handler receives a `*WorkerInfo` that carries worker metadata and child management:
 
-```go
-func (info *WorkerInfo) Name() string              // worker name
-func (info *WorkerInfo) Attempt() int              // restart attempt (0 on first run)
-func (info *WorkerInfo) Add(w *Worker)             // add/replace child worker by name
-func (info *WorkerInfo) Remove(name string)        // stop child worker by name
-func (info *WorkerInfo) Children() []string         // names of running child workers
-func (info *WorkerInfo) Child(name string) (Worker, bool) // look up a child by name
-```
+| Method | Description |
+|--------|-------------|
+| `Name() string` | Worker name |
+| `Attempt() int` | Restart attempt (0 on first run) |
+| `Add(w *Worker)` | Add/replace child worker by name |
+| `Remove(name string)` | Stop child worker by name |
+| `Children() []string` | Names of running child workers |
+| `Child(name string) (Worker, bool)` | Look up a child by name (returns a value copy) |
 
-`Child` returns a value copy — safe for inspection, mutations have no effect on the running worker. Use `Worker.GetHandler()` and `Worker.GetName()` to inspect the child.
+Use `Worker.Name()` and `Worker.GetHandler()` to inspect a child.
 
 `context.Context` handles cancellation/deadlines/values. `*WorkerInfo` handles everything worker-specific.
 
@@ -546,7 +546,7 @@ workers.RunWorker(ctx, w)
 
 ## Logging
 
-Worker lifecycle events (panics, restarts, backoff, timeouts) are logged via `log/slog`:
+Supervisor-level lifecycle events (panics, restarts, backoff, timeouts) are logged via stdlib `log/slog`. If your application configures `slog.SetDefault`, these events flow through your handler:
 
 ```json
 {"level":"ERROR","msg":"worker panicked","worker":"my-worker","event":"..."}
