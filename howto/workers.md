@@ -65,12 +65,48 @@ if err := workers.Run(ctx, []*workers.Worker{
 
 `Run` blocks until `ctx` is cancelled and all workers have exited.
 
+## Why Workers (vs Plain Goroutines)
+
+With plain goroutines, you manage lifecycle manually:
+
+```go
+// Before: manual goroutine management
+var wg sync.WaitGroup
+wg.Add(1)
+go func() {
+    defer wg.Done()
+    // no panic recovery — crashes the process
+    // no restart — dies permanently on error
+    // no structured shutdown — must wire ctx manually
+    // no distributed locking — runs on every pod
+    consume(ctx)
+}()
+wg.Wait()
+```
+
+With workers, the framework handles all of that:
+
+```go
+// After: workers handle lifecycle
+workers.Run(ctx, []*workers.Worker{
+    workers.NewWorker("kafka").HandlerFunc(consume).
+        Interceptors(
+            middleware.Recover(onPanic),
+            middleware.Tracing(),
+            middleware.DistributedLock(redisLocker),
+        ),
+})
+```
+
+**What you get for free:** panic recovery, configurable restart with exponential backoff, scoped lifecycle (children stop when parents stop), composable middleware (tracing, logging, distributed locking, per-cycle timeout), jitter for periodic workers, and pluggable metrics. Distributed locking ensures only one instance runs a job across pods — no manual coordination.
+
 ## Creating Workers
 
 Use `NewWorker` with a name, then set a handler via `HandlerFunc` (for plain functions) or `Handler` (for structs with cleanup):
 
 ```go
 // Simple function handler (common case)
+// Uses github.com/go-coldbrew/log for structured logging
 w := workers.NewWorker("my-worker").HandlerFunc(func(ctx context.Context, info *workers.WorkerInfo) error {
     log.Info(ctx, "msg", "started", "worker", info.GetName(), "attempt", info.GetAttempt())
     <-ctx.Done()
@@ -83,6 +119,19 @@ w := workers.NewWorker("batch").Handler(&batchProcessor{db: db}).
 ```
 
 The handler receives a `context.Context` for cancellation and a `*WorkerInfo` for worker metadata.
+
+## Handler Return Values
+
+| Return value | Behavior |
+|---|---|
+| `return nil` | Worker stops permanently (even with restart enabled) |
+| `return error` | Worker restarts with backoff (if restart enabled) |
+| `return ctx.Err()` | Clean shutdown — context was cancelled |
+| `return workers.ErrDoNotRestart` | Explicit permanent stop (e.g., channel closed, work exhausted) |
+
+**Long-running workers** (no `Every`): block on `<-ctx.Done()`, then return `ctx.Err()`. A handler that returns nil without waiting for ctx cancellation will stop permanently.
+
+**Periodic workers** (with `Every`): the handler runs once per tick and should return quickly. Return nil for success (next tick will fire), return an error to trigger restart.
 
 ## Builder Methods
 
@@ -97,16 +146,16 @@ The handler receives a `context.Context` for cancellation and a `*WorkerInfo` fo
 | `Interceptors(mw...)` | Replace worker-level middleware | — |
 | `AddInterceptors(mw...)` | Append to worker-level middleware | — |
 | `WithFailureBackoff(d)` | Duration between restarts | 15s (suture default) |
-| `WithFailureThreshold(n)` | Max failures before giving up | 5 (suture default) |
-| `WithFailureDecay(r)` | Rate failures decay per second | 1.0 (suture default) |
-| `WithBackoffJitter(j)` | Random jitter on restart backoff | — |
+| `WithFailureThreshold(n float64)` | Max failures before supervisor gives up | 5.0 (suture default) |
+| `WithFailureDecay(rate float64)` | Rate at which failure count decays (per second) | 1.0 (suture default) |
+| `WithBackoffJitter(j suture.Jitter)` | Random jitter on restart backoff (`func(time.Duration) time.Duration`) | none |
 | `WithTimeout(d)` | Max time to wait for graceful stop | 10s (suture default) |
+| `WithMetrics(m Metrics)` | Per-worker metrics override | inherit from parent/run |
 
 Example with full configuration:
 
 ```go
 workers.NewWorker("resilient-consumer").HandlerFunc(consume).
-    WithRestart(true).
     Every(15 * time.Second).
     WithJitter(10).
     WithInitialDelay(5 * time.Second).
@@ -249,7 +298,7 @@ import "github.com/go-coldbrew/workers/middleware"
 | `Duration(observe)` | Measures wall-clock time of each cycle |
 | `DistributedLock(locker, opts...)` | Acquires a distributed lock before each cycle |
 | `Timeout(d)` | Enforces a per-cycle deadline |
-| `Slog()` | Structured log line per cycle via go-coldbrew/log |
+| `Slog()` | Structured log lines per cycle (start + end/error) via go-coldbrew/log |
 | `LogContext()` | Injects worker name + attempt into log context |
 | `DefaultInterceptors()` | Returns `[Recover, LogContext, Tracing, Slog]` |
 
@@ -548,7 +597,19 @@ err := workers.Run(ctx, []*workers.Worker{w1, w2, w3})
 workers.RunWorker(ctx, w)
 ```
 
-`RunWorker` is a convenience for `workers.Run(ctx, []*workers.Worker{w})`. Useful for dynamic managers spawning children in goroutines.
+`RunWorker` is a convenience for `workers.Run(ctx, []*workers.Worker{w})`. Unlike `Run`, it discards the error. Use `Run` if you need error handling.
+
+## Graceful Shutdown
+
+When the context passed to `Run` is cancelled:
+
+1. All worker contexts are cancelled — handlers should return `ctx.Err()`
+2. `BatchChannelWorker` flushes any partial batch before returning
+3. `handler.Close()` is called exactly once (for `CycleHandler` implementations)
+4. Children stop when their parent stops (scoped lifecycle)
+5. `Run` returns nil
+
+`WithTimeout(d)` controls how long suture waits for a worker to return after context cancellation. If a worker ignores cancellation and doesn't return within the timeout, suture logs a stop-timeout event and abandons the goroutine.
 
 ## Logging
 
@@ -561,7 +622,7 @@ Supervisor-level lifecycle events (panics, restarts, backoff, timeouts) are logg
 {"level":"INFO","msg":"worker resumed","event":"..."}
 ```
 
-Per-cycle logging is available via the `middleware.Slog()` and `middleware.LogContext()` interceptors.
+Per-cycle logging is available via the `middleware.Slog()` and `middleware.LogContext()` interceptors, which use `go-coldbrew/log` (a wrapper around `slog`). Since `go-coldbrew/log` calls `slog` under the hood, `slog.SetDefault` affects both layers.
 
 ## Metrics
 
@@ -630,7 +691,57 @@ workers.NewWorker("manager").HandlerFunc(func(ctx context.Context, info *workers
 })
 ```
 
-## ColdBrew Integration (Phase 2)
+## Testing
+
+### Testing middleware
+
+Use `NewWorkerInfo` to create a `*WorkerInfo` for unit-testing middleware without running the full supervisor:
+
+```go
+info := workers.NewWorkerInfo("test-worker", 0)
+err := myMiddleware(ctx, info, func(ctx context.Context, info *workers.WorkerInfo) error {
+    // assert middleware behavior
+    return nil
+})
+```
+
+### Testing with dynamic children
+
+Use `WithTestChildren` to create a `WorkerInfo` that supports `Add`/`Remove`/`GetChildren`:
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+info := workers.NewWorkerInfo("manager", 0, workers.WithTestChildren(ctx))
+info.Add(workers.NewWorker("child").HandlerFunc(childFn))
+assert.Equal(t, []string{"child"}, info.GetChildren())
+```
+
+### Integration testing
+
+Use `RunWorker` with a short-lived context:
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+defer cancel()
+workers.RunWorker(ctx, myWorker)
+// assert side effects
+```
+
+## Best Practices
+
+- **Handler contract:** Long-running workers should block on `<-ctx.Done()`. Periodic workers should return quickly from each tick.
+- **`WithRestart(false)` vs `ErrDoNotRestart`:** Use `WithRestart(false)` when a worker is unconditionally one-shot (known at build time). Use `ErrDoNotRestart` when the decision is made at runtime (e.g., channel closed, work exhausted).
+- **Naming:** Use descriptive names. For hierarchical workers, use colons: `"region:us-east"`, `"tenant:abc123"`.
+- **Middleware ordering:** The first middleware in the list is the outermost. Put `Recover` first (so it catches panics from all inner middleware), `Tracing` next, then domain-specific middleware.
+- **Metrics inheritance:** Set metrics once at the `Run` level. Override per-worker only when you need separate dashboards.
+- **Distributed locking:** Use `DistributedLock` for periodic workers that should run on only one pod. The lock is acquired per cycle, not per worker lifetime.
+
+## ColdBrew Integration
+{: .label .label-yellow }
+Planned — not yet available
+{: .d-inline-block }
 
 The workers package is standalone — any Go service can use it. ColdBrew integration via `CBServiceV2` is planned for a future core release, where workers will be started/stopped as part of the ColdBrew service lifecycle.
 
