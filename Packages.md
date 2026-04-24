@@ -66,7 +66,7 @@ grpcpool is a pool of grpc.ClientConns that can be used to make requests to a gr
 Documentation can be found at [grpcpool-docs]
 
 ## [Workers]
-Workers is a worker lifecycle library that manages background goroutines with automatic panic recovery, configurable restart with backoff, tracing, and structured shutdown. Built on [suture](https://github.com/thejerf/suture), it provides a builder pattern for defining workers, helpers for common patterns (periodic tasks, channel consumers, batch processors), dynamic child worker management, composable middleware (recover, tracing, distributed locking, timing, per-cycle timeout, structured logging), and jitter support to desynchronize periodic workers. See the [Workers howto](/howto/workers/) for usage examples.
+Workers is a worker lifecycle library that manages background goroutines with automatic panic recovery, configurable restart with backoff, and structured shutdown. Built on [suture](https://github.com/thejerf/suture), it provides a builder pattern for defining workers, helpers for common patterns (periodic tasks, channel consumers, batch processors), dynamic child worker management, composable middleware (recover, tracing, distributed locking, timing, per-cycle timeout, structured logging), and jitter support to desynchronize periodic workers. See the [Workers howto](/howto/workers/) for usage examples.
 
 Documentation can be found at [workers-docs]
 
