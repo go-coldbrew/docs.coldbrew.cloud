@@ -144,7 +144,7 @@ Worker-level `WithJitter` takes precedence over the run-level default. Setting `
 ### Formula
 
 On each tick:
-```
+```text
 spread   = base × percent ÷ 100
 jittered = base − spread + rand(2 × spread)
 ```
