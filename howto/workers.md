@@ -20,11 +20,11 @@ Every worker runs inside its own supervisor subtree:
 ```text
 Root Supervisor
 ├── Worker-A supervisor
-│   ├── Worker-A run func
+│   ├── Worker-A service (middleware → handler)
 │   ├── Child-A1 (added dynamically)
 │   └── Child-A2
 └── Worker-B supervisor
-    └── Worker-B run func
+    └── Worker-B service (middleware → handler)
 ```
 
 **Key properties:**
@@ -120,6 +120,29 @@ w := workers.NewWorker("batch").Handler(&batchProcessor{db: db}).
     Every(30 * time.Second)
 ```
 
+For handlers that need resource cleanup, implement the `CycleHandler` interface. `Close()` is called exactly once when the worker permanently stops:
+
+```go
+type batchProcessor struct {
+    db   *sql.DB
+    stmt *sql.Stmt
+}
+
+func (b *batchProcessor) RunCycle(ctx context.Context, info *workers.WorkerInfo) error {
+    rows, err := b.stmt.QueryContext(ctx, info.GetName())
+    if err != nil {
+        return err
+    }
+    defer rows.Close()
+    return processBatch(ctx, rows)
+}
+
+func (b *batchProcessor) Close() error {
+    // Called once on permanent stop — clean up prepared statement
+    return b.stmt.Close()
+}
+```
+
 The handler receives a `context.Context` for cancellation and a `*WorkerInfo` for worker metadata.
 
 ## Handler Return Values
@@ -134,6 +157,20 @@ The handler receives a `context.Context` for cancellation and a `*WorkerInfo` fo
 **Long-running workers** should block on `<-ctx.Done()`, then return `ctx.Err()`. Returning nil without waiting for ctx cancellation stops the worker permanently.
 
 **Periodic workers** run the handler once per tick. Return nil for success (next tick fires normally). Return an error to trigger restart. The `Every` wrapper manages the tick loop — your handler just processes one cycle.
+
+### ErrDoNotRestart
+
+Return `workers.ErrDoNotRestart` from a handler to signal permanent completion — the supervisor will not restart the worker even though restart is enabled by default. `ChannelWorker` and `BatchChannelWorker` return this automatically when their channel is closed.
+
+```go
+func processQueue(ctx context.Context, info *workers.WorkerInfo) error {
+    item, ok := queue.Dequeue(ctx)
+    if !ok {
+        return workers.ErrDoNotRestart // queue exhausted
+    }
+    return process(ctx, item)
+}
+```
 
 ## Builder Methods
 
@@ -150,7 +187,7 @@ The handler receives a `context.Context` for cancellation and a `*WorkerInfo` fo
 | `WithFailureBackoff(d)` | Duration between restarts | 15s (suture default) |
 | `WithFailureThreshold(n float64)` | Max failures before supervisor gives up | 5.0 (suture default) |
 | `WithFailureDecay(rate float64)` | Rate at which failure count decays (per second) | 1.0 (suture default) |
-| `WithBackoffJitter(j suture.Jitter)` | Random jitter on restart backoff (`func(time.Duration) time.Duration`) | none |
+| `WithBackoffJitter(j suture.Jitter)` | Random jitter on restart backoff (interface: `Jitter(time.Duration) time.Duration`) | none |
 | `WithTimeout(d)` | Max time to wait for graceful stop | 10s (suture default) |
 | `WithMetrics(m Metrics)` | Per-worker metrics override | inherit from parent/run |
 
@@ -268,6 +305,7 @@ Effective chain: `run-level middleware → worker-level middleware → handler`
 Middleware is a flat function that calls `next` to continue the chain. The `*WorkerInfo` parameter gives you the worker name and attempt explicitly — no hidden context lookups:
 
 ```go
+// Uses github.com/go-coldbrew/log for structured logging
 func myLogging(ctx context.Context, info *workers.WorkerInfo, next workers.CycleFunc) error {
     log.Info(ctx, "msg", "cycle start", "worker", info.GetName())
     err := next(ctx, info)
@@ -345,7 +383,7 @@ middleware.DistributedLock(redisLocker,
         return time.Minute
     }),
     middleware.WithOnNotAcquired(func(ctx context.Context, name string) error {
-        log.Info(ctx, "msg", "lock held, skipping", "worker", name)
+        log.Info(ctx, "msg", "lock held, skipping", "worker", name) // go-coldbrew/log
         return nil
     }),
 )
@@ -372,7 +410,7 @@ middleware.Timeout(30 * time.Second)
 
 ### Slog
 
-Structured log line per cycle via go-coldbrew/log. Logs at Info on success, Error on failure:
+Structured log lines per cycle (start + end/error) via go-coldbrew/log. Pair with `LogContext()` to include worker name and attempt automatically:
 
 ```go
 middleware.Slog()
@@ -476,17 +514,6 @@ workers.NewWorker("event-batcher").HandlerFunc(workers.BatchChannelWorker(eventC
 
 Partial batches are flushed on context cancellation (graceful shutdown). Both `ChannelWorker` and `BatchChannelWorker` return `ErrDoNotRestart` when the channel is closed, preventing restart loops on exhausted channels.
 
-### ErrDoNotRestart
-
-Return `workers.ErrDoNotRestart` from a handler to signal permanent completion — the supervisor will not restart the worker even though restart is enabled by default. Use `errors.Is` to check:
-
-```go
-err := workers.Run(ctx, myWorkers)
-if err != nil && !errors.Is(err, workers.ErrDoNotRestart) {
-    log.Fatal(err)
-}
-```
-
 ## Dynamic Workers
 
 Workers can dynamically spawn and remove child workers using `WorkerInfo.Add`, `Remove`, and `GetChildren`. This is the pattern for config-driven worker pools (like database-driven solver workers):
@@ -563,7 +590,7 @@ workers.NewWorker("tenant-manager").HandlerFunc(func(ctx context.Context, info *
             switch event.Type {
             case "activated":
                 info.Add(workers.NewWorker("tenant:"+event.ID).
-                    HandlerFunc(makeTenantWorker(event.ID)).WithRestart(true))
+                    HandlerFunc(makeTenantWorker(event.ID)))
             case "deactivated":
                 info.Remove("tenant:" + event.ID)
             }
@@ -650,7 +677,7 @@ Workers support pluggable metrics via the `Metrics` interface. Pass metrics at t
 
 ```go
 if err := workers.Run(ctx, myWorkers, workers.WithMetrics(workers.NewPrometheusMetrics("myapp"))); err != nil {
-    log.Fatal(err)
+    slog.Error("workers failed", "error", err)
 }
 ```
 
