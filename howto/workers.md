@@ -141,7 +141,7 @@ For handlers that need resource cleanup, implement the `CycleHandler` interface.
 ```go
 type batchProcessor struct {
     db   *sql.DB
-    conn *sql.Conn // long-lived connection for advisory locks
+    conn *sql.Conn // dedicated connection for this worker
 }
 
 func NewBatchProcessor(db *sql.DB) (*batchProcessor, error) {
@@ -153,7 +153,7 @@ func NewBatchProcessor(db *sql.DB) (*batchProcessor, error) {
 }
 
 func (b *batchProcessor) RunCycle(ctx context.Context, info *workers.WorkerInfo) error {
-    rows, err := b.db.QueryContext(ctx,
+    rows, err := b.conn.QueryContext(ctx,
         "SELECT id, payload FROM jobs WHERE status = 'pending' LIMIT 100")
     if err != nil {
         return err
