@@ -122,16 +122,16 @@ The handler receives a `context.Context` for cancellation and a `*WorkerInfo` fo
 
 ## Handler Return Values
 
-| Return value | Behavior |
-|---|---|
-| `return nil` | Worker stops permanently (even with restart enabled) |
-| `return error` | Worker restarts with backoff (if restart enabled) |
-| `return ctx.Err()` | Clean shutdown — context was cancelled |
-| `return workers.ErrDoNotRestart` | Explicit permanent stop (e.g., channel closed, work exhausted) |
+| Return value | Long-running worker (no `Every`) | Periodic worker (with `Every`) |
+|---|---|---|
+| `return nil` | Worker stops permanently | Cycle succeeded — next tick fires |
+| `return error` | Restarts with backoff (if restart enabled) | Restarts with backoff (if restart enabled) |
+| `return ctx.Err()` | Clean shutdown | Clean shutdown |
+| `return workers.ErrDoNotRestart` | Permanent stop | Permanent stop |
 
-**Long-running workers** (no `Every`): block on `<-ctx.Done()`, then return `ctx.Err()`. A handler that returns nil without waiting for ctx cancellation will stop permanently.
+**Long-running workers** should block on `<-ctx.Done()`, then return `ctx.Err()`. Returning nil without waiting for ctx cancellation stops the worker permanently.
 
-**Periodic workers** (with `Every`): the handler runs once per tick and should return quickly. Return nil for success (next tick will fire), return an error to trigger restart.
+**Periodic workers** run the handler once per tick. Return nil for success (next tick fires normally). Return an error to trigger restart. The `Every` wrapper manages the tick loop — your handler just processes one cycle.
 
 ## Builder Methods
 
@@ -409,12 +409,14 @@ Every handler receives a `*WorkerInfo` that carries worker metadata and child ma
 |--------|-------------|
 | `GetName() string` | Worker name |
 | `GetAttempt() int` | Restart attempt (0 on first run) |
-| `Add(w *Worker)` | Add/replace child worker by name |
+| `Add(w *Worker) bool` | Add child worker — returns false if name already exists (no-op) |
 | `Remove(name string)` | Stop child worker by name |
 | `GetChildren() []string` | Names of running child workers |
 | `GetChild(name string) (Worker, bool)` | Look up a child by name (returns a value copy) |
 
 Use `Worker.GetName()` and `Worker.GetHandler()` to inspect a child.
+
+To replace a running worker, call `Remove` then `Add`. This is not atomic — there is a brief window where the worker is not running.
 
 `context.Context` handles cancellation/deadlines/values. `*WorkerInfo` handles everything worker-specific.
 
@@ -498,23 +500,37 @@ workers.NewWorker("pool-manager").HandlerFunc(func(ctx context.Context, info *wo
         case <-ticker.C:
             desired := loadConfigsFromDB(ctx)
 
-            // Remove workers no longer in config
+            running := map[string]bool{}
             for _, name := range info.GetChildren() {
+                running[name] = true
+            }
+
+            // Remove workers no longer in config
+            for name := range running {
                 if _, ok := desired[name]; !ok {
                     info.Remove(name)
                 }
             }
 
-            // Add/replace desired workers
+            // Add only workers that aren't already running
             for name, cfg := range desired {
-                info.Add(workers.NewWorker(name).HandlerFunc(makeSolver(cfg)).WithRestart(true))
+                if !running[name] {
+                    info.Add(workers.NewWorker(name).HandlerFunc(makeSolver(cfg)))
+                }
             }
         }
     }
 })
 ```
 
-**Replace semantics:** calling `Add` with a name that already exists stops the old worker and starts the new one. This handles config updates naturally.
+**Add is a no-op if the name exists** — it returns `false` without restarting the running worker. To replace a worker (e.g., on config change), call `Remove` then `Add`:
+
+```go
+info.Remove("solver")
+info.Add(workers.NewWorker("solver").HandlerFunc(makeSolver(newCfg)))
+```
+
+Note: `Remove` + `Add` is not atomic — there is a brief window where the worker is not running.
 
 ### Example: Fixed children on startup
 
