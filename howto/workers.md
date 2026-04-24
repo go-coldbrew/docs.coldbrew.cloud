@@ -28,12 +28,14 @@ Root Supervisor
 ```
 
 **Key properties:**
-- **Scoped lifecycle** — when a parent stops, all its children stop
-- **Independent restart** — each worker restarts independently with exponential backoff
-- **Panic recovery** — panics are caught and converted to errors by suture
-- **Composable middleware** — tracing, logging, locking, and timing as interceptors
-- **Jitter** — desynchronize periodic workers to prevent thundering herd
-- **Dynamic children** — workers can spawn/remove child workers at runtime
+- **Scoped lifecycle** — when a parent stops, all its children stop automatically. No manual cleanup or `sync.WaitGroup` needed.
+- **Restart by default** — workers restart with exponential backoff on failure. One-shot workers opt out with `WithRestart(false)` or return `ErrDoNotRestart`.
+- **Two-layer panic recovery** — suture catches panics at the supervisor level (restarts the worker). `middleware.Recover` catches panics per-cycle (converts to error without a full restart). Use both for defense in depth.
+- **Composable middleware** — tracing, structured logging, distributed locking, per-cycle timeout, and duration metrics as gRPC-style interceptors. Write your own with a single function.
+- **Jitter** — desynchronize periodic workers to prevent thundering herd. Per-worker or run-level default.
+- **Dynamic children** — workers can spawn and remove child workers at runtime via `Add`/`Remove`. Children inherit middleware, metrics, and scoped lifecycle.
+- **Pluggable metrics** — Prometheus out of the box, or implement the `Metrics` interface for Datadog, StatsD, etc. Per-attempt lifetime and per-cycle duration tracked separately.
+- **Handler cleanup** — `CycleHandler.Close()` is called exactly once when the worker permanently stops, for resource cleanup (DB connections, leases).
 
 ## Quick Start
 
