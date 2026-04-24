@@ -332,7 +332,7 @@ interceptors.DefaultClientInterceptor(
 `WithExecutor` can be passed directly to any gRPC call to use a specific executor for that call. This works even without calling `SetDefaultExecutor` — you don't need a global executor to use per-call executors. This is useful for per-service circuit breaker tuning.
 
 {: .note .note-info }
-Per-call `WithExecutor` requires `ExecutorClientInterceptor` in the interceptor chain. This is included automatically when using `DefaultClientInterceptors`. If you build your own interceptor chain, make sure to include it.
+`DefaultClientInterceptor(...)` includes `ExecutorClientInterceptor`, so per-call `WithExecutor` works out of the box. If you build your own interceptor chain, make sure to include `ExecutorClientInterceptor`.
 
 ```go
 // Create a sensitive circuit breaker for the payment service
