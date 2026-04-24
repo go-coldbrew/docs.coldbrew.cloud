@@ -40,6 +40,8 @@ Root Supervisor
 ## Quick Start
 
 ```go
+package main
+
 import (
     "context"
     "log/slog"
@@ -51,18 +53,28 @@ import (
     "github.com/go-coldbrew/workers/middleware"
 )
 
-ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-defer cancel()
+func main() {
+    ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+    defer cancel()
 
-if err := workers.Run(ctx, []*workers.Worker{
-    workers.NewWorker("kafka").HandlerFunc(consume),
-    workers.NewWorker("cleanup").HandlerFunc(cleanup).
-        Every(5 * time.Minute).WithJitter(10),
-},
-    workers.WithInterceptors(middleware.DefaultInterceptors()...),
-); err != nil {
-    slog.Error("workers failed", "error", err)
+    err := workers.Run(ctx, []*workers.Worker{
+        // Long-running worker — blocks until ctx is cancelled
+        workers.NewWorker("kafka").HandlerFunc(consume),
+
+        // Periodic worker — runs cleanup every 5 minutes with jitter
+        workers.NewWorker("cleanup").HandlerFunc(cleanup).
+            Every(5 * time.Minute).WithJitter(10),
+    },
+        // Standard observability: panic recovery, log context, tracing, structured logging
+        workers.WithInterceptors(middleware.DefaultInterceptors()...),
+    )
+    if err != nil {
+        slog.Error("workers failed", "error", err)
+    }
 }
+
+// consume and cleanup have signature:
+//   func(ctx context.Context, info *workers.WorkerInfo) error
 ```
 
 `Run` blocks until `ctx` is cancelled and all workers have exited.
