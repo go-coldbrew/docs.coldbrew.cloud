@@ -85,13 +85,16 @@ With plain goroutines, you manage lifecycle manually:
 
 ```go
 // Before: manual goroutine management
+ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+defer cancel()
+
 var wg sync.WaitGroup
 wg.Add(1)
 go func() {
     defer wg.Done()
     // no panic recovery — crashes the process
     // no restart — dies permanently on error
-    // no structured shutdown — must wire ctx manually
+    // no structured shutdown — must coordinate ctx + wg manually
     // no distributed locking — runs on every pod
     consume(ctx)
 }()
@@ -128,7 +131,8 @@ w := workers.NewWorker("my-worker").HandlerFunc(func(ctx context.Context, info *
 })
 
 // Struct handler with cleanup (for resources like DB connections)
-w := workers.NewWorker("batch").Handler(&batchProcessor{db: db}).
+bp, _ := NewBatchProcessor(db)
+w := workers.NewWorker("batch").Handler(bp).
     Every(30 * time.Second)
 ```
 
@@ -137,11 +141,20 @@ For handlers that need resource cleanup, implement the `CycleHandler` interface.
 ```go
 type batchProcessor struct {
     db   *sql.DB
-    stmt *sql.Stmt
+    conn *sql.Conn // long-lived connection for advisory locks
+}
+
+func NewBatchProcessor(db *sql.DB) (*batchProcessor, error) {
+    conn, err := db.Conn(context.Background())
+    if err != nil {
+        return nil, err
+    }
+    return &batchProcessor{db: db, conn: conn}, nil
 }
 
 func (b *batchProcessor) RunCycle(ctx context.Context, info *workers.WorkerInfo) error {
-    rows, err := b.stmt.QueryContext(ctx, info.GetName())
+    rows, err := b.db.QueryContext(ctx,
+        "SELECT id, payload FROM jobs WHERE status = 'pending' LIMIT 100")
     if err != nil {
         return err
     }
@@ -150,8 +163,8 @@ func (b *batchProcessor) RunCycle(ctx context.Context, info *workers.WorkerInfo)
 }
 
 func (b *batchProcessor) Close() error {
-    // Called once on permanent stop — clean up prepared statement
-    return b.stmt.Close()
+    // Called once on permanent stop — release the dedicated connection
+    return b.conn.Close()
 }
 ```
 
@@ -476,23 +489,22 @@ To replace a running worker, call `Remove` then `Add`. This is not atomic — th
 
 ### EveryInterval
 
-Wraps a function in a timer loop:
-
-```go
-workers.NewWorker("metrics-reporter").HandlerFunc(workers.EveryInterval(
-    30*time.Second,
-    func(ctx context.Context, info *workers.WorkerInfo) error {
-        return reportMetrics(ctx)
-    },
-))
-```
-
-Or use the builder shorthand:
+Use the `Every` builder method to run a handler periodically:
 
 ```go
 workers.NewWorker("metrics-reporter").HandlerFunc(reportMetrics).
     Every(30 * time.Second)
 ```
+
+For manual control, `EveryInterval` wraps a handler in a timer loop directly:
+
+```go
+workers.NewWorker("metrics-reporter").HandlerFunc(workers.EveryInterval(
+    30*time.Second, reportMetrics,
+))
+```
+
+Both are equivalent. The builder form is preferred — it also supports `WithJitter` and `WithInitialDelay`.
 
 ### ChannelWorker
 
@@ -742,7 +754,7 @@ Children inherit metrics from the root by default. Override for specific workers
 ```go
 workers.NewWorker("manager").HandlerFunc(func(ctx context.Context, info *workers.WorkerInfo) error {
     // This child uses custom metrics instead of the inherited root metrics.
-    info.Add(workers.NewWorker("special").HandlerFunc(fn).WithMetrics(customMetrics))
+    info.Add(workers.NewWorker("special").HandlerFunc(processSpecial).WithMetrics(datadogMetrics))
     <-ctx.Done()
     return ctx.Err()
 })
