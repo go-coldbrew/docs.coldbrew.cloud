@@ -122,18 +122,12 @@ workers.Run(ctx, []*workers.Worker{
 Use `NewWorker` with a name, then set a handler via `HandlerFunc` (for plain functions) or `Handler` (for structs with cleanup):
 
 ```go
-// Simple function handler (common case)
 // Uses github.com/go-coldbrew/log for structured logging
 w := workers.NewWorker("my-worker").HandlerFunc(func(ctx context.Context, info *workers.WorkerInfo) error {
     log.Info(ctx, "msg", "started", "worker", info.GetName(), "attempt", info.GetAttempt())
     <-ctx.Done()
     return ctx.Err()
 })
-
-// Struct handler with cleanup (for resources like DB connections)
-bp, _ := NewBatchProcessor(db)
-w := workers.NewWorker("batch").Handler(bp).
-    Every(30 * time.Second)
 ```
 
 For handlers that need resource cleanup, implement the `CycleHandler` interface. `Close()` is called exactly once when the worker permanently stops:
