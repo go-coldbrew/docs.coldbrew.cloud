@@ -206,7 +206,7 @@ func processQueue(ctx context.Context, info *workers.WorkerInfo) error {
 | `WithFailureBackoff(d)` | Duration between restarts | 15s (suture default) |
 | `WithFailureThreshold(n float64)` | Max failures before supervisor gives up | 5.0 (suture default) |
 | `WithFailureDecay(rate float64)` | Rate at which failure count decays (per second) | 1.0 (suture default) |
-| `WithBackoffJitter(j suture.Jitter)` | Random jitter on restart backoff (interface: `Jitter(time.Duration) time.Duration`) | none |
+| `WithBackoffJitter(j)` | Random jitter on restart backoff | none |
 | `WithTimeout(d)` | Max time to wait for graceful stop | 10s (suture default) |
 | `WithMetrics(m Metrics)` | Per-worker metrics override | inherit from parent/run |
 
