@@ -188,6 +188,7 @@ func pollDatabase(ctx context.Context, info *workers.WorkerInfo) error {
     if err != nil {
         return workers.ErrSkipTick // skip this tick, try again next interval
     }
+    defer rows.Close()
     return processRows(rows)
 }
 ```
@@ -435,7 +436,7 @@ middleware.DistributedLock(redisLocker,
 )
 ```
 
-**Caution:** `WithOnNotAcquired` returns an error. A non-nil return triggers restart for periodic workers. Use `WithSkipOnNotAcquired` or return nil if you want to skip without restart.
+**Caution:** If the `WithOnNotAcquired` callback returns a non-nil error, the framework treats it as a cycle failure — for periodic workers, this triggers restart with backoff. Use `WithSkipOnNotAcquired` or return nil from the callback if you want to skip without restart.
 
 The `Locker` interface:
 
@@ -504,7 +505,6 @@ Every handler receives a `*WorkerInfo` that carries worker metadata and child ma
 | `Remove(name string)` | Stop child worker by name |
 | `GetChildren() []string` | Names of running child workers (stopped children auto-pruned) |
 | `GetChild(name string) (Worker, bool)` | Look up a child by name (returns a value copy) |
-| `GetChildCount() int` | Number of running children (cheaper than `len(GetChildren())`) |
 
 Use `Worker.GetName()`, `Worker.GetHandler()`, `Worker.GetInterval()`, and `Worker.GetRestartOnFail()` to inspect a child.
 
@@ -612,7 +612,7 @@ info.Add(workers.NewWorker("solver").HandlerFunc(makeSolver(newCfg)))
 
 Note: `Remove` + `Add` is not atomic — there is a brief window where the worker is not running.
 
-**Automatic cleanup:** When a child permanently stops (returns nil with `WithRestart(false)`, returns `ErrDoNotRestart`, or exhausts restart attempts), it is automatically pruned from the children map on the next call to `GetChildren`, `GetChild`, or `GetChildCount`. No manual cleanup needed.
+**Automatic cleanup:** When a child permanently stops (see the [return value table](#handler-return-values) for what triggers permanent stop), it is automatically excluded from `GetChildren` and `GetChild`. Suture is the source of truth — no manual cleanup needed. Note that there may be a brief delay between the child stopping and the change being visible, since suture processes stop events asynchronously.
 
 ### Example: Config change detection via handler
 
@@ -649,7 +649,7 @@ for key, desired := range desiredConfigs {
 }
 ```
 
-The handler is an interface value — `GetChild()` returns a copy of the `Worker` struct, but the handler reference is shared. Type assertion gives read access to the original handler's fields.
+`GetChild()` returns a copy of the `Worker` struct, but the handler is stored as a `CycleHandler` interface — use type assertion to access handler-specific fields for change detection or metadata inspection.
 
 ### Example: Fixed children on startup
 
