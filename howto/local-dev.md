@@ -2,7 +2,7 @@
 layout: default
 title: "Local Development"
 parent: "How To"
-nav_order: 17
+nav_order: 18
 description: "Docker Compose local dev stack with per-service profiles for databases, caches, message brokers, AWS/GCP emulators, and observability"
 ---
 ## Table of contents

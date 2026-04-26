@@ -2,7 +2,7 @@
 layout: default
 title: "Authentication"
 parent: "How To"
-nav_order: 18
+nav_order: 19
 description: "Adding JWT and API key authentication to ColdBrew gRPC services using go-grpc-middleware auth interceptors"
 ---
 ## Table of contents

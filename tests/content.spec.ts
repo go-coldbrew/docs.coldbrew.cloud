@@ -142,6 +142,67 @@ test.describe("Readiness & Workers Integration", () => {
   });
 });
 
+test.describe("SEO", () => {
+  const pagesWithDescriptions = [
+    "/",
+    "/getting-started/",
+    "/architecture/",
+    "/config-reference/",
+    "/howto/",
+    "/integrations/",
+    "/faq/",
+    "/packages/",
+    "/howto/APIs/",
+    "/howto/workers/",
+    "/howto/readiness/",
+    "/howto/production/",
+    "/howto/interceptors/",
+    "/howto/auth/",
+  ];
+
+  for (const pagePath of pagesWithDescriptions) {
+    test(`${pagePath} has meta description`, async ({ page }) => {
+      await page.goto(pagePath);
+      const meta = page.locator('meta[name="description"]');
+      const content = await meta.getAttribute("content");
+      expect(content, `${pagePath} missing meta description`).toBeTruthy();
+      expect(
+        content!.length,
+        `${pagePath} description too short`
+      ).toBeGreaterThan(20);
+    });
+  }
+});
+
+test.describe("Table of Contents", () => {
+  const howtoPages = [
+    "/howto/APIs/",
+    "/howto/gRPC/",
+    "/howto/Log/",
+    "/howto/errors/",
+    "/howto/Tracing/",
+    "/howto/interceptors/",
+    "/howto/workers/",
+    "/howto/readiness/",
+    "/howto/production/",
+    "/howto/auth/",
+  ];
+
+  for (const pagePath of howtoPages) {
+    test(`${pagePath} has table of contents`, async ({ page }) => {
+      await page.goto(pagePath);
+      const toc = page.locator("#table-of-contents, .no_toc, #toc");
+      const hasTOC = (await toc.count()) > 0;
+      // just-the-docs renders TOC as a list with anchor links
+      const tocLinks = page.locator('nav[aria-label="Table of contents"] a, .no_toc + ol a, .no_toc + ul a');
+      expect(
+        hasTOC || (await tocLinks.count()) > 0,
+        `${pagePath} missing table of contents`
+      ).toBeTruthy();
+    });
+  }
+});
+
 test.describe("ASCII Diagrams", () => {
   test("home page renders architecture diagram in pre block", async ({
     page,

@@ -2,7 +2,7 @@
 layout: default
 title: "Readiness Patterns"
 parent: "How To"
-nav_order: 16
+nav_order: 17
 description: "Readiness patterns for ColdBrew services: simple, PreStart-blocked, worker-managed, and dynamic workers with DB-driven config."
 ---
 ## Table of contents
