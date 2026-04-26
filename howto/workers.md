@@ -616,7 +616,7 @@ info.Add(workers.NewWorker("solver").HandlerFunc(makeSolver(newCfg)))
 
 Note: `Remove` + `Add` is not atomic — there is a brief window where the worker is not running.
 
-**Automatic cleanup:** When a child permanently stops (see the [return value table](#handler-return-values) for what triggers permanent stop), it is automatically excluded from `GetChildren` and `GetChild`. Suture is the source of truth — no manual cleanup needed. Note that there may be a brief delay between the child stopping and the change being visible, since suture processes stop events asynchronously.
+**Automatic cleanup:** When a child permanently stops (see the [return value table](#handler-return-values) for what triggers permanent stop), it is automatically excluded from `GetChildren` and `GetChild`. The underlying [suture] supervisor is the source of truth — no manual cleanup needed. Note that there may be a brief delay between the child stopping and the change being visible, as stop events are processed asynchronously.
 
 ### Example: Config change detection via handler
 
