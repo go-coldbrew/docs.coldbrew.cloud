@@ -505,6 +505,7 @@ Every handler receives a `*WorkerInfo` that carries worker metadata and child ma
 | `Remove(name string)` | Stop child worker by name |
 | `GetChildren() []string` | Names of running child workers (stopped children auto-pruned) |
 | `GetChild(name string) (Worker, bool)` | Look up a child by name (returns a value copy) |
+| `GetChildCount() int` | Number of running children (cheaper than `len(GetChildren())`) |
 
 Use `Worker.GetName()`, `Worker.GetHandler()`, `Worker.GetInterval()`, and `Worker.GetRestartOnFail()` to inspect a child.
 
