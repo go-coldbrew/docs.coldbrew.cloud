@@ -169,7 +169,7 @@ The handler receives a `context.Context` for cancellation and a `*WorkerInfo` fo
 | Return value | Long-running worker (no `Every`) | Periodic worker (with `Every`) |
 |---|---|---|
 | `return nil` | Worker stops permanently | Cycle succeeded — next tick fires |
-| `return workers.ErrSkipTick` | No effect (not meaningful) | Tick skipped — next tick fires normally |
+| `return workers.ErrSkipTick` | Treated like `return error` (not meaningful) | Tick skipped — next tick fires normally |
 | `return error` | Restarts with backoff (if restart enabled) | Restarts with backoff (if restart enabled) |
 | `return ctx.Err()` | Clean shutdown | Clean shutdown |
 | `return workers.ErrDoNotRestart` | Permanent stop | Permanent stop |
@@ -186,7 +186,10 @@ Return `workers.ErrSkipTick` from a periodic handler when a tick fails transient
 func pollDatabase(ctx context.Context, info *workers.WorkerInfo) error {
     rows, err := db.QueryContext(ctx, "SELECT ...")
     if err != nil {
-        return workers.ErrSkipTick // skip this tick, try again next interval
+        if ctx.Err() != nil {
+            return ctx.Err() // context cancelled — clean shutdown
+        }
+        return workers.ErrSkipTick // transient failure, try again next interval
     }
     defer rows.Close()
     return processRows(rows)
