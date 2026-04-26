@@ -218,7 +218,7 @@ func processQueue(ctx context.Context, info *workers.WorkerInfo) error {
 |--------|-------------|---------|
 | `HandlerFunc(fn)` | Set handler from a plain function | — |
 | `Handler(h)` | Set handler from a `CycleHandler` struct | — |
-| `WithRestart(false)` | Disable restart (one-shot worker) | `true` (restart with backoff) |
+| `WithRestart(false)` | Disable restart (one-shot worker). Periodic workers should generally keep the default; use `ErrSkipTick`/`ErrDoNotRestart` instead. | `true` (restart with backoff) |
 | `Every(duration)` | Run periodically on a fixed interval | — |
 | `WithJitter(percent)` | Randomize tick interval by ±percent (requires `Every`) | inherit run-level |
 | `WithInitialDelay(d)` | Delay first tick (requires `Every`) | — |
