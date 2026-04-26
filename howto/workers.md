@@ -880,11 +880,69 @@ workers.RunWorker(ctx, myWorker)
 - **Distributed locking:** Use `DistributedLock` for periodic workers that should run on only one pod. The lock is acquired per cycle, not per worker lifetime.
 
 ## ColdBrew Integration
-{: .label .label-yellow }
-Planned — not yet available
-{: .d-inline-block }
 
-The workers package is standalone — any Go service can use it. ColdBrew integration via `CBServiceV2` is planned for a future core release, where workers will be started/stopped as part of the ColdBrew service lifecycle.
+The workers package is standalone — any Go service can use it directly via `workers.Run`. ColdBrew core also integrates workers into the service lifecycle via the [CBWorkerProvider] optional interface.
+
+### How it works
+
+Implement `Workers()` on your service to return worker definitions. ColdBrew discovers this at startup via type assertion and manages the workers alongside gRPC/HTTP servers:
+
+```go
+var _ core.CBWorkerProvider = (*cbSvc)(nil)
+
+func (s *cbSvc) Workers() []*workers.Worker {
+    return []*workers.Worker{
+        workers.NewWorker("cleanup").
+            HandlerFunc(s.cleanup).
+            Every(5 * time.Minute).
+            WithJitter(10),
+    }
+}
+```
+
+No changes to `main()` — `SetService` discovers the interface automatically.
+
+### Lifecycle
+
+```text
+PreStart → initGRPC → initHTTP → start workers → start servers → PostStart
+→ block → PreStop → FailCheck → drain → stop workers → stop servers → Stop → PostStop
+```
+
+Workers start before servers (can warm caches) and stop before servers stop (in-flight RPCs can still use worker-managed resources).
+
+### Delegation pattern
+
+In the [cookiecutter template], `cbSvc` in `main.go` is a thin adapter. Workers are defined in `service/service.go` where the business logic lives:
+
+```go
+// service/service.go — service owns its workers
+func (s *svc) Workers() []*workers.Worker {
+    return []*workers.Worker{
+        workers.NewWorker("cleanup").HandlerFunc(s.cleanup).Every(5 * time.Minute),
+    }
+}
+
+// main.go — adapter delegates via composite interface
+type serviceImpl interface {
+    Stop()
+    Workers() []*workers.Worker
+}
+
+type cbSvc struct {
+    impl serviceImpl
+}
+
+func (s *cbSvc) Workers() []*workers.Worker { return s.impl.Workers() }
+```
+
+### Readiness
+
+Workers and readiness are independent concerns. See [Readiness Patterns] for how to combine workers with health checks — from simple (Pattern 1) to worker-managed readiness (Pattern 3) to dynamic DB-driven workers (Pattern 4).
+
+[CBWorkerProvider]: https://pkg.go.dev/github.com/go-coldbrew/core#CBWorkerProvider
+[cookiecutter template]: /cookiecutter-reference
+[Readiness Patterns]: /howto/readiness
 
 [workers]: https://github.com/go-coldbrew/workers
 [suture]: https://github.com/thejerf/suture

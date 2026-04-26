@@ -112,6 +112,36 @@ test.describe("Callouts", () => {
   });
 });
 
+test.describe("Readiness & Workers Integration", () => {
+  test("readiness page renders all four patterns", async ({ page }) => {
+    await page.goto("/howto/readiness/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("Pattern 1");
+    await expect(mainContent).toContainText("Pattern 2");
+    await expect(mainContent).toContainText("Pattern 3");
+    await expect(mainContent).toContainText("Pattern 4");
+    await expect(mainContent).toContainText("CBPreStarter");
+    await expect(mainContent).toContainText("CBWorkerProvider");
+    const codeBlocks = page.locator("pre code");
+    expect(await codeBlocks.count()).toBeGreaterThanOrEqual(4);
+  });
+
+  test("readiness page has choosing-a-pattern table", async ({ page }) => {
+    await page.goto("/howto/readiness/");
+    const tables = page.locator("table");
+    expect(await tables.count()).toBeGreaterThanOrEqual(1);
+  });
+
+  test("workers page has ColdBrew Integration section", async ({ page }) => {
+    await page.goto("/howto/workers/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("ColdBrew Integration");
+    await expect(mainContent).toContainText("CBWorkerProvider");
+    await expect(mainContent).toContainText("Delegation pattern");
+    await expect(mainContent).toContainText("Readiness Patterns");
+  });
+});
+
 test.describe("ASCII Diagrams", () => {
   test("home page renders architecture diagram in pre block", async ({
     page,
