@@ -29,14 +29,17 @@ When you start your application, ColdBrew will register a signal handler for `SI
 
 When the application receives a signal, ColdBrew executes a multi-step shutdown sequence:
 
-1. **`FailCheck(true)`** on services implementing [CBGracefulStopper] — `/readycheck` starts returning failure
-2. **Wait** `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s) for the load balancer to stop sending traffic
-3. **Shutdown admin server** if configured (`ADMIN_PORT`)
-4. **Shutdown HTTP server** — stop accepting new HTTP requests
-5. **`GracefulStop()` gRPC server** — finish in-flight RPCs, reject new ones
-6. **Force-stop gRPC server** if graceful shutdown didn't complete in time
-7. **`Stop()`** on services implementing [CBStopper] — resource cleanup
-8. **Exit**
+1. **`PreStop(ctx)`** on services implementing [CBPreStopper] — deregister from service discovery, flush buffers
+2. **`FailCheck(true)`** on services implementing [CBGracefulStopper] — `/readycheck` starts returning failure
+3. **Wait** `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s) for the load balancer to stop sending traffic
+4. **Stop workers** — cancel worker context, wait for workers to exit
+5. **Shutdown admin server** if configured (`ADMIN_PORT`)
+6. **Shutdown HTTP server** — stop accepting new HTTP requests
+7. **`GracefulStop()` gRPC server** — finish in-flight RPCs, reject new ones
+8. **Force-stop gRPC server** if graceful shutdown didn't complete in time
+9. **`Stop()`** on services implementing [CBStopper] — resource cleanup
+10. **`PostStop(ctx)`** on services implementing [CBPostStopper] — final cleanup after everything stopped
+11. **Exit**
 
 ## Customizing the shutdown process
 
@@ -48,12 +51,14 @@ Configuring the shutdown process is done by setting the [config] values:
 
 ## Service lifecycle interfaces
 
-ColdBrew provides two optional interfaces for shutdown behavior:
+ColdBrew provides optional interfaces for lifecycle hooks:
 
 | Interface | Method | When called | Use for |
 |-----------|--------|-------------|---------|
-| [CBGracefulStopper] | `FailCheck(bool)` | **First** — before drain wait | Mark service as not ready |
-| [CBStopper] | `Stop()` | **Last** — after all servers stopped | Close DB pools, flush metrics, drain producers |
+| [CBPreStopper] | `PreStop(ctx)` | Before FailCheck | Deregister from service discovery, flush buffers |
+| [CBGracefulStopper] | `FailCheck(bool)` | Before drain wait | Mark service as not ready |
+| [CBStopper] | `Stop()` | After servers stopped | Close DB pools, flush metrics, drain producers |
+| [CBPostStopper] | `PostStop(ctx)` | After Stop, before exit | Final cleanup, audit log close |
 
 {: .important}
 All resource cleanup belongs in `Stop()`. ColdBrew calls it after all servers have stopped and in-flight requests have completed (or timed out).
@@ -91,5 +96,7 @@ Make sure you configure your load balancer to stop sending new requests to your 
 [config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [CBStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBStopper
 [CBGracefulStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBGracefulStopper
+[CBPreStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStopper
+[CBPostStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPostStopper
 [Kubernetes]: https://kubernetes.io/
 [POSIX signals]: https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals

@@ -68,15 +68,17 @@ func (s *cbSvc) PreStart(ctx context.Context) error {
 }
 ```
 
-`PreStart` runs before `initGRPC` / `initHTTP`, so you can also configure interceptors here:
+`PreStart` runs before `initGRPC` / `initHTTP`, so you can also register auth interceptors or other setup here:
 
 ```go
 func (s *cbSvc) PreStart(ctx context.Context) error {
-    interceptors.SetDefaultTimeout(30 * time.Second)
     auth.Setup(ctx, config.Get().AuthConfig)
     return nil
 }
 ```
+
+{: .note }
+For configuration that has an environment variable equivalent (like `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS`), prefer the env var via the [Configuration Reference](/config-reference). Use `PreStart` for setup that requires code — auth interceptors, database connections, programmatic interceptor configuration via `interceptors.Set*()` functions.
 
 **When to use:** Database connections, message broker connections, mandatory cache warmup, auth interceptor registration. If the dependency fails to connect, the service should not start.
 
@@ -86,8 +88,8 @@ Use when workers can start independently and the service becomes ready once work
 
 ```go
 var (
-    _ core.CBWorkerProvider  = (*cbSvc)(nil)
-    _ core.CBGracefulStopper = (*cbSvc)(nil)
+    _ core.CBWorkerProvider  = (*svc)(nil)
+    _ core.CBGracefulStopper = (*svc)(nil)
 )
 
 type svc struct {
@@ -169,7 +171,7 @@ func (s *svc) reconcileWorkers(ctx context.Context, info *workers.WorkerInfo) er
 
     // Add new workers from DB
     for _, cfg := range configs {
-        if info.GetChild(cfg.Name) == nil {
+        if _, exists := info.GetChild(cfg.Name); !exists {
             info.Add(
                 workers.NewWorker(cfg.Name).
                     HandlerFunc(cfg.BuildHandler(s.deps)).

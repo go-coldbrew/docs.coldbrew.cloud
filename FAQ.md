@@ -241,7 +241,7 @@ Define streaming RPCs in your `.proto` file as usual:
 rpc StreamEvents(EventRequest) returns (stream Event) {}
 ```
 
-Note: the HTTP/JSON gateway (grpc-gateway) does not support streaming — streaming RPCs are gRPC-only. HTTP clients should use Server-Sent Events or WebSockets as a separate endpoint if real-time push is needed.
+Note: grpc-gateway v2 does support streaming RPCs over HTTP by translating them to newline-delimited JSON streams. However, practical constraints apply: reverse proxies may buffer responses (requiring `X-Accel-Buffering: no` or equivalent), error handling uses `runtime.WithStreamErrorHandler`, and true concurrent bidirectional interleaving (like WebSockets) is limited over HTTP/1.1. For high-frequency real-time push, consider a dedicated WebSocket or SSE endpoint alongside the gateway. See the [grpc-gateway streaming examples](https://github.com/grpc-ecosystem/grpc-gateway/tree/main/examples/internal/proto/examplepb) for implementation guidance.
 
 ## How do I run background workers in my service?
 
