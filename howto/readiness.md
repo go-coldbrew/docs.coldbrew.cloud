@@ -61,6 +61,7 @@ func (s *cbSvc) PreStart(ctx context.Context) error {
         return fmt.Errorf("database connect: %w", err)
     }
     if err := db.PingContext(ctx); err != nil {
+        db.Close()
         return fmt.Errorf("database ping: %w", err)
     }
     s.db = db

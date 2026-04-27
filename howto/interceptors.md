@@ -275,8 +275,6 @@ Use the function [AddUnaryServerInterceptor] and [AddUnaryClientInterceptor] to 
 
 ---
 
-[TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
-[go-coldbrew/tracing]: https://pkg.go.dev/github.com/go-coldbrew/tracing
 ## Related
 
 - [Production](/howto/production) — rate limiting, TLS, security hardening for deployment
@@ -284,6 +282,8 @@ Use the function [AddUnaryServerInterceptor] and [AddUnaryClientInterceptor] to 
 - [Tracing](/howto/Tracing) — distributed tracing with OpenTelemetry
 - [Architecture](/architecture) — full interceptor chain diagram and request lifecycle
 
+[TraceId interceptor]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#TraceIdInterceptor
+[go-coldbrew/tracing]: https://pkg.go.dev/github.com/go-coldbrew/tracing
 [ColdBrew cookiecutter]: /getting-started
 [interceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors
 [UseColdBrewServcerInterceptors]: https://pkg.go.dev/github.com/go-coldbrew/interceptors#UseColdBrewServerInterceptors

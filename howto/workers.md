@@ -941,9 +941,13 @@ func (s *cbSvc) Workers() []*workers.Worker { return s.impl.Workers() }
 The workers package is standalone — you can call `workers.Run()` from anywhere in your service or implementation. It works in any goroutine, any function, any context. The workers will stop when the context is cancelled.
 
 ```go
-go workers.Run(ctx, []*workers.Worker{
-    workers.NewWorker("cleanup").HandlerFunc(s.cleanup).Every(5 * time.Minute),
-})
+go func() {
+    if err := workers.Run(ctx, []*workers.Worker{
+        workers.NewWorker("cleanup").HandlerFunc(s.cleanup).Every(5 * time.Minute),
+    }); err != nil {
+        slog.Error("workers failed", "error", err)
+    }
+}()
 ```
 
 **When to use which:**
