@@ -174,20 +174,19 @@ Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` t
 
 ## Graceful shutdown tuning
 
-ColdBrew's shutdown sequence (bounded by `SHUTDOWN_DURATION_IN_SECONDS`, default 15s):
+Kubernetes first sends `SIGTERM`, then ColdBrew begins its in-process shutdown sequence, which is bounded by `SHUTDOWN_DURATION_IN_SECONDS` (default 15s):
 
-1. Receive SIGTERM from Kubernetes
-2. `PreStop(ctx)` on `CBPreStopper` services — deregister from service discovery, flush buffers
-3. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
-4. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s, included in shutdown timeout) for the load balancer to drain
-5. Cancel worker context — workers begin draining
-6. Shutdown admin server if configured (`ADMIN_PORT`)
-7. Shutdown HTTP server (stop accepting new requests)
-8. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
-9. Force-stop gRPC server if graceful shutdown didn't complete in time
-10. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
-11. `PostStop(ctx)` on `CBPostStopper` services — final cleanup, audit log close
-12. Exit
+1. `PreStop(ctx)` on `CBPreStopper` services — deregister from service discovery, flush buffers
+2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
+3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s, included in shutdown timeout) for the load balancer to drain
+4. Cancel worker context, wait for workers to exit
+5. Shutdown admin server if configured (`ADMIN_PORT`)
+6. Shutdown HTTP server (stop accepting new requests)
+7. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
+8. Force-stop gRPC server if graceful shutdown didn't complete in time
+9. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
+10. `PostStop(ctx)` on `CBPostStopper` services — final cleanup, audit log close
+11. Exit
 
 See [Shutdown Lifecycle](/howto/signals) for the full interface table and [Readiness Patterns](/howto/readiness) for combining workers with health checks.
 
