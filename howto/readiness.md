@@ -19,7 +19,7 @@ This page describes four common patterns, from simplest to most advanced.
 
 ## Pattern 1: Simple (most services)
 
-Service becomes ready immediately after `InitGRPC`. No workers, no external dependencies to wait for.
+Service becomes ready during initialization. No workers, no external dependencies to wait for.
 
 ```go
 type svc struct {

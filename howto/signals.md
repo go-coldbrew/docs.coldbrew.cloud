@@ -45,8 +45,8 @@ When the application receives a signal, ColdBrew executes a multi-step shutdown 
 
 Configuring the shutdown process is done by setting the [config] values:
 
-- `SHUTDOWN_DURATION_IN_SECONDS` - Timeout for the entire `Stop()` sequence (default: 15s), covering steps 1-8 above including the drain wait. After this, the process exits regardless.
-- `GRPC_GRACEFUL_DURATION_IN_SECONDS` - Duration of step 2 — how long to wait after failing `/readycheck` before stopping servers (default: 7s). This is **included within** `SHUTDOWN_DURATION_IN_SECONDS`, not additional to it.
+- `SHUTDOWN_DURATION_IN_SECONDS` - Timeout for the entire `Stop()` sequence (default: 15s), covering steps 1-11 above including the drain wait. After this, the process exits regardless.
+- `GRPC_GRACEFUL_DURATION_IN_SECONDS` - Duration of step 3 — how long to wait after failing `/readycheck` before stopping servers (default: 7s). This is **included within** `SHUTDOWN_DURATION_IN_SECONDS`, not additional to it.
 - `DISABLE_SIGNAL_HANDLER` - If set to `true`, ColdBrew will not register a signal handler (useful when you want to handle signals yourself).
 
 ## Service lifecycle interfaces
@@ -61,7 +61,7 @@ ColdBrew provides optional interfaces for lifecycle hooks:
 | [CBPostStopper] | `PostStop(ctx)` | After Stop, before exit | Final cleanup, audit log close |
 
 {: .important}
-All resource cleanup belongs in `Stop()`. ColdBrew calls it after all servers have stopped and in-flight requests have completed (or timed out).
+Heavy resource cleanup (closing DB pools, flushing metrics) belongs in `Stop()`. Use `PreStop` for pre-shutdown actions like deregistering from service discovery, and `PostStop` for final cleanup after everything has stopped.
 
 ## Cleanup before shutdown
 
