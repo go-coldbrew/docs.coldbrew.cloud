@@ -55,6 +55,8 @@ ColdBrew provides optional interfaces for lifecycle hooks:
 
 | Interface | Method | When called | Use for |
 |-----------|--------|-------------|---------|
+| [CBPreStarter] | `PreStart(ctx)` | Before initGRPC/initHTTP | DB connections, auth setup, interceptor config |
+| [CBPostStarter] | `PostStart(ctx)` | After server goroutines launched | Service discovery registration, startup banner |
 | [CBPreStopper] | `PreStop(ctx)` | Before FailCheck | Deregister from service discovery, flush buffers |
 | [CBGracefulStopper] | `FailCheck(bool)` | Before drain wait | Mark service as not ready |
 | [CBStopper] | `Stop()` | After servers stopped | Close DB pools, flush metrics, drain producers |
@@ -96,6 +98,8 @@ Make sure you configure your load balancer to stop sending new requests to your 
 [config]: https://pkg.go.dev/github.com/go-coldbrew/core/config#Config
 [CBStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBStopper
 [CBGracefulStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBGracefulStopper
+[CBPreStarter]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStarter
+[CBPostStarter]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPostStarter
 [CBPreStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStopper
 [CBPostStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPostStopper
 [Kubernetes]: https://kubernetes.io/
