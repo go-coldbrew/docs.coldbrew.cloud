@@ -936,6 +936,23 @@ type cbSvc struct {
 func (s *cbSvc) Workers() []*workers.Worker { return s.impl.Workers() }
 ```
 
+### Alternative: workers.Run() directly
+
+The workers package is standalone — you can call `workers.Run()` from anywhere in your service or implementation. It works in any goroutine, any function, any context. The workers will stop when the context is cancelled.
+
+```go
+go workers.Run(ctx, []*workers.Worker{
+    workers.NewWorker("cleanup").HandlerFunc(s.cleanup).Every(5 * time.Minute),
+})
+```
+
+**When to use which:**
+
+| Approach | Shutdown ordering | Framework-managed | Best for |
+|---|---|---|---|
+| `CBWorkerProvider` | Workers stop before servers (guaranteed) | Yes | Production services with workers tied to the service lifecycle |
+| `workers.Run()` directly | Stops when context cancelled | No — you manage it | Standalone workers, quick prototyping, workers outside the service lifecycle |
+
 ### Readiness
 
 Workers and readiness are independent concerns. See [Readiness Patterns] for how to combine workers with health checks — from simple (Pattern 1) to worker-managed readiness (Pattern 3) to dynamic DB-driven workers (Pattern 4).
