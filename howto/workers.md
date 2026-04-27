@@ -394,7 +394,7 @@ middleware.Recover(func(name string, v any) {
 
 ### Tracing
 
-Creates an OTEL span named `worker:<name>:cycle` for each tick. Records errors on the span. Worker spans are always sampled regardless of the global sampler — this prevents silent span drops when using `ParentBased(TraceIDRatioBased(...))`, where worker root spans (which have no incoming parent) would otherwise be probabilistically dropped.
+Creates an OTEL span named `worker:<name>:cycle` for each tick. Records errors on the span. Worker spans are typically trace roots (no incoming parent), so sampling is determined by the global `TracerProvider`'s sampler — if you use `ParentBased(TraceIDRatioBased(...))` with a low ratio, worker spans may be probabilistically dropped. Use `AlwaysSample()` for the worker `TracerProvider` if you need every cycle traced.
 
 The OTEL trace ID is automatically injected into the log context as `trace` for correlation with your tracing backend.
 
