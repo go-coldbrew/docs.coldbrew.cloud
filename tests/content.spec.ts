@@ -112,6 +112,97 @@ test.describe("Callouts", () => {
   });
 });
 
+test.describe("Readiness & Workers Integration", () => {
+  test("readiness page renders all four patterns", async ({ page }) => {
+    await page.goto("/howto/readiness/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("Pattern 1");
+    await expect(mainContent).toContainText("Pattern 2");
+    await expect(mainContent).toContainText("Pattern 3");
+    await expect(mainContent).toContainText("Pattern 4");
+    await expect(mainContent).toContainText("CBPreStarter");
+    await expect(mainContent).toContainText("CBWorkerProvider");
+    const codeBlocks = page.locator("pre code");
+    expect(await codeBlocks.count()).toBeGreaterThanOrEqual(4);
+  });
+
+  test("readiness page has choosing-a-pattern table", async ({ page }) => {
+    await page.goto("/howto/readiness/");
+    const tables = page.locator("table");
+    expect(await tables.count()).toBeGreaterThanOrEqual(1);
+  });
+
+  test("workers page has ColdBrew Integration section", async ({ page }) => {
+    await page.goto("/howto/workers/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("ColdBrew Integration");
+    await expect(mainContent).toContainText("CBWorkerProvider");
+    await expect(mainContent).toContainText("Delegation pattern");
+    await expect(mainContent).toContainText("Readiness Patterns");
+  });
+});
+
+test.describe("SEO", () => {
+  const pagesWithDescriptions = [
+    "/",
+    "/getting-started/",
+    "/architecture/",
+    "/config-reference/",
+    "/howto/",
+    "/integrations/",
+    "/faq/",
+    "/packages/",
+    "/howto/APIs/",
+    "/howto/workers/",
+    "/howto/readiness/",
+    "/howto/production/",
+    "/howto/interceptors/",
+    "/howto/auth/",
+  ];
+
+  for (const pagePath of pagesWithDescriptions) {
+    test(`${pagePath} has meta description`, async ({ page }) => {
+      await page.goto(pagePath);
+      const meta = page.locator('meta[name="description"]');
+      const content = await meta.getAttribute("content");
+      expect(content, `${pagePath} missing meta description`).toBeTruthy();
+      expect(
+        content!.length,
+        `${pagePath} description too short`
+      ).toBeGreaterThan(20);
+    });
+  }
+});
+
+test.describe("Table of Contents", () => {
+  const howtoPages = [
+    "/howto/APIs/",
+    "/howto/gRPC/",
+    "/howto/Log/",
+    "/howto/errors/",
+    "/howto/Tracing/",
+    "/howto/interceptors/",
+    "/howto/workers/",
+    "/howto/readiness/",
+    "/howto/production/",
+    "/howto/auth/",
+  ];
+
+  for (const pagePath of howtoPages) {
+    test(`${pagePath} has table of contents`, async ({ page }) => {
+      await page.goto(pagePath);
+      const toc = page.locator("#table-of-contents, .no_toc, #toc");
+      const hasTOC = (await toc.count()) > 0;
+      // just-the-docs renders TOC as a list with anchor links
+      const tocLinks = page.locator('nav[aria-label="Table of contents"] a, .no_toc + ol a, .no_toc + ul a');
+      expect(
+        hasTOC || (await tocLinks.count()) > 0,
+        `${pagePath} missing table of contents`
+      ).toBeTruthy();
+    });
+  }
+});
+
 test.describe("ASCII Diagrams", () => {
   test("home page renders architecture diagram in pre block", async ({
     page,

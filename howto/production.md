@@ -624,4 +624,12 @@ These are your responsibility to handle at the infrastructure level:
 - [ ] `LOG_LEVEL=info` or higher (never `debug`)
 
 ---
+
+## Related
+
+- [Readiness Patterns](/howto/readiness) — health check strategies with workers
+- [Interceptors](/howto/interceptors) — rate limiting, timeout, and custom middleware
+- [Shutdown Lifecycle](/howto/signals) — SIGTERM, drain period, FailCheck sequence
+- [Workers](/howto/workers) — background goroutine management with restart and metrics
+
 [ColdBrew cookiecutter]: /getting-started

@@ -231,6 +231,40 @@ This routes the gateway's internal connection through a Unix socket instead of T
 
 Use `RegisterHandlerServer` instead of `RegisterHandlerFromEndpoint` in your `InitHTTP`, and wrap each gRPC method with `interceptors.DoHTTPtoGRPC()`. This eliminates all network overhead (~19µs) while preserving the full interceptor chain. Requires per-method wrappers — see the [Architecture page](/architecture#gateway-performance-options) for a code example.
 
+## Can I use ColdBrew with gRPC streaming?
+
+Yes. ColdBrew supports both **server streaming** and **bidirectional streaming** RPCs. The stream interceptor chain (response time logging, protovalidate, metrics, panic recovery) is applied automatically.
+
+Define streaming RPCs in your `.proto` file as usual:
+
+```protobuf
+rpc StreamEvents(EventRequest) returns (stream Event) {}
+```
+
+Note: grpc-gateway v2 supports **server streaming** over HTTP by translating gRPC server streams to newline-delimited JSON. Client streaming and bidirectional streaming have limited support — they translate to HTTP but lack true concurrent interleaving over HTTP/1.1. Practical constraints: reverse proxies may buffer streamed responses (requiring `X-Accel-Buffering: no`), and errors in streams are handled via `runtime.WithStreamErrorHandler`. For high-frequency real-time push or bidirectional communication, consider a dedicated WebSocket or SSE endpoint alongside the gateway. See the [grpc-gateway streaming examples](https://github.com/grpc-ecosystem/grpc-gateway/tree/main/examples/internal/proto/examplepb) for details.
+
+## How do I run background workers in my service?
+
+Implement the `CBWorkerProvider` optional interface on your service:
+
+```go
+func (s *svc) Workers() []*workers.Worker {
+    return []*workers.Worker{
+        workers.NewWorker("cleanup").HandlerFunc(s.cleanup).Every(5 * time.Minute),
+    }
+}
+```
+
+ColdBrew discovers this at startup and manages workers alongside gRPC/HTTP servers — with automatic panic recovery, configurable restart, and graceful shutdown. See the [Workers How-To](/howto/workers) for middleware, jitter, dynamic children, and the [Readiness Patterns](/howto/readiness) guide for integrating workers with health checks.
+
+## Why is my HTTP gateway slow?
+
+Two common causes and their fixes:
+
+1. **TCP loopback overhead** — The gateway connects to gRPC via TCP by default. Set `DISABLE_UNIX_GATEWAY=false` to use a Unix socket instead (~1.9x faster). See [gateway performance options](/architecture#gateway-performance-options).
+
+2. **Protobuf serialization** — Standard `proto.Marshal` uses reflection. Ensure your proto generation includes vtprotobuf (`vtproto` plugin in `buf.gen.yaml`). ColdBrew's codec uses VT methods automatically when available. See the [vtprotobuf How-To](/howto/vtproto).
+
 ## Where can I get help?
 
 - **[GitHub Discussions](https://github.com/go-coldbrew/core/discussions)** — Ask questions, share ideas

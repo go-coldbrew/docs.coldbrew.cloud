@@ -767,6 +767,13 @@ Benchmark source: [`benchmarks/`](https://github.com/go-coldbrew/core/tree/main/
 [errors package]: https://pkg.go.dev/github.com/go-coldbrew/errors
 [envconfig]: https://github.com/kelseyhightower/envconfig
 [ColdBrew]: https://docs.coldbrew.cloud
+## Related
+
+- [Swagger](/howto/swagger) — serve OpenAPI/Swagger UI for your endpoints
+- [Errors](/howto/errors) — gRPC status codes, stack traces, error notification
+- [vtprotobuf](/howto/vtproto) — optimize protobuf serialization for high throughput
+- [Testing](/howto/testing) — unit tests and benchmarks for your endpoints
+
 [google.api.http annotations]: https://cloud.google.com/endpoints/docs/grpc/transcoding
 [grpc-gateway]: https://grpc-ecosystem.github.io/grpc-gateway/
 [gRPC Gateway mapping]: https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/examples/
