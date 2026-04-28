@@ -174,17 +174,21 @@ Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` t
 
 ## Graceful shutdown tuning
 
-ColdBrew's shutdown sequence (bounded by `SHUTDOWN_DURATION_IN_SECONDS`, default 15s):
+When pod termination begins, Kubernetes runs any configured `lifecycle.preStop` hook, then the kubelet sends `SIGTERM`. ColdBrew's in-process shutdown sequence then begins, bounded by `SHUTDOWN_DURATION_IN_SECONDS` (default 15s). Note: the `PreStop(ctx)` hook below refers to ColdBrew's [CBPreStopper] interface, not Kubernetes' `lifecycle.preStop`:
 
-1. Receive SIGTERM from Kubernetes
+1. `PreStop(ctx)` on `CBPreStopper` services — deregister from service discovery, flush buffers
 2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
 3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s, included in shutdown timeout) for the load balancer to drain
-4. Shutdown admin server if configured (`ADMIN_PORT`)
-5. Shutdown HTTP server (stop accepting new requests)
-6. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
-7. Force-stop gRPC server if graceful shutdown didn't complete in time
-8. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
-9. Exit
+4. Cancel worker context, wait for workers to exit
+5. Shutdown admin server if configured (`ADMIN_PORT`)
+6. Shutdown HTTP server (stop accepting new requests)
+7. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
+8. Force-stop gRPC server if graceful shutdown didn't complete in time
+9. Call `Stop()` on `CBStopper` services — close database pools, flush metrics, drain message producers
+10. `PostStop(ctx)` on `CBPostStopper` services — final cleanup, audit log close
+11. Exit
+
+See [Shutdown Lifecycle](/howto/signals) for the full interface table and [Readiness Patterns](/howto/readiness) for combining workers with health checks.
 
 Tune these values based on your service:
 
@@ -633,3 +637,4 @@ These are your responsibility to handle at the infrastructure level:
 - [Workers](/howto/workers) — background goroutine management with restart and metrics
 
 [ColdBrew cookiecutter]: /getting-started
+[CBPreStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStopper
