@@ -174,7 +174,7 @@ Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` t
 
 ## Graceful shutdown tuning
 
-Kubernetes first sends `SIGTERM`, then ColdBrew begins its in-process shutdown sequence, which is bounded by `SHUTDOWN_DURATION_IN_SECONDS` (default 15s):
+When pod termination begins, Kubernetes runs any configured `lifecycle.preStop` hook, then the kubelet sends `SIGTERM`. ColdBrew's in-process shutdown sequence then begins, bounded by `SHUTDOWN_DURATION_IN_SECONDS` (default 15s). Note: the `PreStop(ctx)` hook below refers to ColdBrew's [CBPreStopper] interface, not Kubernetes' `lifecycle.preStop`:
 
 1. `PreStop(ctx)` on `CBPreStopper` services — deregister from service discovery, flush buffers
 2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
@@ -637,3 +637,4 @@ These are your responsibility to handle at the infrastructure level:
 - [Workers](/howto/workers) — background goroutine management with restart and metrics
 
 [ColdBrew cookiecutter]: /getting-started
+[CBPreStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStopper
