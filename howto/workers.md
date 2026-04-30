@@ -950,7 +950,7 @@ func init() {
 }
 ```
 
-`AddWorkerRunOptions` also accepts other run-level options like `workers.WithDefaultJitter` and `workers.WithInterceptors` — anything that should apply framework-wide to every worker started by `core.Run()`. Per-worker `Worker.WithMetrics` still overrides the run-level default for individual workers.
+`AddWorkerRunOptions` also accepts other run-level options like `workers.WithDefaultJitter` and `workers.WithInterceptors` — anything that should apply framework-wide to every worker started by `cb.Run()`. Per-worker `Worker.WithMetrics` still overrides the run-level default for individual workers.
 
 ### Tracing and observability middleware (opt-in)
 
@@ -977,7 +977,7 @@ core.AddWorkerRunOptions(
 )
 ```
 
-Run-level interceptors wrap **outside** worker-level interceptors, so per-worker `Interceptors`/`AddInterceptors` still compose correctly. See the [Middleware section](#middleware) earlier in this document for individual middleware behaviour.
+Run-level interceptors wrap **outside** worker-level interceptors, so per-worker `Interceptors`/`AddInterceptors` still compose correctly. See the [Middleware section](#middleware) earlier in this document for individual middleware behavior.
 
 ### Alternative: workers.Run() directly
 
