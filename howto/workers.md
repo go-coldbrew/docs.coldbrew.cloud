@@ -936,17 +936,17 @@ type cbSvc struct {
 func (s *cbSvc) Workers() []*workers.Worker { return s.impl.Workers() }
 ```
 
-### Metrics
+### Metrics defaults
 
 ColdBrew wires `workers.NewPrometheusMetrics(APP_NAME)` automatically when you adopt `CBWorkerProvider`. The default uses `APP_NAME` as the namespace, so `myapp_worker_started_total`, `myapp_worker_panicked_total`, `myapp_worker_active_count`, etc. appear on `/metrics` without any extra wiring.
 
 The default is skipped when `DISABLE_PROMETHEUS=true` or `APP_NAME` is empty (an empty namespace would produce ambiguous unprefixed metric names).
 
-To use a non-Prometheus backend (Datadog, StatsD, etc.) or a custom Prometheus namespace, override the default via `core.AddWorkerRunOptions` during init — same `Metrics` interface as the [Metrics section above](#metrics):
+To use a non-Prometheus backend (Datadog, StatsD, etc.) or a custom Prometheus namespace, override the default via `core.AddWorkerRunOptions` during init. The `Metrics` interface is the same one shown in the [standalone Metrics section](#metrics) earlier in this document:
 
 ```go
 func init() {
-    core.AddWorkerRunOptions(workers.WithMetrics(myDatadogMetrics{}))
+    core.AddWorkerRunOptions(workers.WithMetrics(&myDatadogMetrics{client: dd}))
 }
 ```
 
