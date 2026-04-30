@@ -952,6 +952,33 @@ func init() {
 
 `AddWorkerRunOptions` also accepts other run-level options like `workers.WithDefaultJitter` and `workers.WithInterceptors` — anything that should apply framework-wide to every worker started by `core.Run()`. Per-worker `Worker.WithMetrics` still overrides the run-level default for individual workers.
 
+### Tracing and observability middleware (opt-in)
+
+Unlike gRPC, ColdBrew does **not** wire worker observability middleware automatically. The standard stack (`Recover`, `LogContext`, `Tracing`, `Slog`) is opt-in because tracing and slog produce one span and one log line per cycle — fine for slow periodic workers, noisy for fast ones. Enable it explicitly:
+
+```go
+import "github.com/go-coldbrew/workers/middleware"
+
+func init() {
+    core.AddWorkerRunOptions(
+        workers.WithInterceptors(middleware.DefaultInterceptors()...),
+    )
+}
+```
+
+`DefaultInterceptors()` returns `[Recover, LogContext, Tracing, Slog]`. Pick a subset if some are too noisy for your workload — `middleware.Recover(nil)` and `middleware.LogContext()` are essentially free and recommended for any production service:
+
+```go
+core.AddWorkerRunOptions(
+    workers.WithInterceptors(
+        middleware.Recover(nil),
+        middleware.LogContext(),
+    ),
+)
+```
+
+Run-level interceptors wrap **outside** worker-level interceptors, so per-worker `Interceptors`/`AddInterceptors` still compose correctly. See the [Middleware section](#middleware) earlier in this document for individual middleware behaviour.
+
 ### Alternative: workers.Run() directly
 
 The workers package is standalone — you can call `workers.Run()` from anywhere in your service or implementation. It works in any goroutine, any function, any context. The workers will stop when the context is cancelled.
