@@ -936,6 +936,22 @@ type cbSvc struct {
 func (s *cbSvc) Workers() []*workers.Worker { return s.impl.Workers() }
 ```
 
+### Metrics
+
+ColdBrew wires `workers.NewPrometheusMetrics(APP_NAME)` automatically when you adopt `CBWorkerProvider`. The default uses `APP_NAME` as the namespace, so `myapp_worker_started_total`, `myapp_worker_panicked_total`, `myapp_worker_active_count`, etc. appear on `/metrics` without any extra wiring.
+
+The default is skipped when `DISABLE_PROMETHEUS=true` or `APP_NAME` is empty (an empty namespace would produce ambiguous unprefixed metric names).
+
+To use a non-Prometheus backend (Datadog, StatsD, etc.) or a custom Prometheus namespace, override the default via `core.AddWorkerRunOptions` during init — same `Metrics` interface as the [Metrics section above](#metrics):
+
+```go
+func init() {
+    core.AddWorkerRunOptions(workers.WithMetrics(myDatadogMetrics{}))
+}
+```
+
+`AddWorkerRunOptions` also accepts other run-level options like `workers.WithDefaultJitter` and `workers.WithInterceptors` — anything that should apply framework-wide to every worker started by `core.Run()`. Per-worker `Worker.WithMetrics` still overrides the run-level default for individual workers.
+
 ### Alternative: workers.Run() directly
 
 The workers package is standalone — you can call `workers.Run()` from anywhere in your service or implementation. It works in any goroutine, any function, any context. The workers will stop when the context is cancelled.
