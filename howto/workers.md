@@ -954,7 +954,7 @@ func init() {
 
 ### Tracing and observability middleware (opt-in)
 
-Unlike gRPC, ColdBrew does **not** wire worker observability middleware automatically. The standard stack (`Recover`, `LogContext`, `Tracing`, `Slog`) is opt-in because tracing and slog produce one span and one log line per cycle — fine for slow periodic workers, noisy for fast ones. Enable it explicitly:
+Unlike gRPC, ColdBrew does **not** wire worker observability middleware automatically. The standard stack (`Recover`, `LogContext`, `Tracing`, `Slog`) is opt-in because tracing produces one span and `Slog` emits two log lines (start + end/error) per cycle — fine for slow periodic workers, noisy for fast ones. Enable it explicitly:
 
 ```go
 import "github.com/go-coldbrew/workers/middleware"
