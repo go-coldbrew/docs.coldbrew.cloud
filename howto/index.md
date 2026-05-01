@@ -20,6 +20,7 @@ Step-by-step guides for building, running, and operating ColdBrew services.
 | Add distributed tracing | [Tracing](/howto/Tracing) |
 | Expose Prometheus metrics | [Metrics](/howto/Metrics) |
 | Customize the interceptor chain | [Interceptors](/howto/interceptors) |
+| Add custom HTTP marshalers or middleware | [HTTP Gateway Extensions](/howto/gateway-extensions) |
 | Debug requests in production | [Debugging](/howto/Debugging) |
 | Handle graceful shutdown | [Signals](/howto/signals) |
 | Serve Swagger/OpenAPI UI | [Swagger](/howto/swagger) |
