@@ -142,6 +142,37 @@ test.describe("Readiness & Workers Integration", () => {
   });
 });
 
+test.describe("Factual accuracy", () => {
+  test("Tracing howto uses NewDatastoreSpan (not NewDatabaseSpan)", async ({ page }) => {
+    await page.goto("/howto/Tracing/");
+    const pageText = await page.locator("main, .main-content").first().textContent();
+    expect(pageText).toContain("NewDatastoreSpan");
+    expect(pageText).not.toContain("NewDatabaseSpan");
+  });
+
+  test("home page advertises correct local-stack counts", async ({ page }) => {
+    await page.goto("/");
+    const pageText = await page.locator("main, .main-content").first().textContent();
+    expect(pageText).toContain("21 services");
+    expect(pageText).toContain("18 single-service profiles");
+  });
+
+  test("local-dev page advertises correct local-stack counts", async ({ page }) => {
+    await page.goto("/howto/local-dev/");
+    const pageText = await page.locator("main, .main-content").first().textContent();
+    expect(pageText).toContain("21 infrastructure services");
+    expect(pageText).toContain("18 single-service profiles");
+  });
+
+  test("production page documents startup lifecycle hooks", async ({ page }) => {
+    await page.goto("/howto/production/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("Startup lifecycle");
+    await expect(mainContent).toContainText("CBPreStarter");
+    await expect(mainContent).toContainText("CBPostStarter");
+  });
+});
+
 test.describe("SEO", () => {
   const pagesWithDescriptions = [
     "/",

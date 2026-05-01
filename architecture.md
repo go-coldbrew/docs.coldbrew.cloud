@@ -375,24 +375,34 @@ func (s *svc) Echo(ctx context.Context, req *proto.EchoRequest) (*proto.EchoResp
 
 1. Configuration loaded from environment variables (`core.New(cfg)`)
 2. Interceptor chain assembled during `init()` (not thread-safe)
-3. gRPC server created, service registers handlers (`InitGRPC`)
-4. Unix socket created for gateway (if `DISABLE_UNIX_GATEWAY=false`)
-5. HTTP server created, service registers handlers (`InitHTTP`)
-6. gRPC and HTTP servers start listening concurrently
-7. Admin server starts (if `ADMIN_PORT` is set)
-8. Service marks itself as ready (`SetReady()`) — `/readycheck` starts succeeding
-9. Server blocks until shutdown signal
+3. `PreStart(ctx)` on services implementing [CBPreStarter] — DB connections, schema migrations, programmatic interceptor configuration. Returning an error aborts startup.
+4. gRPC server created, service registers handlers (`InitGRPC`)
+5. Unix socket created for gateway (if `DISABLE_UNIX_GATEWAY=false`)
+6. HTTP server created, service registers handlers (`InitHTTP`)
+7. gRPC and HTTP servers start listening concurrently
+8. Admin server starts (if `ADMIN_PORT` is set)
+9. `PostStart(ctx)` on services implementing [CBPostStarter] — service-discovery registration, post-startup metrics emission
+10. Service marks itself as ready (`SetReady()`) — `/readycheck` starts succeeding
+11. Server blocks until shutdown signal
 
 ### Shutdown Sequence
 
 1. SIGTERM/SIGINT received
-2. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
-3. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default 7s) for load balancer to drain
-4. Shutdown admin server (if configured)
-5. Shutdown HTTP server (stop accepting new requests)
-6. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
-7. Force-stop gRPC server if graceful shutdown didn't complete in time
-8. `Stop()` called on `CBStopper` services (your cleanup logic)
-9. Exit
+2. `PreStop(ctx)` on services implementing [CBPreStopper] — deregister from service discovery, flush buffers
+3. `FailCheck(true)` on `CBGracefulStopper` services — `/readycheck` starts failing
+4. Wait `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default 7s) for load balancer to drain
+5. Cancel worker context, wait for workers to exit
+6. Shutdown admin server (if configured)
+7. Shutdown HTTP server (stop accepting new requests)
+8. `GracefulStop()` gRPC server (finish in-flight RPCs, reject new ones)
+9. Force-stop gRPC server if graceful shutdown didn't complete in time
+10. `Stop()` called on `CBStopper` services (your cleanup logic)
+11. `PostStop(ctx)` on services implementing [CBPostStopper] — final cleanup, audit log close
+12. Exit
 
-See [Signal Handling and Graceful Shutdown](/howto/signals) for configuration and tuning details.
+See [Signal Handling and Graceful Shutdown](/howto/signals) for the full lifecycle interface table, configuration, and tuning details.
+
+[CBPreStarter]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStarter
+[CBPostStarter]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPostStarter
+[CBPreStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStopper
+[CBPostStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPostStopper

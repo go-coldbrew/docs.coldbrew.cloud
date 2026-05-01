@@ -13,7 +13,7 @@ description: "Docker Compose local dev stack with per-service profiles for datab
 
 ## Overview
 
-Projects generated from the [ColdBrew cookiecutter] include a `docker-compose.local.yml` with 19 infrastructure services across 18 individual profiles plus one group profile (`obs` for Prometheus + Grafana + Jaeger). You select which profiles to start — only those containers run.
+Projects generated from the [ColdBrew cookiecutter] include a `docker-compose.local.yml` with 21 infrastructure services across 18 single-service profiles plus the `obs` group profile (Prometheus + Grafana + Jaeger). You select which profiles to start — only those containers run.
 
 Your app runs natively via `make run` (fast builds, no Docker overhead). The compose stack provides only infrastructure dependencies.
 

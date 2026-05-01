@@ -172,6 +172,15 @@ Both return JSON with build/version info on success. During graceful shutdown, `
 {: .important }
 Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` to avoid SIGKILL during shutdown. The drain wait (`GRPC_GRACEFUL_DURATION_IN_SECONDS`) is included within the shutdown timeout, not additional to it. With the default of 15s, a value of 20 provides a safe buffer.
 
+## Startup lifecycle
+
+ColdBrew exposes two optional interfaces for one-time startup work, symmetric to the shutdown hooks below:
+
+1. `PreStart(ctx) error` on services implementing [CBPreStarter] — runs **before** `InitGRPC`/`InitHTTP`. Returning an error aborts startup, so this is the right place for required dependencies that must be ready before traffic is accepted: database pool initialization, schema migrations, programmatic interceptor configuration via `interceptors.Set*()` functions, blocking auth-key warmup.
+2. `PostStart(ctx)` on services implementing [CBPostStarter] — runs **after** servers are listening. Use it for fire-and-forget setup that doesn't gate readiness: service-discovery registration, post-startup metrics emission, startup banners.
+
+Order: `PreStart → InitGRPC/InitHTTP → server listen → PostStart → SetReady`. See [Readiness Patterns](/howto/readiness) for blocking on dependencies in `PreStart`, and [Shutdown Lifecycle](/howto/signals#service-lifecycle-interfaces) for the full interface table.
+
 ## Graceful shutdown tuning
 
 When pod termination begins, Kubernetes runs any configured `lifecycle.preStop` hook, then the kubelet sends `SIGTERM`. ColdBrew's in-process shutdown sequence then begins, bounded by `SHUTDOWN_DURATION_IN_SECONDS` (default 15s). Note: the `PreStop(ctx)` hook below refers to ColdBrew's [CBPreStopper] interface, not Kubernetes' `lifecycle.preStop`:
@@ -637,4 +646,6 @@ These are your responsibility to handle at the infrastructure level:
 - [Workers](/howto/workers) — background goroutine management with restart and metrics
 
 [ColdBrew cookiecutter]: /getting-started
+[CBPreStarter]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStarter
+[CBPostStarter]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPostStarter
 [CBPreStopper]: https://pkg.go.dev/github.com/go-coldbrew/core#CBPreStopper
