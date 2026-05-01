@@ -29,7 +29,7 @@ func RegisterHTTPMarshaler(mime string, m runtime.Marshaler)
 Use them to add custom marshalers (MessagePack, CBOR, vendor-specific JSON), tune the default protojson marshaler, register per-route middleware, install a custom error handler, or wire forward-response hooks — anything `runtime.ServeMuxOption` lets you do.
 
 {: .note }
-These functions follow ColdBrew's init-only configuration pattern. Call them **before** `core.Run()` — typically from a service's `PreStart` hook or a `package init`. They are **not** safe for concurrent registration and have no effect after the server is running.
+These functions follow ColdBrew's init-only configuration pattern. Call them **before starting the ColdBrew instance** (for example, before `cb.Run()`) — typically from a service's `PreStart` hook or a `package init`. They are **not** safe for concurrent registration and have no effect after the server is running.
 
 ## Ordering rules
 
