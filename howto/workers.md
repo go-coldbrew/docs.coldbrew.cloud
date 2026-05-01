@@ -936,6 +936,49 @@ type cbSvc struct {
 func (s *cbSvc) Workers() []*workers.Worker { return s.impl.Workers() }
 ```
 
+### Metrics defaults
+
+ColdBrew wires `workers.NewPrometheusMetrics(APP_NAME)` automatically when you adopt `CBWorkerProvider`. The default uses `APP_NAME` as the namespace, so `myapp_worker_started_total`, `myapp_worker_panicked_total`, `myapp_worker_active_count`, etc. appear on `/metrics` without any extra wiring.
+
+The default is skipped when `DISABLE_PROMETHEUS=true` or `APP_NAME` is empty (an empty namespace would produce ambiguous unprefixed metric names).
+
+To use a non-Prometheus backend (Datadog, StatsD, etc.) or a custom Prometheus namespace, override the default via `core.AddWorkerRunOptions` during init. The `Metrics` interface is the same one shown in the [standalone Metrics section](#metrics) earlier in this document:
+
+```go
+func init() {
+    core.AddWorkerRunOptions(workers.WithMetrics(&myDatadogMetrics{client: dd}))
+}
+```
+
+`AddWorkerRunOptions` also accepts other run-level options like `workers.WithDefaultJitter` and `workers.WithInterceptors` — anything that should apply framework-wide to every worker started by `cb.Run()`. Per-worker `Worker.WithMetrics` still overrides the run-level default for individual workers.
+
+### Tracing and observability middleware (opt-in)
+
+Unlike gRPC, ColdBrew does **not** wire worker observability middleware automatically. The standard stack (`Recover`, `LogContext`, `Tracing`, `Slog`) is opt-in because tracing produces one span and `Slog` emits two log lines (start + end/error) per cycle — fine for slow periodic workers, noisy for fast ones. Enable it explicitly:
+
+```go
+import "github.com/go-coldbrew/workers/middleware"
+
+func init() {
+    core.AddWorkerRunOptions(
+        workers.WithInterceptors(middleware.DefaultInterceptors()...),
+    )
+}
+```
+
+`DefaultInterceptors()` returns `[Recover, LogContext, Tracing, Slog]`. Pick a subset if some are too noisy for your workload — `middleware.Recover(nil)` and `middleware.LogContext()` are essentially free and recommended for any production service:
+
+```go
+core.AddWorkerRunOptions(
+    workers.WithInterceptors(
+        middleware.Recover(nil),
+        middleware.LogContext(),
+    ),
+)
+```
+
+Run-level interceptors wrap **outside** worker-level interceptors, so per-worker `Interceptors`/`AddInterceptors` still compose correctly. See the [Middleware section](#middleware) earlier in this document for individual middleware behavior.
+
 ### Alternative: workers.Run() directly
 
 The workers package is standalone — you can call `workers.Run()` from anywhere in your service or implementation. It works in any goroutine, any function, any context. The workers will stop when the context is cancelled.
