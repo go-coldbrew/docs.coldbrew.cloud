@@ -35,7 +35,7 @@ A Kubernetes-native Go microservice framework for building production-grade gRPC
 | **Fast Serialization** | [vtprotobuf] codec enabled by default — faster gRPC marshalling with automatic fallback to standard protobuf |
 | **TLS with Auto-Reload** | Automatic certificate hot-reloading via [certinel](https://github.com/cloudflare/certinel) — updated certs are picked up without a restart; works with cert-manager and Vault symlink rotation |
 | **Kubernetes-native** | Health/ready probes, graceful SIGTERM shutdown, structured JSON logs, Prometheus metrics — all wired automatically |
-| **Service Lifecycle Hooks** | Optional `PreStart`/`PostStart`/`PreStop`/`Stop`/`PostStop` callbacks for setup, registration, draining, and cleanup — see [Shutdown Lifecycle](/howto/signals) |
+| **Service Lifecycle Hooks** | Optional `PreStart`/`PostStart`/`PreStop`/`Stop`/`PostStop` callbacks for setup, registration, draining, and cleanup — see [service lifecycle interfaces](/howto/signals#service-lifecycle-interfaces) |
 | **Swagger / OpenAPI** | Interactive API docs auto-served at `/swagger/` from your protobuf definitions |
 | **Profiling** | Go [pprof] endpoints at `/debug/pprof/` for CPU, memory, goroutine, and trace profiling |
 | **gRPC Reflection** | Server reflection enabled by default — works with [grpcurl], [grpcui], and Postman |

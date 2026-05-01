@@ -55,7 +55,7 @@ ColdBrew provides optional interfaces for lifecycle hooks:
 
 | Interface | Method | When called | Use for |
 |-----------|--------|-------------|---------|
-| [CBPreStarter] | `PreStart(ctx)` | Before initGRPC/initHTTP | DB connections, auth setup, interceptor config |
+| [CBPreStarter] | `PreStart(ctx) error` | Before initGRPC/initHTTP | DB connections, auth setup, interceptor config (returning error aborts startup) |
 | [CBPostStarter] | `PostStart(ctx)` | After server goroutines launched | Service discovery registration, startup banner |
 | [CBPreStopper] | `PreStop(ctx)` | Before FailCheck | Deregister from service discovery, flush buffers |
 | [CBGracefulStopper] | `FailCheck(bool)` | Before drain wait | Mark service as not ready |
