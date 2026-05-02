@@ -136,6 +136,8 @@ Wire it from your service:
 
 ```go
 import (
+    "context"
+
     "github.com/go-coldbrew/core"
     "yourorg/yourservice/msgpackmarshaler"
 )
@@ -161,6 +163,8 @@ ColdBrew's default for unknown `Content-Type`s — including `application/json` 
 
 ```go
 import (
+    "context"
+
     "google.golang.org/protobuf/encoding/protojson"
     "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
     "github.com/go-coldbrew/core"
@@ -187,6 +191,7 @@ func (s *Service) PreStart(ctx context.Context) error {
 
 ```go
 import (
+    "context"
     "net/http"
 
     "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -224,15 +229,19 @@ import (
 
 func envelopeErrorHandler(ctx context.Context, mux *runtime.ServeMux, m runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
     s, _ := status.FromError(err)
-    w.Header().Set("Content-Type", m.ContentType(nil))
-    w.WriteHeader(runtime.HTTPStatusFromCode(s.Code()))
     payload := map[string]any{
         "error": map[string]any{
             "code":    s.Code().String(),
             "message": s.Message(),
         },
     }
-    body, _ := m.Marshal(payload)
+    body, marshalErr := m.Marshal(payload)
+    if marshalErr != nil {
+        http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+        return
+    }
+    w.Header().Set("Content-Type", m.ContentType(nil))
+    w.WriteHeader(runtime.HTTPStatusFromCode(s.Code()))
     _, _ = w.Write(body)
 }
 
