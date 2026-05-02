@@ -100,8 +100,6 @@ When your service makes outbound gRPC calls, three concerns usually come up toge
 - **Per-call timeouts** — pass a deadline via `context.WithTimeout` on the client side and call the returned `cancel` (typically `defer cancel()`) so the timer is released as soon as the call returns. The server-side default is `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` (see [Configuration Reference](/config-reference)).
 - **Client-side tracing and metrics** — the default client interceptors propagate the trace ID and emit `grpc_client_*` Prometheus metrics automatically. See [Interceptors](/howto/interceptors#adding-interceptors-to-your-grpc-client) to add your own.
 
-[failsafe-go]: https://github.com/failsafe-go/failsafe-go
-
 ## Wrapping existing connections
 
 You can also use existing gRPC connections with [grpcpool] by wrapping it with [grpcpool.New] function.
@@ -149,3 +147,4 @@ func main() {
 [grpcpool.Dial]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool#Dial
 [grpc.ClientConnInterface]: https://pkg.go.dev/google.golang.org/grpc#ClientConnInterface
 [grpcpool.New]: https://pkg.go.dev/github.com/go-coldbrew/grpcpool#New
+[failsafe-go]: https://github.com/failsafe-go/failsafe-go
