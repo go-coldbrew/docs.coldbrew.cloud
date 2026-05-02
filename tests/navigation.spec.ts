@@ -30,6 +30,7 @@ const howtoPages = [
   "/howto/private-modules/",
   "/howto/auth/",
   "/howto/readiness/",
+  "/howto/local-dev/",
   "/howto/gateway-extensions/",
 ];
 
