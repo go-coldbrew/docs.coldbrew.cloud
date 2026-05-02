@@ -97,7 +97,7 @@ func main() {
 When your service makes outbound gRPC calls, three concerns usually come up together — the connection pool above handles transport, and these handle reliability:
 
 - **Circuit breaking and retries** — register an executor with `interceptors.SetDefaultExecutor` and bring your own resilience library ([failsafe-go] is recommended). See [Circuit Breaker / Resilience](/integrations/#circuit-breaker--resilience) for the full setup, per-method circuit breakers, and excluded errors.
-- **Per-call timeouts** — pass a deadline via `context.WithTimeout` on the client side. The server-side default is `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` (see [Configuration Reference](/config-reference)).
+- **Per-call timeouts** — pass a deadline via `context.WithTimeout` on the client side and call the returned `cancel` (typically `defer cancel()`) so the timer is released as soon as the call returns. The server-side default is `GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS` (see [Configuration Reference](/config-reference)).
 - **Client-side tracing and metrics** — the default client interceptors propagate the trace ID and emit `grpc_client_*` Prometheus metrics automatically. See [Interceptors](/howto/interceptors#adding-interceptors-to-your-grpc-client) to add your own.
 
 [failsafe-go]: https://github.com/failsafe-go/failsafe-go

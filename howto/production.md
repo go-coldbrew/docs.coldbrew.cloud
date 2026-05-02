@@ -620,7 +620,7 @@ These are your responsibility to handle at the infrastructure level:
 - [ ] Set up error tracking (`SENTRY_DSN` or equivalent)
 - [ ] Configure tracing (`OTLP_ENDPOINT` or `NEW_RELIC_LICENSE_KEY`)
 - [ ] Ship logs to a centralized sink (Loki, Elastic, Datadog, etc.) so the trace ID in each line is searchable across pods
-- [ ] If serving TLS, point `TLS_CERT_PATH`/`TLS_KEY_PATH` at the cert-manager / Vault symlink so [auto-reload](/howto/production#tls) picks up rotations
+- [ ] If serving TLS, point `GRPC_TLS_CERT_FILE`/`GRPC_TLS_KEY_FILE` at the cert-manager / Vault symlink so [auto-reload](/howto/production#tls) picks up rotations
 - [ ] Use headless Service or L7 proxy for gRPC load balancing
 - [ ] Set resource requests and limits
 - [ ] Store secrets in Kubernetes Secrets, not environment variable literals
