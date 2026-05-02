@@ -32,6 +32,7 @@ Step-by-step guides for building, running, and operating ColdBrew services.
 | Manage readiness with workers | [Readiness Patterns](/howto/readiness) |
 | Set up local dev with Docker | [Local Development](/howto/local-dev) |
 | Add JWT / API key auth | [Authentication](/howto/auth) |
+| Add custom HTTP marshalers or middleware | [HTTP Gateway Extensions](/howto/gateway-extensions) |
 
 If you have a How To that you would like to share, please [open an issue](https://github.com/go-coldbrew/docs.coldbrew.cloud/issues)
 

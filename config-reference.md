@@ -93,6 +93,8 @@ To allow connections to remain open indefinitely, set both `GRPC_SERVER_MAX_CONN
 | `TRACE_HEADER_NAME` | string | `x-trace-id` | HTTP header name for trace ID propagation to log/trace contexts |
 | `DISABLE_HTTP_COMPRESSION` | bool | `false` | Disable gzip/zstd compression for HTTP gateway responses |
 | `HTTP_COMPRESSION_MIN_SIZE` | int | `256` | Minimum response body size (bytes) before compression is applied. Responses smaller than this are sent uncompressed |
+| `DISABLE_ZSTD_COMPRESSION` | bool | `false` | Disable zstd compression on the HTTP gateway. When `false`, zstd is offered alongside gzip and selected via `Accept-Encoding` negotiation. Ignored when `DISABLE_HTTP_COMPRESSION=true` |
+| `PREFER_ZSTD` | bool | `true` | Prefer zstd over gzip when a client advertises both in `Accept-Encoding`. Ignored when zstd is disabled |
 | `DISABLE_UNIX_GATEWAY` | bool | `true` | Disable Unix domain socket for HTTP gateway's internal gRPC connection. Set to `false` to enable (~1.9x faster than TCP loopback). Ignored when gRPC TLS is configured. See [Gateway Performance Options](/architecture#gateway-performance-options) |
 
 ## Prometheus Metrics
