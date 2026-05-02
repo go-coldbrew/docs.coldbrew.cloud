@@ -614,13 +614,18 @@ These are your responsibility to handle at the infrastructure level:
 
 - [ ] Set `APP_NAME` and `ENVIRONMENT` for log/metric identification
 - [ ] Configure `livenessProbe` on `/healthcheck` and `readinessProbe` on `/readycheck`
-- [ ] Set `terminationGracePeriodSeconds` ≥ shutdown + healthcheck wait duration
+- [ ] Set `terminationGracePeriodSeconds` to at least `SHUTDOWN_DURATION_IN_SECONDS` so graceful shutdown completes before SIGKILL
 - [ ] Enable Prometheus scraping (annotation or ServiceMonitor)
+- [ ] Wire alerts on the four signals every service needs: error-rate spike, p99 latency burn, restart count, OOM kills (see [Key metrics to alert on](#key-metrics-to-alert-on))
 - [ ] Set up error tracking (`SENTRY_DSN` or equivalent)
 - [ ] Configure tracing (`OTLP_ENDPOINT` or `NEW_RELIC_LICENSE_KEY`)
+- [ ] Ship logs to a centralized sink (Loki, Elastic, Datadog, etc.) so the trace ID in each line is searchable across pods
+- [ ] If serving TLS, point `GRPC_TLS_CERT_FILE`/`GRPC_TLS_KEY_FILE` at the cert-manager / Vault symlink so [auto-reload](#tls) picks up rotations
 - [ ] Use headless Service or L7 proxy for gRPC load balancing
 - [ ] Set resource requests and limits
 - [ ] Store secrets in Kubernetes Secrets, not environment variable literals
+- [ ] Set `ADMIN_PORT` if `/metrics`, `/debug/pprof`, and `/swagger` should be on a separate (non-public) port — see [Dedicated admin port](#dedicated-admin-port-recommended)
+- [ ] Have a rollout plan — canary, blue-green, or progressive rollout — so a bad deploy doesn't take down all replicas at once
 - [ ] Run `make lint` (includes `govulncheck`) before deploying
 - [ ] For high-QPS services: set `RESPONSE_TIME_LOG_ERROR_ONLY=true` to skip per-request logging on successful RPCs (see [tuning impact](/config-reference#measured-tuning-impact))
 

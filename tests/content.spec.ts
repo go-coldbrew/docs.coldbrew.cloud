@@ -171,6 +171,41 @@ test.describe("Factual accuracy", () => {
     await expect(mainContent).toContainText("CBPreStarter");
     await expect(mainContent).toContainText("CBPostStarter");
   });
+
+  test("howto index is grouped by audience", async ({ page }) => {
+    await page.goto("/howto/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent.getByRole("heading", { name: "Build" })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "Operate" })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "Integrate" })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "Advanced" })).toBeVisible();
+  });
+
+  test("gRPC howto links the resilience and timeout topics", async ({ page }) => {
+    await page.goto("/howto/gRPC/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("Calling other services");
+    await expect(mainContent).toContainText("GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS");
+    // Assert the actual hrefs so this test fails if a link is dropped or
+    // re-pointed, not just if the surrounding prose is reworded.
+    await expect(
+      mainContent.getByRole("link", { name: "Circuit Breaker / Resilience" })
+    ).toHaveAttribute("href", "/integrations/#circuit-breaker--resilience");
+    await expect(
+      mainContent.getByRole("link", { name: "Configuration Reference" })
+    ).toHaveAttribute("href", "/config-reference");
+  });
+
+  test("production checklist covers the documented operational gates", async ({ page }) => {
+    await page.goto("/howto/production/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("Production checklist");
+    await expect(mainContent).toContainText("p99 latency");
+    await expect(mainContent).toContainText("OOM");
+    await expect(mainContent).toContainText("centralized sink");
+    await expect(mainContent).toContainText("ADMIN_PORT");
+    await expect(mainContent).toContainText("canary");
+  });
 });
 
 test.describe("SEO", () => {
