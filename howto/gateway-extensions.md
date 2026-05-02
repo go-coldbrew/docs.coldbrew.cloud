@@ -152,14 +152,14 @@ func (s *Service) PreStart(ctx context.Context) error {
 Now `curl -H 'Accept: application/msgpack' …` returns msgpack-encoded responses, and `Content-Type: application/msgpack` request bodies decode correctly.
 
 {: .warning }
-`NewDecoder` reads the full request body into memory via `io.ReadAll`. Pair this marshaler with a request-size limit at the middleware layer (see the [Per-route middleware](#recipe-per-route-middleware) recipe below using `http.MaxBytesReader`) so a hostile client can't pin memory by streaming a giant body.
+`NewDecoder` reads the full request body into memory via `io.ReadAll`. Pair this marshaler with a request-size limit at the middleware layer (see the [Gateway middleware](#recipe-gateway-middleware) recipe below using `http.MaxBytesReader`) so a hostile client can't pin memory by streaming a giant body.
 
 {: .note }
 The protojson hop costs about 2× a single marshal compared to a hand-written `protoreflect`-based encoder. For hot paths consider implementing a direct encoder; for typical request volumes the bridge is fast enough and dramatically simpler.
 
 ## Recipe: Tune the default JSON marshaler
 
-ColdBrew's default for unknown `Content-Type`s — including `application/json` — is grpc-gateway's `runtime.JSONPb` (protojson). The defaults emit `camelCase` field names and omit zero values. Override the wildcard MIME to change that:
+The fallback marshaler for any `Content-Type` that isn't explicitly registered is grpc-gateway's `runtime.JSONPb` (protojson). Out of the box this catches `application/json` requests too — the defaults emit `camelCase` field names and omit zero values. Override the fallback by re-registering for `runtime.MIMEWildcard`:
 
 ```go
 import (
@@ -185,9 +185,12 @@ func (s *Service) PreStart(ctx context.Context) error {
 }
 ```
 
-## Recipe: Per-route middleware
+{: .note }
+The wildcard registration only takes effect when no concrete marshaler is registered for the request's `Content-Type`. If you've set `USE_JSON_BUILTIN_MARSHALLER=true` (which binds `JSON_BUILTIN_MARSHALLER_MIME`, default `application/json`, to `runtime.JSONBuiltin{}`) — or otherwise registered a marshaler for `application/json` — also register the tuned `JSONPb` for that concrete MIME, e.g. `core.RegisterHTTPMarshaler("application/json", &runtime.JSONPb{...})`.
 
-`runtime.WithMiddlewares` middleware runs around every gateway-routed request and stacks with ColdBrew's internal middleware:
+## Recipe: Gateway middleware
+
+`runtime.WithMiddlewares` registers a middleware on the entire grpc-gateway mux — every gateway-routed request runs through it, stacking with ColdBrew's internal middleware:
 
 ```go
 import (
@@ -250,6 +253,9 @@ func (s *Service) PreStart(ctx context.Context) error {
     return nil
 }
 ```
+
+{: .warning }
+This snippet marshals a `map[string]any` envelope. JSON-shaped marshalers (`runtime.JSONPb`, `runtime.JSONBuiltin`, the JSON-bridged msgpack recipe above) accept it, but proto-only marshalers (`application/proto`, `application/protobuf`) require a `proto.Message` and would hit the `http.Error` fallback path. For a portable envelope, marshal `status.Convert(err).Proto()` (a `*google.golang.org/genproto/googleapis/rpc/status.Status` that implements `proto.Message`) instead of a freeform map — or define your own envelope as a generated proto.
 
 ## When to reach for these hooks
 
