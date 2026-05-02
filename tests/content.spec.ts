@@ -185,8 +185,15 @@ test.describe("Factual accuracy", () => {
     await page.goto("/howto/gRPC/");
     const mainContent = page.locator("main, .main-content").first();
     await expect(mainContent).toContainText("Calling other services");
-    await expect(mainContent).toContainText("Circuit Breaker / Resilience");
     await expect(mainContent).toContainText("GRPC_SERVER_DEFAULT_TIMEOUT_IN_SECONDS");
+    // Assert the actual hrefs so this test fails if a link is dropped or
+    // re-pointed, not just if the surrounding prose is reworded.
+    await expect(
+      mainContent.getByRole("link", { name: "Circuit Breaker / Resilience" })
+    ).toHaveAttribute("href", "/integrations/#circuit-breaker--resilience");
+    await expect(
+      mainContent.getByRole("link", { name: "Configuration Reference" })
+    ).toHaveAttribute("href", "/config-reference");
   });
 
   test("production checklist covers the documented operational gates", async ({ page }) => {
