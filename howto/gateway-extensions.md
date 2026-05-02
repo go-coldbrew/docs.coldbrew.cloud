@@ -26,7 +26,7 @@ func RegisterServeMuxOption(opt runtime.ServeMuxOption)
 func RegisterHTTPMarshaler(mime string, m runtime.Marshaler)
 ```
 
-Use them to add custom marshalers (MessagePack, CBOR, vendor-specific JSON), tune the default protojson marshaler, register per-route middleware, install a custom error handler, or wire forward-response hooks — anything `runtime.ServeMuxOption` lets you do.
+Use them to add custom marshalers (MessagePack, CBOR, vendor-specific JSON), tune the default protojson marshaler, register gateway middleware, install a custom error handler, or wire forward-response hooks — anything `runtime.ServeMuxOption` lets you do.
 
 {: .note }
 These functions follow ColdBrew's init-only configuration pattern. Call them **before starting the ColdBrew instance** (for example, before `cb.Run()`) — typically from a service's `PreStart` hook or a package-level `init()` function. They are **not** safe for concurrent registration and have no effect after the server is running.
@@ -255,7 +255,7 @@ func (s *Service) PreStart(ctx context.Context) error {
 ```
 
 {: .warning }
-This snippet marshals a `map[string]any` envelope. JSON-shaped marshalers (`runtime.JSONPb`, `runtime.JSONBuiltin`, the JSON-bridged msgpack recipe above) accept it, but proto-only marshalers (`application/proto`, `application/protobuf`) require a `proto.Message` and would hit the `http.Error` fallback path. For a portable envelope, marshal `status.Convert(err).Proto()` (a `*google.golang.org/genproto/googleapis/rpc/status.Status` that implements `proto.Message`) instead of a freeform map — or define your own envelope as a generated proto.
+This snippet marshals a `map[string]any` envelope. Only `runtime.JSONPb` and `runtime.JSONBuiltin` accept arbitrary Go values; every other marshaler ColdBrew ships or this guide demonstrates — `runtime.ProtoMarshaller` (`application/proto`, `application/protobuf`) and the MessagePack recipe above (which type-asserts `proto.Message`) — will reject the freeform map and fall through to the `http.Error` path. For a portable envelope, marshal `status.Convert(err).Proto()` (a `*google.golang.org/genproto/googleapis/rpc/status.Status` that implements `proto.Message`) instead of a freeform map, or define your own envelope as a generated proto.
 
 ## When to reach for these hooks
 

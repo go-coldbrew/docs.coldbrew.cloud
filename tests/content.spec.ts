@@ -189,6 +189,7 @@ test.describe("SEO", () => {
     "/howto/production/",
     "/howto/interceptors/",
     "/howto/auth/",
+    "/howto/gateway-extensions/",
   ];
 
   for (const pagePath of pagesWithDescriptions) {
@@ -217,6 +218,7 @@ test.describe("Table of Contents", () => {
     "/howto/readiness/",
     "/howto/production/",
     "/howto/auth/",
+    "/howto/gateway-extensions/",
   ];
 
   for (const pagePath of howtoPages) {

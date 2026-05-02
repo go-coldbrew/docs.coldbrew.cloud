@@ -23,12 +23,14 @@ async function getInternalLinks(
 test.describe("Internal Links", () => {
   const pagesToCrawl = [
     "/",
+    "/howto/",
     "/howto/APIs/",
     "/integrations/",
     "/packages/",
     "/howto/production/",
     "/howto/workers/",
     "/howto/readiness/",
+    "/howto/gateway-extensions/",
     "/architecture/",
     "/config-reference/",
   ];
