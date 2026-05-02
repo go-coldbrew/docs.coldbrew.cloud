@@ -29,7 +29,7 @@ func RegisterHTTPMarshaler(mime string, m runtime.Marshaler)
 Use them to add custom marshalers (MessagePack, CBOR, vendor-specific JSON), tune the default protojson marshaler, register per-route middleware, install a custom error handler, or wire forward-response hooks — anything `runtime.ServeMuxOption` lets you do.
 
 {: .note }
-These functions follow ColdBrew's init-only configuration pattern. Call them **before starting the ColdBrew instance** (for example, before `cb.Run()`) — typically from a service's `PreStart` hook or a `package init`. They are **not** safe for concurrent registration and have no effect after the server is running.
+These functions follow ColdBrew's init-only configuration pattern. Call them **before starting the ColdBrew instance** (for example, before `cb.Run()`) — typically from a service's `PreStart` hook or a package-level `init()` function. They are **not** safe for concurrent registration and have no effect after the server is running.
 
 ## Ordering rules
 
@@ -136,18 +136,21 @@ Wire it from your service:
 
 ```go
 import (
-    coldbrew "github.com/go-coldbrew/core"
+    "github.com/go-coldbrew/core"
     "yourorg/yourservice/msgpackmarshaler"
 )
 
 func (s *Service) PreStart(ctx context.Context) error {
-    coldbrew.RegisterHTTPMarshaler(msgpackmarshaler.ContentType, msgpackmarshaler.Marshaler{})
-    coldbrew.RegisterHTTPMarshaler("application/x-msgpack", msgpackmarshaler.Marshaler{}) // legacy alias
+    core.RegisterHTTPMarshaler(msgpackmarshaler.ContentType, msgpackmarshaler.Marshaler{})
+    core.RegisterHTTPMarshaler("application/x-msgpack", msgpackmarshaler.Marshaler{}) // legacy alias
     return nil
 }
 ```
 
 Now `curl -H 'Accept: application/msgpack' …` returns msgpack-encoded responses, and `Content-Type: application/msgpack` request bodies decode correctly.
+
+{: .warning }
+`NewDecoder` reads the full request body into memory via `io.ReadAll`. Pair this marshaler with a request-size limit at the middleware layer (see the [Per-route middleware](#recipe-per-route-middleware) recipe below using `http.MaxBytesReader`) so a hostile client can't pin memory by streaming a giant body.
 
 {: .note }
 The protojson hop costs about 2× a single marshal compared to a hand-written `protoreflect`-based encoder. For hot paths consider implementing a direct encoder; for typical request volumes the bridge is fast enough and dramatically simpler.
@@ -160,11 +163,11 @@ ColdBrew's default for unknown `Content-Type`s — including `application/json` 
 import (
     "google.golang.org/protobuf/encoding/protojson"
     "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-    coldbrew "github.com/go-coldbrew/core"
+    "github.com/go-coldbrew/core"
 )
 
 func (s *Service) PreStart(ctx context.Context) error {
-    coldbrew.RegisterHTTPMarshaler(runtime.MIMEWildcard, &runtime.JSONPb{
+    core.RegisterHTTPMarshaler(runtime.MIMEWildcard, &runtime.JSONPb{
         MarshalOptions: protojson.MarshalOptions{
             EmitUnpopulated: true,  // include zero-valued fields
             UseProtoNames:   true,  // snake_case instead of camelCase
@@ -187,7 +190,7 @@ import (
     "net/http"
 
     "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-    coldbrew "github.com/go-coldbrew/core"
+    "github.com/go-coldbrew/core"
 )
 
 func requestSizeLimit(maxBytes int64) func(runtime.HandlerFunc) runtime.HandlerFunc {
@@ -200,7 +203,7 @@ func requestSizeLimit(maxBytes int64) func(runtime.HandlerFunc) runtime.HandlerF
 }
 
 func (s *Service) PreStart(ctx context.Context) error {
-    coldbrew.RegisterServeMuxOption(runtime.WithMiddlewares(requestSizeLimit(10 << 20)))
+    core.RegisterServeMuxOption(runtime.WithMiddlewares(requestSizeLimit(10 << 20)))
     return nil
 }
 ```
@@ -215,7 +218,7 @@ import (
     "net/http"
 
     "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-    coldbrew "github.com/go-coldbrew/core"
+    "github.com/go-coldbrew/core"
     "google.golang.org/grpc/status"
 )
 
@@ -234,7 +237,7 @@ func envelopeErrorHandler(ctx context.Context, mux *runtime.ServeMux, m runtime.
 }
 
 func (s *Service) PreStart(ctx context.Context) error {
-    coldbrew.RegisterServeMuxOption(runtime.WithErrorHandler(envelopeErrorHandler))
+    core.RegisterServeMuxOption(runtime.WithErrorHandler(envelopeErrorHandler))
     return nil
 }
 ```
@@ -252,4 +255,3 @@ For gRPC-side concerns — auth, rate limiting, metrics, retries — use [Interc
 
 [grpc-gateway]: https://github.com/grpc-ecosystem/grpc-gateway
 [protojson]: https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson
-[ColdBrew cookiecutter]: /getting-started
