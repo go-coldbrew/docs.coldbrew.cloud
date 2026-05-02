@@ -152,6 +152,9 @@ func (s *Service) PreStart(ctx context.Context) error {
 Now `curl -H 'Accept: application/msgpack' …` returns msgpack-encoded responses, and `Content-Type: application/msgpack` request bodies decode correctly.
 
 {: .warning }
+The bridge round-trips through `encoding/json` decoded into `any`, which turns every JSON number into a `float64`. Integer fields larger than 2^53 − 1 (the limit of an exactly representable IEEE-754 double) lose precision. If your protos carry large `int64`/`uint64` values, replace the protojson hop with a `protoreflect`-based encoder or use a different wire format for those fields.
+
+{: .warning }
 `NewDecoder` reads the full request body into memory via `io.ReadAll`. Pair this marshaler with a request-size limit at the middleware layer (see the [Gateway middleware](#recipe-gateway-middleware) recipe below using `http.MaxBytesReader`) so a hostile client can't pin memory by streaming a giant body.
 
 {: .note }
@@ -159,7 +162,7 @@ The protojson hop costs about 2× a single marshal compared to a hand-written `p
 
 ## Recipe: Tune the default JSON marshaler
 
-The fallback marshaler for any `Content-Type` that isn't explicitly registered is grpc-gateway's `runtime.JSONPb` (protojson). Out of the box this catches `application/json` requests too — the defaults emit `camelCase` field names and omit zero values. Override the fallback by re-registering for `runtime.MIMEWildcard`:
+The fallback marshaler for any MIME that isn't explicitly registered is grpc-gateway's `runtime.JSONPb` (protojson). It serves both inbound (request `Content-Type`) and outbound (response `Accept`) sides. Out of the box this catches `application/json` traffic too — the defaults emit `camelCase` field names and omit zero values. Override the fallback by re-registering for `runtime.MIMEWildcard`:
 
 ```go
 import (
@@ -186,7 +189,7 @@ func (s *Service) PreStart(ctx context.Context) error {
 ```
 
 {: .note }
-The wildcard registration only takes effect when no concrete marshaler is registered for the request's `Content-Type`. If you've set `USE_JSON_BUILTIN_MARSHALLER=true` (which binds `JSON_BUILTIN_MARSHALLER_MIME`, default `application/json`, to `runtime.JSONBuiltin{}`) — or otherwise registered a marshaler for `application/json` — also register the tuned `JSONPb` for that concrete MIME, e.g. `core.RegisterHTTPMarshaler("application/json", &runtime.JSONPb{...})`.
+The wildcard registration only takes effect for MIMEs with no concrete registration. If you've set `USE_JSON_BUILTIN_MARSHALLER=true` (which binds `JSON_BUILTIN_MARSHALLER_MIME`, default `application/json`, to `runtime.JSONBuiltin{}`) — or otherwise registered a marshaler for `application/json` — that registration wins for both inbound `Content-Type` and outbound `Accept` matching. Re-register the tuned `JSONPb` for that concrete MIME too, e.g. `core.RegisterHTTPMarshaler("application/json", &runtime.JSONPb{...})`.
 
 ## Recipe: Gateway middleware
 
@@ -260,11 +263,11 @@ This snippet marshals a `map[string]any` envelope. Only `runtime.JSONPb` and `ru
 ## When to reach for these hooks
 
 - You need a wire format ColdBrew doesn't ship (msgpack, CBOR, YAML, vendor-specific binary).
-- You want the defaults of `runtime.JSONPb` adjusted (field naming, empty-value emission, indentation).
-- You need request-scoped concerns at the HTTP layer that don't fit in a gRPC interceptor (raw-body access, file uploads, response streaming wrappers, request size limits).
-- You need a different error envelope than the gateway default.
+- The defaults of `runtime.JSONPb` need adjusting (field naming, empty-value emission, indentation).
+- HTTP-layer concerns don't fit in a gRPC interceptor — raw-body access, file uploads, response streaming wrappers, request size limits.
+- The gateway's default error envelope isn't the shape your clients want.
 
-For gRPC-side concerns — auth, rate limiting, metrics, retries — use [Interceptors](/howto/interceptors) instead. Interceptors run on the gRPC server itself and are independent of the HTTP gateway.
+For gRPC-side concerns — server-side auth, rate limiting, metrics, panic recovery, and client-side retries or circuit breaking — use [Interceptors](/howto/interceptors) instead. They wrap gRPC server and client calls and are independent of the HTTP gateway.
 
 ---
 

@@ -71,6 +71,7 @@ test.describe("Anchor Links", () => {
     { path: "/integrations/", anchor: "prometheus" },
     { path: "/integrations/", anchor: "new-relic" },
     { path: "/integrations/", anchor: "sentry" },
+    { path: "/howto/gateway-extensions/", anchor: "recipe-gateway-middleware" },
   ];
 
   for (const { path, anchor } of pagesWithAnchors) {

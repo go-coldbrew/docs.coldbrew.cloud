@@ -189,6 +189,7 @@ test.describe("SEO", () => {
     "/howto/production/",
     "/howto/interceptors/",
     "/howto/auth/",
+    "/howto/local-dev/",
     "/howto/gateway-extensions/",
   ];
 
@@ -218,6 +219,7 @@ test.describe("Table of Contents", () => {
     "/howto/readiness/",
     "/howto/production/",
     "/howto/auth/",
+    "/howto/local-dev/",
     "/howto/gateway-extensions/",
   ];
 
