@@ -38,6 +38,8 @@ make local-stack PROFILES="postgres kafka nats"
 
 ### Databases
 
+See [Database](/howto/database) for the lifecycle pattern (open the pool in `PreStart`, close in `Stop`) and a runnable Postgres example.
+
 | Profile | Image | Host Port | Notes |
 |---------|-------|-----------|-------|
 | `postgres` | `postgres:18-alpine` | 5433 | Health check: `pg_isready` |
@@ -48,6 +50,8 @@ make local-stack PROFILES="postgres kafka nats"
 
 ### Cache
 
+See [Cache](/howto/cache) for the wiring pattern, cache-aside, and a Redis / Valkey example.
+
 | Profile | Image | Host Port | Notes |
 |---------|-------|-----------|-------|
 | `redis` | `redis:8-alpine` | 6379 | Health check: `redis-cli ping` |
@@ -55,6 +59,8 @@ make local-stack PROFILES="postgres kafka nats"
 | `memcached` | `memcached:alpine` | 11211 | |
 
 ### Messaging
+
+See [Messaging](/howto/messaging) for consumer patterns via the workers package and Kafka / NATS examples with graceful drain.
 
 | Profile | Image | Host Port | Notes |
 |---------|-------|-----------|-------|

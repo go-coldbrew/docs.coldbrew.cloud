@@ -233,15 +233,7 @@ Use `RegisterHandlerServer` instead of `RegisterHandlerFromEndpoint` in your `In
 
 ## Can I use ColdBrew with gRPC streaming?
 
-Yes. ColdBrew supports both **server streaming** and **bidirectional streaming** RPCs. The stream interceptor chain (response time logging, protovalidate, metrics, panic recovery) is applied automatically.
-
-Define streaming RPCs in your `.proto` file as usual:
-
-```protobuf
-rpc StreamEvents(EventRequest) returns (stream Event) {}
-```
-
-Note: grpc-gateway v2 supports **server streaming** over HTTP by translating gRPC server streams to newline-delimited JSON. Client streaming and bidirectional streaming have limited support — they translate to HTTP but lack true concurrent interleaving over HTTP/1.1. Practical constraints: reverse proxies may buffer streamed responses (requiring `X-Accel-Buffering: no`), and errors in streams are handled via `runtime.WithStreamErrorHandler`. For high-frequency real-time push or bidirectional communication, consider a dedicated WebSocket or SSE endpoint alongside the gateway. See the [grpc-gateway streaming examples](https://github.com/grpc-ecosystem/grpc-gateway/tree/main/examples/internal/proto/examplepb) for details.
+Yes — server-streaming, client-streaming, and bidirectional streaming are all supported, and the stream interceptor chain (response time logging, protovalidate, metrics, panic recovery) is applied automatically. See the [Streaming RPCs how-to](/howto/streaming-rpcs) for handler patterns, deadline propagation, backpressure, and the practical limits when serving the same methods through grpc-gateway over HTTP.
 
 ## How do I run background workers in my service?
 

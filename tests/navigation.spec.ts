@@ -4,6 +4,7 @@ const topLevelPages = [
   { path: "/", title: "ColdBrew" },
   { path: "/getting-started/", title: "Getting Started" },
   { path: "/architecture/", title: "Architecture" },
+  { path: "/concepts/", title: "Concepts" },
   { path: "/howto/", title: "How To" },
   { path: "/integrations/", title: "Integrations" },
   { path: "/faq/", title: "Frequently Asked Questions" },
@@ -32,6 +33,10 @@ const howtoPages = [
   "/howto/readiness/",
   "/howto/local-dev/",
   "/howto/gateway-extensions/",
+  "/howto/streaming-rpcs/",
+  "/howto/database/",
+  "/howto/cache/",
+  "/howto/messaging/",
 ];
 
 test.describe("Page Loading", () => {
