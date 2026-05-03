@@ -1,6 +1,26 @@
-// Newer how-to pages, declared once and shared across the test files so a
-// new how-to only needs to be added in one place.
-export const newHowtoPages = [
+// All how-to pages on the docs site, in sidebar order. Imported by every
+// test suite that walks the how-tos so adding a how-to is one edit.
+export const allHowtoPages = [
+  "/howto/APIs/",
+  "/howto/gRPC/",
+  "/howto/Log/",
+  "/howto/errors/",
+  "/howto/Tracing/",
+  "/howto/Metrics/",
+  "/howto/interceptors/",
+  "/howto/Debugging/",
+  "/howto/signals/",
+  "/howto/swagger/",
+  "/howto/data-builder/",
+  "/howto/vtproto/",
+  "/howto/production/",
+  "/howto/testing/",
+  "/howto/workers/",
+  "/howto/private-modules/",
+  "/howto/auth/",
+  "/howto/readiness/",
+  "/howto/local-dev/",
+  "/howto/gateway-extensions/",
   "/howto/streaming-rpcs/",
   "/howto/database/",
   "/howto/cache/",

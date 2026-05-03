@@ -1,5 +1,17 @@
 import { test, expect } from "@playwright/test";
-import { newHowtoPages } from "./pages";
+import { allHowtoPages } from "./pages";
+
+const topLevelPages = [
+  "/",
+  "/getting-started/",
+  "/architecture/",
+  "/concepts/",
+  "/config-reference/",
+  "/howto/",
+  "/integrations/",
+  "/faq/",
+  "/packages/",
+];
 
 test.describe("Code Blocks", () => {
   test("home page renders code blocks", async ({ page }) => {
@@ -261,26 +273,7 @@ test.describe("Factual accuracy", () => {
 });
 
 test.describe("SEO", () => {
-  const pagesWithDescriptions = [
-    "/",
-    "/getting-started/",
-    "/architecture/",
-    "/config-reference/",
-    "/howto/",
-    "/integrations/",
-    "/faq/",
-    "/packages/",
-    "/howto/APIs/",
-    "/howto/workers/",
-    "/howto/readiness/",
-    "/howto/production/",
-    "/howto/interceptors/",
-    "/howto/auth/",
-    "/howto/local-dev/",
-    "/howto/gateway-extensions/",
-    "/concepts/",
-    ...newHowtoPages,
-  ];
+  const pagesWithDescriptions = [...topLevelPages, ...allHowtoPages];
 
   for (const pagePath of pagesWithDescriptions) {
     test(`${pagePath} has meta description`, async ({ page }) => {
@@ -297,23 +290,7 @@ test.describe("SEO", () => {
 });
 
 test.describe("Table of Contents", () => {
-  const howtoPages = [
-    "/howto/APIs/",
-    "/howto/gRPC/",
-    "/howto/Log/",
-    "/howto/errors/",
-    "/howto/Tracing/",
-    "/howto/interceptors/",
-    "/howto/workers/",
-    "/howto/readiness/",
-    "/howto/production/",
-    "/howto/auth/",
-    "/howto/local-dev/",
-    "/howto/gateway-extensions/",
-    ...newHowtoPages,
-  ];
-
-  for (const pagePath of howtoPages) {
+  for (const pagePath of allHowtoPages) {
     test(`${pagePath} has table of contents`, async ({ page }) => {
       await page.goto(pagePath);
       const toc = page.locator("#table-of-contents, .no_toc, #toc");
