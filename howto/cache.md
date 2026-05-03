@@ -21,7 +21,7 @@ This page shows the framework pattern with a Redis / Valkey example using [go-re
 
 ## The pattern
 
-```
+```text
 PreStart  → open the client, run a Ping
 Stop      → close the client
 NewDatastoreSpan around each call → tracing

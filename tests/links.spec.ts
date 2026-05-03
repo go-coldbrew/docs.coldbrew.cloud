@@ -1,4 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
+import { newHowtoPages } from "./pages";
 
 /**
  * Collect all unique internal links from a page.
@@ -33,6 +34,8 @@ test.describe("Internal Links", () => {
     "/howto/gateway-extensions/",
     "/architecture/",
     "/config-reference/",
+    "/concepts/",
+    ...newHowtoPages,
   ];
 
   for (const pagePath of pagesToCrawl) {

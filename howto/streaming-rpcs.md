@@ -102,6 +102,8 @@ func (s *EventsService) UploadSamples(stream pb.Events_UploadSamplesServer) erro
 The simplest pattern is to read in a goroutine and write from the main goroutine (or vice versa). Use the stream's context to coordinate cancellation:
 
 ```go
+import "io"
+
 func (s *ChatService) Chat(stream pb.Chat_ChatServer) error {
     ctx := stream.Context()
 

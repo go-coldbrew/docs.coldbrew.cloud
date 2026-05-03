@@ -21,7 +21,7 @@ This page shows the framework pattern and a runnable Postgres example using [pgx
 
 ## The pattern
 
-```
+```text
 PreStart  → open the pool, run a ping
 Stop      → close the pool
 NewDatastoreSpan around each query → tracing + metrics

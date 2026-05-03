@@ -23,7 +23,7 @@ This page shows the framework pattern and Kafka and NATS examples. The same shap
 
 A messaging consumer is a long-running worker:
 
-```
+```text
 CBWorkerProvider.Workers() returns one *workers.Worker per subscription.
 Each worker:
   - opens its broker client
@@ -246,15 +246,17 @@ func (s *Service) PreStart(ctx context.Context) error {
     if err != nil {
         return fmt.Errorf("nats connect: %w", err)
     }
-    s.nc = nc
 
     // Buffered channel = explicit backpressure knob. Once full, NATS will
     // start dropping messages for the subscription unless you've enabled
     // JetStream flow control on the broker side.
-    s.msgCh = make(chan *nats.Msg, 64)
-    if _, err := nc.ChanQueueSubscribe(cfg.NATSSubject, cfg.NATSQueue, s.msgCh); err != nil {
+    msgCh := make(chan *nats.Msg, 64)
+    if _, err := nc.ChanQueueSubscribe(cfg.NATSSubject, cfg.NATSQueue, msgCh); err != nil {
+        nc.Close() // don't leak the connection if the subscription failed
         return fmt.Errorf("nats subscribe: %w", err)
     }
+    s.nc = nc
+    s.msgCh = msgCh
     return nil
 }
 

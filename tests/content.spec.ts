@@ -1,13 +1,5 @@
 import { test, expect } from "@playwright/test";
-
-// Newer how-to pages, listed once and reused by the SEO and TOC test sets so
-// adding a page only requires touching one list.
-const newHowtoPages = [
-  "/howto/streaming-rpcs/",
-  "/howto/database/",
-  "/howto/cache/",
-  "/howto/messaging/",
-];
+import { newHowtoPages } from "./pages";
 
 test.describe("Code Blocks", () => {
   test("home page renders code blocks", async ({ page }) => {
