@@ -43,7 +43,7 @@ Start the database container:
 make local-stack PROFILES=postgres
 ```
 
-The cookiecutter `docker-compose.local.yml` exposes Postgres at `localhost:5432` under the `postgres` profile.
+The cookiecutter `docker-compose.local.yml` exposes Postgres at `localhost:5433` under the `postgres` profile (see [Local Development](/howto/local-dev#databases) for the full port list).
 
 ### Add the config field
 
@@ -64,7 +64,7 @@ type Config struct {
 Set the value the same way as any other env var:
 
 ```bash
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/app?sslmode=disable
+export DATABASE_URL=postgres://postgres:postgres@localhost:5433/app?sslmode=disable
 ```
 
 ### Wire the pool
@@ -221,11 +221,11 @@ The cookiecutter `docker-compose.local.yml` ships these database profiles. Start
 
 | Profile | Service | Port |
 |---|---|---|
-| `postgres` | Postgres | 5432 |
+| `postgres` | Postgres | 5433 |
 | `mysql` | MySQL | 3306 |
 | `cockroachdb` | CockroachDB | 26257 |
 | `mongodb` | MongoDB | 27017 |
-| `alloydb` | AlloyDB Omni | 5432 |
+| `alloydb` | AlloyDB Omni | 5434 |
 | `spanner` | Cloud Spanner emulator | 9010 |
 
 See [Local Development](/howto/local-dev) for the full profile list.

@@ -42,7 +42,7 @@ When core shuts down, it cancels the worker context (step 4 in the [shutdown seq
 
 See [Workers how-to](/howto/workers) for the full worker API (middleware, jitter, restart-on-fail, child workers, metrics).
 
-## Kafka with kafka-go
+## Kafka with sarama
 
 Start the Kafka container:
 
@@ -74,7 +74,7 @@ export KAFKA_TOPIC=events
 export KAFKA_GROUP_ID=my-service
 ```
 
-[segmentio/kafka-go] is a pure-Go client with a context-aware reader API that fits the worker pattern naturally:
+[IBM/sarama] is the most widely deployed Kafka client for Go. Its consumer-group API requires a small `ConsumerGroupHandler` adapter but gives you at-least-once semantics by default — `MarkMessage` only after the handler succeeds:
 
 ```go
 package svc
@@ -82,14 +82,13 @@ package svc
 import (
     "context"
     "errors"
-    "io"
-    "time"
+    "fmt"
 
+    "github.com/IBM/sarama"
     "github.com/go-coldbrew/core"
     "github.com/go-coldbrew/log"
     "github.com/go-coldbrew/tracing"
     "github.com/go-coldbrew/workers"
-    "github.com/segmentio/kafka-go"
 
     "myapp/config" // import path of your service's config package
 )
@@ -108,35 +107,63 @@ func (s *Service) Workers() []*workers.Worker {
 
 func (s *Service) consumeEvents(ctx context.Context, info *workers.WorkerInfo) error {
     cfg := config.Get()
-    reader := kafka.NewReader(kafka.ReaderConfig{
-        Brokers:        cfg.KafkaBrokers,
-        Topic:          cfg.KafkaTopic,
-        GroupID:        cfg.KafkaGroupID,
-        MinBytes:       1,
-        MaxBytes:       10 << 20, // 10 MB
-        CommitInterval: time.Second,
-    })
-    defer reader.Close()
+    saramaCfg := sarama.NewConfig()
+    saramaCfg.Version = sarama.V3_6_0_0
+    // Auto-commit is on by default with a 1s interval. Marked offsets are
+    // committed at most ~1s after MarkMessage; a crash inside that window
+    // replays at most ~1s of work. For strictest at-least-once, set
+    // saramaCfg.Consumer.Offsets.AutoCommit.Enable = false and call
+    // sess.Commit() after MarkMessage.
 
+    group, err := sarama.NewConsumerGroup(cfg.KafkaBrokers, cfg.KafkaGroupID, saramaCfg)
+    if err != nil {
+        return fmt.Errorf("kafka consumer group: %w", err)
+    }
+    defer group.Close()
+
+    handler := &consumerGroupHandler{svc: s}
     for {
-        msg, err := reader.ReadMessage(ctx)
-        if err != nil {
-            // Context cancellation is the expected shutdown signal.
-            if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) {
+        // Consume blocks until the session ends (rebalance, error, or ctx cancellation),
+        // then we re-enter so the group rejoins after a rebalance.
+        if err := group.Consume(ctx, []string{cfg.KafkaTopic}, handler); err != nil {
+            if errors.Is(err, sarama.ErrClosedConsumerGroup) {
                 return ctx.Err()
             }
-            log.GetLogger(ctx).Error("kafka read", "err", err)
-            return err // worker will restart by default
+            log.GetLogger(ctx).Error("kafka consume", "err", err)
+            return err
         }
-        if err := s.handleEvent(ctx, msg); err != nil {
-            // Decide: log-and-continue (at-least-once with poison-pill risk),
-            // or return the error to trigger a restart.
-            log.GetLogger(ctx).Error("handle event", "err", err, "offset", msg.Offset)
+        if ctx.Err() != nil {
+            return ctx.Err()
         }
     }
 }
 
-func (s *Service) handleEvent(ctx context.Context, msg kafka.Message) error {
+type consumerGroupHandler struct {
+    svc *Service
+}
+
+func (h *consumerGroupHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
+func (h *consumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+
+func (h *consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+    for {
+        select {
+        case <-sess.Context().Done():
+            return nil
+        case msg, ok := <-claim.Messages():
+            if !ok {
+                return nil // partition revoked or claim closed
+            }
+            if err := h.svc.handleEvent(sess.Context(), msg); err != nil {
+                log.GetLogger(sess.Context()).Error("handle event", "err", err, "offset", msg.Offset)
+                return err // session ends; group rebalances; message replays
+            }
+            sess.MarkMessage(msg, "")
+        }
+    }
+}
+
+func (s *Service) handleEvent(ctx context.Context, msg *sarama.ConsumerMessage) error {
     span, ctx := tracing.NewInternalSpan(ctx, "handleEvent")
     defer span.End()
     span.SetTag("kafka.topic", msg.Topic)
@@ -150,8 +177,9 @@ func (s *Service) handleEvent(ctx context.Context, msg kafka.Message) error {
 
 The shape of the loop is the important part:
 
-- **`ReadMessage(ctx)` is the cancellation point.** When core cancels `ctx`, `ReadMessage` returns immediately and the handler returns `ctx.Err()` — a clean drain.
-- **Handler errors are a policy choice.** Returning the error restarts the worker (and re-reads the same offset, since `kafka-go` only commits successful work). Logging and continuing skips the message but keeps the consumer alive — fine for non-critical events, dangerous for anything you must process.
+- **Mark only after success is what makes it at-least-once.** `MarkMessage` advances the in-memory offset for the partition; the consumer group flushes marked offsets on the auto-commit interval (default 1s). Returning before `MarkMessage` means the message replays after the next rebalance — exactly the behaviour you want when a handler errors.
+- **`sess.Context().Done()` is the cancellation point.** When core cancels the worker context, `group.Close()` ends the session and `sess.Context()` fires `Done()`; `ConsumeClaim` returns nil for a clean drain.
+- **The outer `for { Consume; ... }` loop handles rebalances.** Each `Consume` call holds one session; rejoining the group requires re-entering. A non-rebalance error breaks out and returns the error so the worker restarts.
 - **Per-message tracing uses `NewInternalSpan`.** The span has no parent gRPC trace, so it starts a fresh trace per message; tag the topic/partition/offset so you can correlate with broker-side logs.
 
 ## NATS with nats.go
@@ -184,7 +212,7 @@ export NATS_SUBJECT=orders.created
 export NATS_QUEUE=my-service
 ```
 
-The official client [nats-io/nats.go] uses a callback-style subscription, which is a slightly different worker shape — the worker exists to keep the subscription alive and to drain on shutdown, while the callback runs each message:
+The official client [nats-io/nats.go] supports both callback-style subscriptions (`QueueSubscribe`) and channel-style (`ChanQueueSubscribe`). Channel-style fits the workers package directly via [`workers.ChannelWorker`](https://pkg.go.dev/github.com/go-coldbrew/workers#ChannelWorker), which already implements the `select { ctx.Done() / msgCh }` loop, error propagation, and clean drain on cancellation:
 
 ```go
 package svc
@@ -194,7 +222,6 @@ import (
     "fmt"
 
     "github.com/go-coldbrew/core"
-    "github.com/go-coldbrew/log"
     "github.com/go-coldbrew/tracing"
     "github.com/go-coldbrew/workers"
     "github.com/nats-io/nats.go"
@@ -203,7 +230,8 @@ import (
 )
 
 type Service struct {
-    nc *nats.Conn
+    nc    *nats.Conn
+    msgCh chan *nats.Msg
 }
 
 var (
@@ -213,55 +241,56 @@ var (
 )
 
 func (s *Service) PreStart(ctx context.Context) error {
-    nc, err := nats.Connect(config.Get().NATSURL)
+    cfg := config.Get()
+    nc, err := nats.Connect(cfg.NATSURL)
     if err != nil {
         return fmt.Errorf("nats connect: %w", err)
     }
     s.nc = nc
+
+    // Buffered channel = explicit backpressure knob. Once full, NATS will
+    // start dropping messages for the subscription unless you've enabled
+    // JetStream flow control on the broker side.
+    s.msgCh = make(chan *nats.Msg, 64)
+    if _, err := nc.ChanQueueSubscribe(cfg.NATSSubject, cfg.NATSQueue, s.msgCh); err != nil {
+        return fmt.Errorf("nats subscribe: %w", err)
+    }
     return nil
 }
 
 func (s *Service) Stop() {
     if s.nc != nil {
-        // Drain blocks until in-flight callbacks finish.
+        // Drain stops accepting new messages and waits for the channel to empty.
         _ = s.nc.Drain()
     }
 }
 
 func (s *Service) Workers() []*workers.Worker {
     return []*workers.Worker{
-        workers.NewWorker("nats-orders").HandlerFunc(s.consumeOrders),
+        workers.NewWorker("nats-orders").HandlerFunc(
+            workers.ChannelWorker(s.msgCh, s.handleOrder),
+        ),
     }
 }
 
-func (s *Service) consumeOrders(ctx context.Context, info *workers.WorkerInfo) error {
-    cfg := config.Get()
-    sub, err := s.nc.QueueSubscribe(cfg.NATSSubject, cfg.NATSQueue, func(m *nats.Msg) {
-        s.handleOrder(ctx, m)
-    })
-    if err != nil {
-        return err
-    }
-    defer sub.Unsubscribe()
-
-    <-ctx.Done() // block until shutdown
-    return ctx.Err()
-}
-
-func (s *Service) handleOrder(ctx context.Context, m *nats.Msg) {
+func (s *Service) handleOrder(ctx context.Context, info *workers.WorkerInfo, m *nats.Msg) error {
     span, ctx := tracing.NewInternalSpan(ctx, "handleOrder")
     defer span.End()
     span.SetTag("nats.subject", m.Subject)
 
     // … your business logic on m.Data
+    return nil
 }
 ```
 
 Notice the split:
 
-- **`PreStart` opens the connection** so the service fails fast if NATS is unreachable.
-- **`Stop()` calls `Drain()`**, which stops accepting new messages but waits for in-flight callbacks to finish — this is the NATS equivalent of "graceful shutdown."
-- **The worker exists to hold the subscription open** until `ctx.Done()`, then unsubscribes. `Drain()` in `Stop()` then handles the in-flight callbacks.
+- **`PreStart` opens the connection and registers the subscription.** Messages start landing in `s.msgCh` immediately; the worker hasn't started yet, but the buffered channel absorbs them.
+- **`workers.ChannelWorker(s.msgCh, s.handleOrder)`** is the whole consumer loop — it reads the next message, calls your handler, returns the handler's error to restart the worker, and exits cleanly when `ctx.Done()` fires.
+- **Consumption is independent of the wiring.** `handleOrder` takes only `(ctx, info, *nats.Msg)` and knows nothing about subscriptions, channels, or NATS lifecycle — you can unit-test it with a hand-built `*nats.Msg`, and the same handler shape would work behind any source that produces a `chan T` (an internal pipeline, a generated mock, a different broker). The channel is the seam.
+- **`Stop()` calls `Drain()`**, which stops new messages and lets the channel empty before the connection closes.
+
+For batch processing, swap `workers.ChannelWorker` for [`workers.BatchChannelWorker(ch, maxSize, maxDelay, fn)`](https://pkg.go.dev/github.com/go-coldbrew/workers#BatchChannelWorker) — same shape, but flushes batches by size or time, whichever comes first.
 
 ## Tracing across the broker boundary
 
@@ -297,5 +326,5 @@ See [Local Development](/howto/local-dev) for the full list, including `pubsub` 
 - [Tracing](/howto/Tracing) — Internal spans and trace propagation.
 - [Shutdown Lifecycle](/howto/signals) — Where worker drain fits in the broader shutdown sequence.
 
-[segmentio/kafka-go]: https://github.com/segmentio/kafka-go
+[IBM/sarama]: https://github.com/IBM/sarama
 [nats-io/nats.go]: https://github.com/nats-io/nats.go

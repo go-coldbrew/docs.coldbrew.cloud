@@ -45,7 +45,7 @@ make local-stack PROFILES=redis
 make local-stack PROFILES=valkey
 ```
 
-Both profiles expose port `6379`.
+The `redis` profile exposes port `6379`; the `valkey` profile exposes port `6380` so the two can run side by side. See [Local Development](/howto/local-dev#cache) for the full port list.
 
 ### Add the config field
 
@@ -79,7 +79,6 @@ import (
     "time"
 
     "github.com/go-coldbrew/core"
-    "github.com/go-coldbrew/tracing"
     "github.com/redis/go-redis/v9"
 
     "myapp/config" // import path of your service's config package
@@ -198,10 +197,10 @@ Pub/sub-based invalidation across replicas is possible but brittle in a microser
 | Profile | Service | Port |
 |---|---|---|
 | `redis` | Redis 8 | 6379 |
-| `valkey` | Valkey 8 (Redis-compatible) | 6379 |
+| `valkey` | Valkey 8 (Redis-compatible) | 6380 |
 | `memcached` | Memcached | 11211 |
 
-Use one or the other — both bind 6379, so they conflict. See [Local Development](/howto/local-dev) for the full list.
+See [Local Development](/howto/local-dev) for the full profile list.
 
 ## Other caches
 

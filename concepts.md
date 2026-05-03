@@ -3,7 +3,7 @@ layout: default
 title: Concepts
 nav_order: 9
 description: "Glossary of the gRPC, observability, and resilience concepts that ColdBrew builds on. Single-paragraph definitions with links to the deeper guides."
-permalink: /concepts
+permalink: /concepts/
 ---
 # Concepts
 

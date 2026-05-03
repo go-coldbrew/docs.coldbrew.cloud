@@ -227,7 +227,7 @@ test.describe("Factual accuracy", () => {
     await expect(mainContent.getByRole("heading", { name: "Healthcheck vs readycheck" })).toBeVisible();
   });
 
-  test("streaming-rpcs covers all four shapes and gateway limits", async ({ page }) => {
+  test("streaming-rpcs covers the three streaming shapes and gateway limits", async ({ page }) => {
     await page.goto("/howto/streaming-rpcs/");
     const mainContent = page.locator("main, .main-content").first();
     await expect(mainContent).toContainText("Server-streaming");

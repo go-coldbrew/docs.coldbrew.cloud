@@ -133,7 +133,13 @@ func (s *ChatService) Chat(stream pb.Chat_ChatServer) error {
                 return nil
             }
             return err
-        case msg := <-incoming:
+        case msg, ok := <-incoming:
+            if !ok {
+                // Reader closed the channel — wait for the error from errCh
+                // on the next iteration so EOF and read errors propagate.
+                incoming = nil
+                continue
+            }
             reply := s.handle(msg)
             if err := stream.Send(reply); err != nil {
                 return err
