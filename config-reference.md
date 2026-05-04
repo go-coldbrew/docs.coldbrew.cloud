@@ -16,7 +16,7 @@ permalink: /config-reference
 
 ---
 
-ColdBrew is configured entirely through environment variables using [envconfig](https://github.com/kelseyhightower/envconfig). All fields have sensible defaults — you can run a service with zero configuration.
+ColdBrew is configured entirely through environment variables. The framework `Config` struct carries both `envconfig:"…"` and `env:"…"` struct tags, so services can populate it with [kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig) (the cookiecutter default) or any `env:`-tag loader such as [caarlos0/env](https://github.com/caarlos0/env), [sethvargo/go-envconfig](https://github.com/sethvargo/go-envconfig), or [ilyakaznacheev/cleanenv](https://github.com/ilyakaznacheev/cleanenv). All fields have sensible defaults — you can run a service with zero configuration.
 
 Access the config in code via:
 

@@ -22,7 +22,7 @@ ColdBrew follows [12-factor app](https://12factor.net/) methodology and is desig
 
 | 12-Factor Principle | How ColdBrew Implements It |
 |--------------------|-----------------------------|
-| **Config** | All configuration via environment variables ([envconfig](https://github.com/kelseyhightower/envconfig)) — no config files, no YAML. See [Configuration Reference](/config-reference) |
+| **Config** | All configuration via environment variables — works with [envconfig](https://github.com/kelseyhightower/envconfig) or any `env:`-tag loader like [caarlos0/env](https://github.com/caarlos0/env). No config files, no YAML. See [Configuration Reference](/config-reference) |
 | **Port binding** | Self-contained HTTP (`:9091`) and gRPC (`:9090`) servers, optional dedicated admin port (`ADMIN_PORT`) for endpoint isolation |
 | **Logs** | Structured JSON to stdout by default — ready for any log aggregator (Fluentd, Loki, CloudWatch) |
 | **Disposability** | Graceful SIGTERM handling with configurable drain periods. See [Signals](/howto/signals) |

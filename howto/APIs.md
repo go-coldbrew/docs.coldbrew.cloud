@@ -765,7 +765,6 @@ Benchmark source: [`benchmarks/`](https://github.com/go-coldbrew/core/tree/main/
 [google/rpc/code.proto]: https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
 [ColdBrew errors package]: https://pkg.go.dev/github.com/go-coldbrew/errors#NewWithStatus
 [errors package]: https://pkg.go.dev/github.com/go-coldbrew/errors
-[envconfig]: https://github.com/kelseyhightower/envconfig
 [ColdBrew]: https://docs.coldbrew.cloud
 ## Related
 
