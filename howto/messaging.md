@@ -231,12 +231,14 @@ import (
 
 type Service struct {
     nc    *nats.Conn
+    sub   *nats.Subscription
     msgCh chan *nats.Msg
 }
 
 var (
     _ core.CBWorkerProvider = (*Service)(nil)
     _ core.CBPreStarter     = (*Service)(nil)
+    _ core.CBPreStopper     = (*Service)(nil)
     _ core.CBStopper        = (*Service)(nil)
 )
 
@@ -251,19 +253,29 @@ func (s *Service) PreStart(ctx context.Context) error {
     // start dropping messages for the subscription unless you've enabled
     // JetStream flow control on the broker side.
     msgCh := make(chan *nats.Msg, 64)
-    if _, err := nc.ChanQueueSubscribe(cfg.NATSSubject, cfg.NATSQueue, msgCh); err != nil {
+    sub, err := nc.ChanQueueSubscribe(cfg.NATSSubject, cfg.NATSQueue, msgCh)
+    if err != nil {
         nc.Close() // don't leak the connection if the subscription failed
         return fmt.Errorf("nats subscribe: %w", err)
     }
     s.nc = nc
+    s.sub = sub
     s.msgCh = msgCh
+    return nil
+}
+
+// PreStop runs *before* core cancels the worker context, so the consumer
+// is still reading from msgCh while we drain the subscription.
+func (s *Service) PreStop(ctx context.Context) error {
+    if s.sub != nil {
+        return s.sub.Drain()
+    }
     return nil
 }
 
 func (s *Service) Stop() {
     if s.nc != nil {
-        // Drain stops accepting new messages and waits for the channel to empty.
-        _ = s.nc.Drain()
+        s.nc.Close()
     }
 }
 
@@ -290,7 +302,7 @@ Notice the split:
 - **`PreStart` opens the connection and registers the subscription.** Messages start landing in `s.msgCh` immediately; the worker hasn't started yet, but the buffered channel absorbs them.
 - **`workers.ChannelWorker(s.msgCh, s.handleOrder)`** is the whole consumer loop — it reads the next message, calls your handler, returns the handler's error to restart the worker, and exits cleanly when `ctx.Done()` fires.
 - **Consumption is independent of the wiring.** `handleOrder` takes only `(ctx, info, *nats.Msg)` and knows nothing about subscriptions, channels, or NATS lifecycle — you can unit-test it with a hand-built `*nats.Msg`, and the same handler shape would work behind any source that produces a `chan T` (an internal pipeline, a generated mock, a different broker). The channel is the seam.
-- **`Stop()` calls `Drain()`**, which stops new messages and lets the channel empty before the connection closes.
+- **Drain order matters.** `PreStop` runs at [shutdown step 1](/howto/signals#graceful-shutdown), *before* the worker context is cancelled at step 4 — so calling `s.sub.Drain()` here stops the broker from sending new messages while the worker is still consuming, and the buffered channel empties during the drain wait. By the time `Stop()` runs at step 9, the worker has exited cleanly and we just need to close the connection. Calling `Drain()` from `Stop()` instead would block on a channel no one is reading from.
 
 For batch processing, swap `workers.ChannelWorker` for [`workers.BatchChannelWorker(ch, maxSize, maxDelay, fn)`](https://pkg.go.dev/github.com/go-coldbrew/workers#BatchChannelWorker) — same shape, but flushes batches by size or time, whichever comes first.
 
