@@ -1,37 +1,16 @@
 import { test, expect } from "@playwright/test";
+import { allHowtoPages } from "./pages";
 
 const topLevelPages = [
   { path: "/", title: "ColdBrew" },
   { path: "/getting-started/", title: "Getting Started" },
   { path: "/architecture/", title: "Architecture" },
+  { path: "/concepts/", title: "Concepts" },
   { path: "/howto/", title: "How To" },
   { path: "/integrations/", title: "Integrations" },
   { path: "/faq/", title: "Frequently Asked Questions" },
   { path: "/packages/", title: "Packages" },
   { path: "/config-reference/", title: "Configuration Reference" },
-];
-
-const howtoPages = [
-  "/howto/APIs/",
-  "/howto/gRPC/",
-  "/howto/Log/",
-  "/howto/errors/",
-  "/howto/Tracing/",
-  "/howto/Metrics/",
-  "/howto/interceptors/",
-  "/howto/Debugging/",
-  "/howto/signals/",
-  "/howto/swagger/",
-  "/howto/data-builder/",
-  "/howto/vtproto/",
-  "/howto/production/",
-  "/howto/testing/",
-  "/howto/workers/",
-  "/howto/private-modules/",
-  "/howto/auth/",
-  "/howto/readiness/",
-  "/howto/local-dev/",
-  "/howto/gateway-extensions/",
 ];
 
 test.describe("Page Loading", () => {
@@ -43,7 +22,7 @@ test.describe("Page Loading", () => {
     });
   }
 
-  for (const path of howtoPages) {
+  for (const path of allHowtoPages) {
     test(`howto page loads: ${path}`, async ({ page }) => {
       const response = await page.goto(path);
       expect(response?.status()).toBe(200);

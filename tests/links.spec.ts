@@ -1,4 +1,5 @@
 import { test, expect, Page } from "@playwright/test";
+import { allHowtoPages } from "./pages";
 
 /**
  * Collect all unique internal links from a page.
@@ -23,16 +24,14 @@ async function getInternalLinks(
 test.describe("Internal Links", () => {
   const pagesToCrawl = [
     "/",
-    "/howto/",
-    "/howto/APIs/",
-    "/integrations/",
-    "/packages/",
-    "/howto/production/",
-    "/howto/workers/",
-    "/howto/readiness/",
-    "/howto/gateway-extensions/",
     "/architecture/",
+    "/concepts/",
     "/config-reference/",
+    "/howto/",
+    "/integrations/",
+    "/faq/",
+    "/packages/",
+    ...allHowtoPages,
   ];
 
   for (const pagePath of pagesToCrawl) {

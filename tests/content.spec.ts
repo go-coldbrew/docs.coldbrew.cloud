@@ -1,4 +1,17 @@
 import { test, expect } from "@playwright/test";
+import { allHowtoPages } from "./pages";
+
+const topLevelPages = [
+  "/",
+  "/getting-started/",
+  "/architecture/",
+  "/concepts/",
+  "/config-reference/",
+  "/howto/",
+  "/integrations/",
+  "/faq/",
+  "/packages/",
+];
 
 test.describe("Code Blocks", () => {
   test("home page renders code blocks", async ({ page }) => {
@@ -206,27 +219,61 @@ test.describe("Factual accuracy", () => {
     await expect(mainContent).toContainText("ADMIN_PORT");
     await expect(mainContent).toContainText("canary");
   });
+
+  test("concepts page defines the core gRPC and observability terms", async ({ page }) => {
+    await page.goto("/concepts/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent.getByRole("heading", { name: "gRPC", exact: true })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "Interceptors" })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "vtprotobuf" })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "Trace ID" })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "Lifecycle hooks" })).toBeVisible();
+    await expect(mainContent.getByRole("heading", { name: "Healthcheck vs readycheck" })).toBeVisible();
+  });
+
+  test("streaming-rpcs covers the three streaming shapes and gateway limits", async ({ page }) => {
+    await page.goto("/howto/streaming-rpcs/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("Server-streaming");
+    await expect(mainContent).toContainText("Client-streaming");
+    await expect(mainContent).toContainText("Bidirectional");
+    await expect(mainContent).toContainText("Backpressure");
+    await expect(mainContent).toContainText("X-Accel-Buffering");
+  });
+
+  test("database howto documents the framework pattern with config", async ({ page }) => {
+    await page.goto("/howto/database/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("PreStart");
+    await expect(mainContent).toContainText("CBStopper");
+    await expect(mainContent).toContainText("NewDatastoreSpan");
+    await expect(mainContent).toContainText("config.Get()");
+    await expect(mainContent).toContainText("DATABASE_URL");
+  });
+
+  test("cache howto documents the framework pattern with config", async ({ page }) => {
+    await page.goto("/howto/cache/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("PreStart");
+    await expect(mainContent).toContainText("Cache-aside");
+    await expect(mainContent).toContainText("NewDatastoreSpan");
+    await expect(mainContent).toContainText("config.Get()");
+    await expect(mainContent).toContainText("REDIS_ADDR");
+  });
+
+  test("messaging howto documents Kafka and NATS via workers and config", async ({ page }) => {
+    await page.goto("/howto/messaging/");
+    const mainContent = page.locator("main, .main-content").first();
+    await expect(mainContent).toContainText("CBWorkerProvider");
+    await expect(mainContent).toContainText("Kafka");
+    await expect(mainContent).toContainText("NATS");
+    await expect(mainContent).toContainText("config.Get()");
+    await expect(mainContent).toContainText("at-least-once");
+  });
 });
 
 test.describe("SEO", () => {
-  const pagesWithDescriptions = [
-    "/",
-    "/getting-started/",
-    "/architecture/",
-    "/config-reference/",
-    "/howto/",
-    "/integrations/",
-    "/faq/",
-    "/packages/",
-    "/howto/APIs/",
-    "/howto/workers/",
-    "/howto/readiness/",
-    "/howto/production/",
-    "/howto/interceptors/",
-    "/howto/auth/",
-    "/howto/local-dev/",
-    "/howto/gateway-extensions/",
-  ];
+  const pagesWithDescriptions = [...topLevelPages, ...allHowtoPages];
 
   for (const pagePath of pagesWithDescriptions) {
     test(`${pagePath} has meta description`, async ({ page }) => {
@@ -243,22 +290,7 @@ test.describe("SEO", () => {
 });
 
 test.describe("Table of Contents", () => {
-  const howtoPages = [
-    "/howto/APIs/",
-    "/howto/gRPC/",
-    "/howto/Log/",
-    "/howto/errors/",
-    "/howto/Tracing/",
-    "/howto/interceptors/",
-    "/howto/workers/",
-    "/howto/readiness/",
-    "/howto/production/",
-    "/howto/auth/",
-    "/howto/local-dev/",
-    "/howto/gateway-extensions/",
-  ];
-
-  for (const pagePath of howtoPages) {
+  for (const pagePath of allHowtoPages) {
     test(`${pagePath} has table of contents`, async ({ page }) => {
       await page.goto(pagePath);
       const toc = page.locator("#table-of-contents, .no_toc, #toc");

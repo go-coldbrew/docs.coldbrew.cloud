@@ -26,6 +26,10 @@ Designing and writing your service.
 | Run background workers | [Workers](/howto/workers) |
 | Add JWT / API key auth | [Authentication](/howto/auth) |
 | Add custom HTTP marshalers or middleware | [HTTP Gateway Extensions](/howto/gateway-extensions) |
+| Use server, client, or bidi streaming | [Streaming RPCs](/howto/streaming-rpcs) |
+| Wire a database connection pool | [Database](/howto/database) |
+| Cache reads with Redis or Valkey | [Cache](/howto/cache) |
+| Consume Kafka or NATS messages | [Messaging](/howto/messaging) |
 
 ## Operate
 

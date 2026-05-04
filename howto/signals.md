@@ -32,7 +32,7 @@ When the application receives a signal, ColdBrew executes a multi-step shutdown 
 1. **`PreStop(ctx)`** on services implementing [CBPreStopper] — deregister from service discovery, flush buffers
 2. **`FailCheck(true)`** on services implementing [CBGracefulStopper] — `/readycheck` starts returning failure
 3. **Wait** `GRPC_GRACEFUL_DURATION_IN_SECONDS` (default: 7s) for the load balancer to stop sending traffic
-4. **Stop workers** — cancel worker context, wait for workers to exit
+4. **Stop workers** — cancel worker context, wait for workers to exit (see [Messaging](/howto/messaging) for the consumer-drain pattern)
 5. **Shutdown admin server** if configured (`ADMIN_PORT`)
 6. **Shutdown HTTP server** — stop accepting new HTTP requests
 7. **`GracefulStop()` gRPC server** — finish in-flight RPCs, reject new ones

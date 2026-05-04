@@ -178,6 +178,7 @@ ColdBrew composes proven Go libraries — not replacements:
 ## Next Steps
 
 - **[Getting Started](/getting-started)** — Create your first ColdBrew service
+- **[Concepts](/concepts)** — One-paragraph definitions of the gRPC, observability, and resilience terms ColdBrew builds on
 - **[How-To Guides](/howto)** — Step-by-step guides for common tasks
 - **[Production Deployment](/howto/production)** — Kubernetes, health probes, tracing, and graceful shutdown
 - **[Integrations](/integrations)** — Set up monitoring, tracing, and error tracking
