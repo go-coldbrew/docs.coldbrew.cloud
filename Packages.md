@@ -20,7 +20,7 @@ The core module is the base module and provides the base implementation for Cold
 Documentation can be found at [core-docs]
 
 ### [Config]
-ColdBrew config package contains the configuration for the core package. It uses [envconfig] to load the configuration from the environment variables.
+ColdBrew config package contains the configuration for the core package. Each field carries both `envconfig:"…"` and `env:"…"` struct tags, so it can be loaded with [envconfig] (the cookiecutter default) or any `env:`-tag loader such as [caarlos0/env](https://github.com/caarlos0/env).
 
 Documentation can be found at [config-docs]
 

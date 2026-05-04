@@ -211,7 +211,7 @@ Yes — ColdBrew is Kubernetes-native by design. Out of the box you get:
 - **Graceful shutdown** on SIGTERM with configurable drain periods (`SHUTDOWN_DURATION_IN_SECONDS`, `GRPC_GRACEFUL_DURATION_IN_SECONDS`)
 - **Prometheus metrics** at `/metrics` for scraping
 - **Structured JSON logging** to stdout (ready for Fluentd, Loki, or any log aggregator)
-- **Environment variable configuration** via [envconfig](https://github.com/kelseyhightower/envconfig) — works natively with ConfigMaps and Secrets
+- **Environment variable configuration** via [envconfig](https://github.com/kelseyhightower/envconfig) or any `env:`-tag loader (e.g. [caarlos0/env](https://github.com/caarlos0/env)) — works natively with ConfigMaps and Secrets
 
 ColdBrew also follows [12-factor app](https://12factor.net/) principles: no config files, stateless processes, port binding, and log streams. See the [Production Deployment guide](/howto/production) for K8s manifests, ServiceMonitor setup, and graceful shutdown tuning, and the [Architecture](/architecture) page for the full design principles table.
 
