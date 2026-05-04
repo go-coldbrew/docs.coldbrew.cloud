@@ -181,7 +181,7 @@ func (s *Service) GetUser(ctx context.Context, id int64) (*User, error) {
 Two principles to keep in mind:
 
 - **Cache failures must not fail the request.** A degraded cache should turn into higher database load, not 5xx errors.
-- **Pick a TTL up front, not by accident.** `SET key value EX 300` (5 minutes) for human-scale data; longer for immutable data; explicit `Del` on writes for anything that *must* invalidate. Avoid relying on memory pressure for eviction — the data you needed evicted first is rarely the data Redis evicts first.
+- **Pick a TTL up front, not by accident.** `SET key value EX 300` (5 minutes) for human-scale data; longer for immutable data; explicit `Del` on writes for anything that *must* invalidate. Avoid relying on memory pressure for eviction — the data you need evicted first is rarely the data Redis evicts first.
 
 ## Invalidation
 
