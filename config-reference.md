@@ -89,6 +89,7 @@ To allow connections to remain open indefinitely, set both `GRPC_SERVER_MAX_CONN
 | `DISABLE_DEBUG` | bool | `false` | Disable pprof debug endpoints at `/debug/` |
 | `USE_JSON_BUILTIN_MARSHALLER` | bool | `false` | Use `encoding/json` instead of the default protojson marshaller for `application/json` |
 | `JSON_BUILTIN_MARSHALLER_MIME` | string | `application/json` | Content-Type for the JSON builtin marshaller |
+| `DISABLE_SSE_MARSHALER` | bool | `false` | Disable the auto-registered `text/event-stream` marshaler. When `false` (default), server-streaming RPCs are consumable as Server-Sent Events by clients that send `Accept: text/event-stream` — see [Server-Sent Events](/howto/server-sent-events/) |
 | `HTTP_HEADER_PREFIXES` | []string | `""` | HTTP header prefixes to forward as gRPC metadata (comma-separated) |
 | `TRACE_HEADER_NAME` | string | `x-trace-id` | HTTP header name for trace ID propagation to log/trace contexts |
 | `DISABLE_HTTP_COMPRESSION` | bool | `false` | Disable gzip/zstd compression for HTTP gateway responses |

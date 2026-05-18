@@ -22,7 +22,8 @@ export const allHowtoPages = [
   "/howto/auth/",                // 19
   "/howto/gateway-extensions/",  // 20
   "/howto/streaming-rpcs/",      // 21
-  "/howto/database/",            // 22
-  "/howto/cache/",               // 23
-  "/howto/messaging/",           // 24
+  "/howto/server-sent-events/",  // 22
+  "/howto/database/",            // 23
+  "/howto/cache/",               // 24
+  "/howto/messaging/",           // 25
 ];

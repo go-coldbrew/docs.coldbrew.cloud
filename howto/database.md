@@ -2,7 +2,7 @@
 layout: default
 title: "Database"
 parent: "How To"
-nav_order: 22
+nav_order: 23
 description: "How to wire a database connection pool into a ColdBrew service: pool init in PreStart, drain in Stop, and tracing via NewDatastoreSpan. Library-agnostic with a pgx Postgres example"
 ---
 # Database
