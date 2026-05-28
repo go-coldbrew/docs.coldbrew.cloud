@@ -15,9 +15,11 @@ description: "Server-Sent Events over the ColdBrew HTTP gateway — browser-cons
 
 ---
 
-ColdBrew exposes every server-streaming gRPC method as Server-Sent Events for free. A browser `EventSource(...)` can consume any `rpc Foo(Req) returns (stream Resp)` endpoint directly — no per-service wiring, no proto changes, no custom HTTP handler. This is the path of least resistance for AI/LLM token streams, progress feeds, change notifications, and any other server → client push that benefits from staying on plain HTTP.
+ColdBrew exposes every server-streaming gRPC method as Server-Sent Events for free. Any `rpc Foo(Req) returns (stream Resp)` endpoint is SSE-consumable when the client sends `Accept: text/event-stream` — no per-service wiring, no proto changes, no custom HTTP handler. This is the path of least resistance for AI/LLM token streams, progress feeds, change notifications, and any other server → client push that benefits from staying on plain HTTP.
 
 The marshaler is registered by default. There is nothing to import in your service code. Clients pick SSE by sending `Accept: text/event-stream`; everything else continues to receive newline-delimited JSON as before.
+
+Browser `EventSource(...)` is the simplest consumer but only does `GET` requests, so it works directly only for streams mapped to HTTP `GET`. For `POST`-mapped streams (most non-trivial endpoints), use `fetch` with a streaming response reader, or a small library like [microsoft/fetch-event-source](https://github.com/Azure/fetch-event-source) — the wire format is identical, only the request side changes.
 
 ## When to use SSE
 
@@ -48,13 +50,14 @@ grpc-gateway wraps server-streaming responses in `{"result": <message>}` over HT
 
 ## Defining a streaming endpoint
 
-A streaming method is just a `stream` response in your `.proto`. Nothing changes for SSE specifically:
+A streaming method is just a `stream` response in your `.proto`. Nothing changes for SSE specifically. Map to HTTP `GET` if you want browser `EventSource(...)` to consume it directly; use `POST` (and a streaming `fetch` client) when the request needs a body:
 
 ```protobuf
 rpc StreamTokens(StreamTokensRequest) returns (stream Token) {
   option (google.api.http) = {
-    post: "/api/v1/stream/tokens"
-    body: "*"
+    // GET keeps the EventSource example below working as-is.
+    // For POST, swap to: post: "/api/v1/stream/tokens" body: "*"
+    get: "/api/v1/stream/tokens"
   };
 }
 
@@ -107,23 +110,22 @@ events.onmessage = (e) => {
 events.onerror = () => events.close();
 ```
 
-`EventSource` is the standard browser API — auto-reconnects on transient network failures, available in every modern browser, no dependencies. Note: it always sends `GET`. For `POST` streams (most non-trivial endpoints), use `fetch(..., { method: "POST" })` and a streaming response reader, or use a small library like [@microsoft/fetch-event-source](https://github.com/Azure/fetch-event-source) that handles POST + SSE parsing.
+`EventSource` is the standard browser API — auto-reconnects on transient network failures, available in every modern browser, no dependencies. As noted in the intro, it only does `GET`; for `POST`-mapped streams use `fetch(..., { method: "POST" })` with a streaming response reader, or a library like [@microsoft/fetch-event-source](https://github.com/Azure/fetch-event-source) that handles POST + SSE parsing.
 
 ### curl
 
 ```console
 $ # Default — newline-delimited JSON:
-$ curl -N -X POST -H 'Content-Type: application/json' \
-    -d '{"msg":"hello world"}' \
-    http://localhost:9091/api/v1/stream/tokens
+$ curl -N 'http://localhost:9091/api/v1/stream/tokens?msg=hello+world'
 
 $ # SSE — request text/event-stream:
-$ curl -N -X POST -H 'Content-Type: application/json' -H 'Accept: text/event-stream' \
-    -d '{"msg":"hello world"}' \
-    http://localhost:9091/api/v1/stream/tokens
+$ curl -N -H 'Accept: text/event-stream' \
+    'http://localhost:9091/api/v1/stream/tokens?msg=hello+world'
 ```
 
 `-N` (no-buffer) is required — without it, curl will hold the response until the stream completes.
+
+For `POST`-mapped streams, the same flags apply; add `-X POST -H 'Content-Type: application/json' -d '{...}'` and replace the query string with a body. The wire format is identical.
 
 ### Native gRPC
 
