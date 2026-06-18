@@ -2,7 +2,7 @@
 layout: default
 title: "Cache"
 parent: "How To"
-nav_order: 23
+nav_order: 24
 description: "How to wire a Redis or Valkey cache into a ColdBrew service: client init in PreStart, drain in Stop, cache-aside, and tracing via NewDatastoreSpan"
 ---
 # Cache

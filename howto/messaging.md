@@ -2,7 +2,7 @@
 layout: default
 title: "Messaging"
 parent: "How To"
-nav_order: 24
+nav_order: 25
 description: "How to run Kafka or NATS consumers in a ColdBrew service via workers.Worker, with graceful drain on shutdown and built-in tracing"
 ---
 # Messaging

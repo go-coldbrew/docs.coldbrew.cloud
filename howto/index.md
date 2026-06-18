@@ -27,6 +27,7 @@ Designing and writing your service.
 | Add JWT / API key auth | [Authentication](/howto/auth) |
 | Add custom HTTP marshalers or middleware | [HTTP Gateway Extensions](/howto/gateway-extensions) |
 | Use server, client, or bidi streaming | [Streaming RPCs](/howto/streaming-rpcs) |
+| Stream tokens to the browser (AI/LLM, progress feeds) | [Server-Sent Events](/howto/server-sent-events) |
 | Wire a database connection pool | [Database](/howto/database) |
 | Cache reads with Redis or Valkey | [Cache](/howto/cache) |
 | Consume Kafka or NATS messages | [Messaging](/howto/messaging) |

@@ -184,15 +184,16 @@ grpc-gateway translates streaming RPCs to HTTP, but the four shapes don't map cl
 | gRPC shape | HTTP behaviour through the gateway |
 |---|---|
 | Unary | Standard request/response. |
-| Server-streaming | Newline-delimited JSON (NDJSON) over a chunked HTTP response. Clients read line-by-line. |
+| Server-streaming | Newline-delimited JSON (NDJSON) over a chunked HTTP response by default, or Server-Sent Events when the client sends `Accept: text/event-stream`. |
 | Client-streaming | Limited — the gateway buffers and forwards as a unary gRPC stream. Don't rely on this for large or long-lived uploads. |
 | Bidirectional | Limited — no true concurrent interleaving over HTTP/1.1. Avoid for HTTP clients. |
 
 Practical things to know:
 
+- **Server-Sent Events work out of the box.** ColdBrew registers a `text/event-stream` marshaler by default so any server-streaming RPC is consumable as SSE when the client sends `Accept: text/event-stream`. Browser `EventSource(...)` works directly for endpoints exposed via HTTP `GET`; for `POST`-mapped streams use `fetch` + [microsoft/fetch-event-source](https://github.com/Azure/fetch-event-source) (or any streaming HTTP client) — the wire format is identical. See [Server-Sent Events](/howto/server-sent-events/) for the framing, opt-out, and AI/LLM patterns; set `DISABLE_SSE_MARSHALER=true` to suppress.
 - **Reverse proxies buffer streamed responses.** Nginx, Cloudflare, and similar will hold chunks until they have "enough." Set `X-Accel-Buffering: no` on the response (or the upstream config) to disable buffering when you actually need server-streaming over HTTP.
 - **Stream errors need a handler.** Use `runtime.WithStreamErrorHandler` when registering the gateway to control how mid-stream errors render in the HTTP response. The default trailers-only behaviour is awkward to consume from a JSON client.
-- **Native HTTP alternatives.** If your HTTP clients need true bidirectional or high-frequency push, consider a separate WebSocket or Server-Sent Events endpoint registered via [HTTP Gateway Extensions](/howto/gateway-extensions). Keep the gRPC stream as the canonical implementation and have the WebSocket handler delegate to it.
+- **Bidirectional or push-style HTTP.** True bidi over HTTP/1.1 isn't viable through the gateway. For server → client push, prefer Server-Sent Events (above) over a separate WebSocket endpoint — it reuses the existing gRPC stream + gateway plumbing. WebSockets are still the right answer when you need client → server messages on the same connection; see [HTTP Gateway Extensions](/howto/gateway-extensions) for the registration recipe.
 
 See the [grpc-gateway streaming examples](https://github.com/grpc-ecosystem/grpc-gateway/tree/main/examples/internal/proto/examplepb) for the full HTTP semantics.
 
@@ -200,5 +201,6 @@ See the [grpc-gateway streaming examples](https://github.com/grpc-ecosystem/grpc
 
 - [APIs how-to](/howto/APIs) — Defining gRPC and HTTP endpoints from proto.
 - [Interceptors](/howto/interceptors) — The stream interceptor chain and how to add your own.
+- [Server-Sent Events](/howto/server-sent-events/) — Browser-consumable streams over the gateway, ideal for AI/LLM token streaming.
 - [HTTP Gateway Extensions](/howto/gateway-extensions) — Custom marshalers and routes when the gateway alone isn't enough.
 - [Tracing](/howto/Tracing) — Trace IDs propagate through stream contexts the same way they do for unary.

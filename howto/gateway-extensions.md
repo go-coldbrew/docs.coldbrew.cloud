@@ -38,6 +38,7 @@ Registered options are applied **after** ColdBrew's built-ins. Built-ins include
 - The incoming-header matcher derived from `HTTP_HEADER_PREFIXES`
 - Marshalers for `application/proto` and `application/protobuf`
 - The internal `spanRouteMiddleware` (sets the OTEL span name + `http.route` attribute)
+- A `text/event-stream` marshaler (`core.SSEMarshaler`) so server-streaming RPCs are browser `EventSource`-consumable out of the box. Set `DISABLE_SSE_MARSHALER=true` to suppress, or register your own marshaler for `text/event-stream` to override the default. See [Server-Sent Events](/howto/server-sent-events/) for the framing details.
 - Optionally the JSON builtin marshaler when `USE_JSON_BUILTIN_MARSHALLER=true`
 
 Because grpc-gateway's option model is last-write-wins for some options and additive for others, the practical effect is:
